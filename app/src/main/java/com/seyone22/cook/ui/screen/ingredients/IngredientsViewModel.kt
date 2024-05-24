@@ -3,34 +3,41 @@ package com.seyone22.cook.ui.screen.ingredients
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seyone22.cook.data.model.Ingredient
+import com.seyone22.cook.data.model.IngredientImage
+import com.seyone22.cook.data.repository.ingredient.IngredientRepository
+import com.seyone22.cook.data.repository.ingredientImage.IngredientImageRepository
+import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class IngredientsViewModel : ViewModel() {
+class IngredientsViewModel(
+    private val ingredientRepository: IngredientRepository,
+    private val ingredientVariantRepository: IngredientVariantRepository,
+    private val ingredientImageRepository: IngredientImageRepository
+) : ViewModel() {
 
-    // Define your data repository here
-    private val repository = IngredientsRepository() // You'll need to create this class
 
-    // Define StateFlow variable to hold the list of ingredients
-    private val _ingredientList = MutableStateFlow<List<Ingredient>>(emptyList())
-    val ingredientList: StateFlow<List<Ingredient>> get() = _ingredientList
+    // Create a StateFlow to emit the combined data
+    private val _ingredientsViewState = MutableStateFlow(IngredientsViewState(emptyList(), emptyList()))
+    val ingredientsViewState: StateFlow<IngredientsViewState> get() = _ingredientsViewState
 
-    // Function to fetch the list of ingredients from the repository
-    fun getIngredients() {
+
+    // Function to fetch both ingredients and images
+    fun fetchIngredientsAndImages() {
         viewModelScope.launch {
-            repository.getIngredients().collect { ingredients ->
-                // Update StateFlow with the fetched ingredients
-                _ingredientList.value = ingredients
-            }
+            val ingredients = ingredientRepository.getAllIngredients().first()
+            val images = ingredientImageRepository.getAllIngredientImages().first()
+            _ingredientsViewState.value = IngredientsViewState(ingredients, images)
         }
     }
-
-    // Add other functions for adding/editing/deleting ingredients as needed
-    // Example:
-    // fun addIngredient(ingredient: Ingredient) { /* Implement logic */ }
-    // fun editIngredient(ingredient: Ingredient) { /* Implement logic */ }
-    // fun deleteIngredient(ingredientId: Long) { /* Implement logic */ }
 }
+
+
+
+// Define a data class to hold both the list of ingredients and images
+data class IngredientsViewState(
+    val ingredients: List<Ingredient?>,
+    val images: List<IngredientImage?>
+)

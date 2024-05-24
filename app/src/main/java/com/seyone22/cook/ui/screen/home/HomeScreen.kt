@@ -1,8 +1,10 @@
 package com.seyone22.cook.ui.screen.home
 
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.seyone22.cook.R
+import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
 
 object HomeDestination : NavigationDestination {
@@ -13,6 +15,7 @@ object HomeDestination : NavigationDestination {
 
 @Composable
 fun HomeScreen(
+    viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
     navController: NavController
 ) {
 }

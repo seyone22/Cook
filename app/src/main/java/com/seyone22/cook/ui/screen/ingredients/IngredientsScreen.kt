@@ -1,13 +1,35 @@
 package com.seyone22.cook.ui.screen.ingredients
 
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Ingredient
+import com.seyone22.cook.data.model.IngredientImage
+import com.seyone22.cook.helper.ImageHelper
+import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
+import java.io.File
 
 object IngredientsDestination : NavigationDestination {
     override val route = "Ingredients"
@@ -17,25 +39,54 @@ object IngredientsDestination : NavigationDestination {
 
 @Composable
 fun IngredientsScreen(
-    viewModel: IngredientsViewModel = viewModel()
+    viewModel: IngredientsViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    navController: NavController
 ) {
     // Call the ViewModel function to fetch ingredients when the screen is first displayed
-    viewModel.getIngredients()
+    viewModel.fetchIngredientsAndImages()
 
     // Observe the ingredientList StateFlow to display ingredients
-    val ingredients = viewModel.ingredientList.collectAsState(initial = emptyList()).value
+    val ingredientsViewState by viewModel.ingredientsViewState.collectAsState()
+
+    val ingredients = ingredientsViewState.ingredients
+    val images = ingredientsViewState.images
 
     // Implement the UI for the Ingredients screen using Jetpack Compose
-    LazyVerticalGrid(columns = GridCells.Fixed(2)) {
-        items(ingredients) { ingredient ->
-            IngredientItem(ingredient = ingredient)
-        }
-    }
+    LazyVerticalStaggeredGrid(modifier = Modifier.padding(16.dp),
+        columns = StaggeredGridCells.Adaptive(minSize = 140.dp),
+        content = {
+            items(count = ingredients.size, itemContent = {
+                IngredientItem(ingredient = ingredients[it]!!,
+                    image = images.find { img -> img!!.ingredientId == ingredients[it]!!.id },
+                    modifier = Modifier.clickable { navController.navigate("Ingredient Details/${ingredients[it]?.id}") })
+            })
+        })
 }
 
 @Composable
-fun IngredientItem(ingredient: Ingredient) {
-    // Implement the UI for displaying an individual ingredient
-    Text(text = ingredient.nameEn)
-    // You can display other details of the ingredient here
+fun IngredientItem(modifier: Modifier, ingredient: Ingredient, image: IngredientImage?) {
+    val imageHelper = ImageHelper(LocalContext.current)
+    Card(modifier = modifier.padding(8.dp)) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            if (image != null) {
+                val bitmap = File(image.imagePath).takeIf { it.exists() }
+                    ?.let { imageHelper.loadImageFromUri(it.toUri()) }
+                bitmap?.let {
+                    Image(
+                        bitmap = it.asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .aspectRatio(1f) // Maintain aspect ratio
+                            .clip(shape = RoundedCornerShape(8.dp))
+                    )
+                }
+            }
+            Text(
+                text = ingredient.nameEn,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(8.dp),
+            )
+        }
+    }
 }

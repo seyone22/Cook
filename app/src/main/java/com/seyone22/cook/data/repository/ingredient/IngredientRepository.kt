@@ -4,7 +4,7 @@ import com.seyone22.cook.data.model.Ingredient
 import kotlinx.coroutines.flow.Flow
 
 interface IngredientRepository {
-    suspend fun insertIngredient(ingredient: Ingredient)
+    suspend fun insertIngredient(ingredient: Ingredient): Long
     suspend fun deleteIngredient(ingredient: Ingredient)
     suspend fun updateIngredient(ingredient: Ingredient)
 

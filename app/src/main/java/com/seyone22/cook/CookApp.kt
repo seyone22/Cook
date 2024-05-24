@@ -2,13 +2,11 @@ package com.seyone22.cook
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -32,18 +30,10 @@ fun CookApp(
     navController: NavHostController = rememberNavController(),
 ) {
     val coroutineScope = rememberCoroutineScope()
-
-    // Auto scroll for FAB
-    var offset by remember { mutableStateOf(0f) }
-
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-
     var topBarOperation: Int by remember { mutableIntStateOf(0) }
-
     var isSelected by remember { mutableStateOf(false) }
-
     val snackbarHostState = remember { SnackbarHostState() }
-
     val context = LocalContext.current
 
     Scaffold(
@@ -52,7 +42,11 @@ fun CookApp(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
 
         topBar = {
-            CookTopBar()
+            CookTopBar(
+                currentActivity = navBackStackEntry?.destination?.route,
+                navController = navController,
+                saveAction = { }
+            )
         },
         bottomBar = {
             CookNavBar(
@@ -62,7 +56,10 @@ fun CookApp(
         },
 
         floatingActionButton = {
-            CookFAB()
+            CookFAB(
+                currentActivity = navBackStackEntry?.destination?.route,
+                navigateToScreen = { screen -> navController.navigate(screen) },
+            )
         }
     ) { innerPadding ->
         CookNavHost(

@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface IngredientDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insert(ingredient: Ingredient)
+    suspend fun insert(ingredient: Ingredient) : Long
     @Update
     suspend fun update(ingredient: Ingredient)
     @Delete
