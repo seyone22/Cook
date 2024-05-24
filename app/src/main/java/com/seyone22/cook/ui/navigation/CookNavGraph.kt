@@ -21,6 +21,8 @@ import com.seyone22.cook.ui.screen.home.HomeDestination
 import com.seyone22.cook.ui.screen.home.HomeScreen
 import com.seyone22.cook.ui.screen.ingredients.IngredientsDestination
 import com.seyone22.cook.ui.screen.ingredients.IngredientsScreen
+import com.seyone22.cook.ui.screen.home.detail.RecipeDetailDestination
+import com.seyone22.cook.ui.screen.home.detail.RecipeDetailScreen
 import com.seyone22.cook.ui.screen.ingredients.detail.IngredientDetailDestination
 import com.seyone22.cook.ui.screen.ingredients.detail.IngredientDetailScreen
 
@@ -66,6 +68,15 @@ fun CookNavHost(
             arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) {
             IngredientDetailScreen(
+                navController = navController,
+                backStackEntry = it.arguments?.getString("id") ?: "-1"
+            )
+        }
+        composable(
+            route = RecipeDetailDestination.route + "/{id}",
+            arguments = listOf(navArgument("id") { type = NavType.StringType })
+        ) {
+            RecipeDetailScreen(
                 navController = navController,
                 backStackEntry = it.arguments?.getString("id") ?: "-1"
             )

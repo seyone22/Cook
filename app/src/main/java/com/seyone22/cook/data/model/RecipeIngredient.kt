@@ -9,5 +9,5 @@ data class RecipeIngredient(
     val recipeId: Long,
     val ingredientId: Long,
     val quantity: Double,
-    val unit: String
+    val measureId: Long
 )

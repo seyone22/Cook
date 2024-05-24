@@ -9,6 +9,8 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.seyone22.cook.data.AppContainer
 import com.seyone22.cook.data.AppDataContainer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 
 private const val BASECURRENCYIDT_PREFERENCE_NAME = "baseCurrencyId"
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
@@ -17,11 +19,12 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
 
 class CookApplication : Application() {
     lateinit var container: AppContainer
+    private val scope = CoroutineScope(SupervisorJob())
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
 
-        container = AppDataContainer(this)
+        container = AppDataContainer(this, scope)
     }
 
     private fun createNotificationChannel() {

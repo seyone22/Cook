@@ -10,5 +10,7 @@ data class IngredientVariant(
     val variantName: String,
     val brand: String?,
     val type: String?,
-    val price: Double?
+    val price: Double?,
+    val quantity: Int,
+    val unitId: Long
 )

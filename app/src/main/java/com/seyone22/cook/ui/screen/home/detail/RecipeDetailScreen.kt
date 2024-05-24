@@ -1,4 +1,4 @@
-package com.seyone22.cook.ui.screen.ingredients.detail
+package com.seyone22.cook.ui.screen.home.detail
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
@@ -30,34 +30,35 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.IngredientVariant
+import com.seyone22.cook.data.model.Instruction
 import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
-import com.seyone22.cook.ui.screen.ingredients.IngredientsViewModel
+import com.seyone22.cook.ui.screen.home.HomeViewModel
 import java.io.File
 
-object IngredientDetailDestination : NavigationDestination {
-    override val route = "Ingredient Details"
+object RecipeDetailDestination : NavigationDestination {
+    override val route = "Recipe Details"
     override val titleRes = R.string.app_name
-    override val routeId = 20
+    override val routeId = 21
 }
 
 @Composable
-fun IngredientDetailScreen(
-    viewModel: IngredientsViewModel = viewModel(factory = AppViewModelProvider.Factory),
+fun RecipeDetailScreen(
+    viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
     backStackEntry: String,
     navController: NavController
 ) {
     // Call the ViewModel function to fetch ingredients when the screen is first displayed
-    viewModel.fetchIngredientsAndImages()
+    viewModel.fetchData()
 
     // Observe the ingredientList StateFlow to display ingredients
-    val ingredientsViewState by viewModel.ingredientsViewState.collectAsState()
+    val homeViewState by viewModel.homeViewState.collectAsState()
 
-    val ingredient =
-        ingredientsViewState.ingredients.find { i -> i?.id.toString() == backStackEntry }
-    val images = ingredientsViewState.images.filter { i -> i?.id.toString() == backStackEntry }
-    val variants = ingredientsViewState.variants.filter { i -> i?.ingredientId.toString() == backStackEntry }
+    val recipe =
+        homeViewState.recipes.find { r -> r?.id.toString() == backStackEntry }
+    val images = homeViewState.images.filter { i -> i?.id.toString() == backStackEntry }
+    val instructions = homeViewState.instructions.filter { i -> i?.recipeId.toString() == backStackEntry }
 
     val imageHelper = ImageHelper(LocalContext.current)
 
@@ -76,20 +77,17 @@ fun IngredientDetailScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        if (ingredient != null) {
+        if (recipe != null) {
             item {
-                com.seyone22.cook.ui.screen.home.detail.HeaderImage(bitmap = bitmap.asImageBitmap())
+                HeaderImage(bitmap = bitmap.asImageBitmap())
 
-                Text(text = ingredient.nameEn, style = MaterialTheme.typography.headlineLarge)
-                Text(text = ingredient.nameSi, style = MaterialTheme.typography.headlineSmall)
-                Text(text = ingredient.nameTa, style = MaterialTheme.typography.headlineSmall)
-
-                Text(text = ingredient.description ?: "")
+                Text(text = recipe.name, style = MaterialTheme.typography.headlineLarge)
+                Text(text = recipe.description ?: "")
             }
         }
-        if (variants.isNotEmpty()) {
+        if (instructions.isNotEmpty()) {
             item {
-                VariantsList(list = variants)
+                InstructionList(list = instructions)
             }
         }
     }
@@ -108,14 +106,14 @@ fun HeaderImage(bitmap: ImageBitmap) {
 }
 
 @Composable
-fun VariantsList(list: List<IngredientVariant?>) {
+fun InstructionList(list: List<Instruction?>) {
     list.forEach {
-        VariantCard(variant = it!!)
+        InstructionCard(instruction = it!!)
     }
 }
 
 @Composable
-fun VariantCard(variant: IngredientVariant) {
+fun InstructionCard(instruction: Instruction) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -123,12 +121,8 @@ fun VariantCard(variant: IngredientVariant) {
         shape = RoundedCornerShape(8.dp),
     ) {
         Column {
-            Text(text = variant.variantName)
-            Text(text = variant.type ?: "")
-            Text(text = variant.brand ?: "")
-            Text(text = variant.price.toString())
-            Text(text = variant.quantity.toString())
-            Text(text = variant.unitId.toString())
+            Text(text = instruction.description ?: "")
+            Text(text = instruction.stepNumber.toString() ?: "")
         }
     }
 }

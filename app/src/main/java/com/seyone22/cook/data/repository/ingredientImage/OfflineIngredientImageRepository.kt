@@ -1,9 +1,11 @@
 package com.seyone22.cook.data.repository.ingredientImage
 
 import com.seyone22.cook.data.model.IngredientImage
+import com.seyone22.cook.data.repository.recipeImage.RecipeImageDao
+import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
 import kotlinx.coroutines.flow.Flow
 
-class OfflineIngredientImageRepository(private val ingredientImageDao: IngredientImageDao):
+    class OfflineIngredientImageRepository(private val ingredientImageDao: IngredientImageDao):
     IngredientImageRepository {
     override suspend fun insertIngredientImage(ingredientImage: IngredientImage) = ingredientImageDao.insert(ingredientImage)
     override suspend fun deleteIngredientImage(ingredientImage: IngredientImage) = ingredientImageDao.delete(ingredientImage)

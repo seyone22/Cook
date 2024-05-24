@@ -10,5 +10,6 @@ data class Recipe(
     val description: String?,
     val prepTime: Int,
     val cookTime: Int,
-    val servingSize: Int
+    val servingSize: Int,
+    val reference: String?
 )

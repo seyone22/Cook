@@ -26,7 +26,6 @@ interface IngredientImageDao {
             "   WHERE ingredientId = :ingredientId" +
             "   ORDER BY id ASC")
     fun getImagesForIngredient(ingredientId: Int): Flow<List<IngredientImage>>
-
     @Query("SELECT * FROM ingredient_images" +
             "   ORDER BY id ASC")
     fun getAllIngredientImages(): Flow<List<IngredientImage>>

@@ -7,17 +7,33 @@ import androidx.lifecycle.viewModelScope
 import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.model.IngredientImage
 import com.seyone22.cook.data.model.IngredientVariant
+import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
 import com.seyone22.cook.data.repository.ingredientImage.IngredientImageRepository
 import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantRepository
+import com.seyone22.cook.data.repository.measure.MeasureRepository
 import com.seyone22.cook.helper.ImageHelper
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class AddIngredientViewModel(
     private val ingredientRepository: IngredientRepository,
     private val ingredientVariantRepository: IngredientVariantRepository,
-    private val ingredientImageRepository: IngredientImageRepository
+    private val ingredientImageRepository: IngredientImageRepository,
+    private val measureRepository: MeasureRepository
 ): ViewModel() {
+    private val _addIngredientViewState = MutableStateFlow(AddIngredientViewState(emptyList()))
+    val addIngredientViewState: StateFlow<AddIngredientViewState> get() = _addIngredientViewState
+
+    fun fetchData() {
+        viewModelScope.launch {
+            val measures = measureRepository.getAllMeasures().first()
+            _addIngredientViewState.value = AddIngredientViewState(measures)
+        }
+    }
+
     fun saveIngredient(ingredient: Ingredient, ingredientVariantList: List<IngredientVariant>, images: List<Uri>?, context: Context) {
         viewModelScope.launch {
             try {
@@ -46,3 +62,8 @@ class AddIngredientViewModel(
         }
     }
 }
+
+// Define a data class to hold the list of measures
+data class AddIngredientViewState(
+    val measures: List<Measure?>
+)

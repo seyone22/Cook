@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -24,7 +26,11 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -33,6 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +57,7 @@ import androidx.navigation.NavController
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.model.IngredientVariant
+import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
@@ -66,6 +74,10 @@ fun AddIngredientScreen(
     viewModel: AddIngredientViewModel = viewModel(factory = AppViewModelProvider.Factory),
     navController: NavController,
 ) {
+    viewModel.fetchData()
+
+    val data by viewModel.addIngredientViewState.collectAsState()
+
     val context = LocalContext.current
     var nameEn by remember { mutableStateOf("") }
     var nameSi by remember { mutableStateOf("") }
@@ -76,10 +88,12 @@ fun AddIngredientScreen(
     val variants = remember {
         mutableStateListOf(
             IngredientVariant(
-                brand = "", ingredientId = 0, price = 0.0, type = "", variantName = ""
+                brand = "", ingredientId = 0, price = 0.0, type = "", variantName = "", quantity = 0, unitId = 0
             )
         )
     }
+
+    var measuresExpanded by remember { mutableStateOf(false) }
 
     // Launcher for selecting images
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -313,19 +327,77 @@ fun AddIngredientScreen(
                                     label = { Text("Type") },
                                     modifier = Modifier.fillMaxWidth()
                                 )
-                                OutlinedTextField(
-                                    value = variant.price.toString(),
-                                    onValueChange = { newVariantPrice ->
-                                        variants[index] =
-                                            variant.copy(price = newVariantPrice.toDouble())
-                                    },
-                                    label = { Text("Price") },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    keyboardOptions = KeyboardOptions.Default.copy(
-                                        imeAction = ImeAction.Done,
-                                        keyboardType = KeyboardType.Number
+                                Row {
+                                    OutlinedTextField(
+                                        value = variant.price.toString(),
+                                        onValueChange = { newVariantPrice ->
+                                            variants[index] =
+                                                variant.copy(price = newVariantPrice.toDouble())
+                                        },
+                                        label = { Text("Price") },
+                                        modifier = Modifier
+                                            .width(140.dp)
+                                            .padding(0.dp, 0.dp, 8.dp, 0.dp),
+                                        keyboardOptions = KeyboardOptions.Default.copy(
+                                            imeAction = ImeAction.Done,
+                                            keyboardType = KeyboardType.Number
+                                        )
                                     )
-                                )
+                                    OutlinedTextField(
+                                        value = variant.quantity.toString(),
+                                        onValueChange = { newVariantQuantity ->
+                                            variants[index] =
+                                                variant.copy(quantity = newVariantQuantity.toInt())
+                                        },
+                                        label = { Text("Per") },
+                                        modifier = Modifier
+                                            .width(84.dp)
+                                            .padding(0.dp, 0.dp, 8.dp, 0.dp),
+                                        keyboardOptions = KeyboardOptions.Default.copy(
+                                            imeAction = ImeAction.Done,
+                                            keyboardType = KeyboardType.Number
+                                        )
+                                    )
+                                    ExposedDropdownMenuBox(
+                                        expanded = measuresExpanded,
+                                        onExpandedChange = { measuresExpanded = !measuresExpanded }
+                                    ) {
+                                        OutlinedTextField(
+                                            modifier = Modifier
+                                                .padding(0.dp, 8.dp)
+                                                .menuAnchor()
+                                                .clickable(enabled = true) {
+                                                    measuresExpanded = true
+                                                },
+                                            value = data.measures.find { m -> m?.id?.toInt() == variant.unitId.toInt() }?.abbreviation ?: "",
+                                            readOnly = true,
+                                            onValueChange = { },
+                                            label = { Text("") },
+                                            singleLine = true,
+                                            trailingIcon = {
+                                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = measuresExpanded)
+                                            }
+                                        )
+
+                                        ExposedDropdownMenu(
+                                            expanded = measuresExpanded,
+                                            onDismissRequest = { measuresExpanded = false }
+                                        ) {
+                                            data.measures.forEach { measure ->
+                                                measure?.let {
+                                                    DropdownMenuItem(
+                                                        text = { Text(measure.abbreviation) },
+                                                        onClick = {
+                                                            variants[index] =
+                                                                variant.copy(unitId = measure.id)
+                                                            measuresExpanded = false
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -336,7 +408,9 @@ fun AddIngredientScreen(
                                 ingredientId = 0,
                                 price = 0.0,
                                 type = "",
-                                variantName = ""
+                                variantName = "",
+                                quantity = 0,
+                                unitId = 0
                             )
                         )
                     }) {
