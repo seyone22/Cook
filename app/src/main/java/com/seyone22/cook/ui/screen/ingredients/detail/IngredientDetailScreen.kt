@@ -1,27 +1,56 @@
 package com.seyone22.cook.ui.screen.ingredients.detail
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -33,7 +62,6 @@ import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
 import com.seyone22.cook.ui.screen.home.detail.DeleteConfirmationDialog
-import com.seyone22.cook.ui.screen.home.detail.HeaderImage
 import com.seyone22.cook.ui.screen.ingredients.IngredientsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -62,14 +90,15 @@ fun IngredientDetailScreen(
 
     val ingredient =
         ingredientsViewState.ingredients.find { i -> i?.id.toString() == backStackEntry }
-    val images = ingredientsViewState.images.filter { i -> i?.ingredientId.toString() == backStackEntry }
+    val images =
+        ingredientsViewState.images.filter { i -> i?.ingredientId.toString() == backStackEntry }
     val variants =
         ingredientsViewState.variants.filter { i -> i?.ingredientId.toString() == backStackEntry }
     val measures = ingredientsViewState.measures
 
     val imageHelper = ImageHelper(LocalContext.current)
 
-    var bitmap by remember { mutableStateOf(createBitmap(1, 1)) }
+    var bitmap: Bitmap? by remember { mutableStateOf(null) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(images) {
@@ -155,17 +184,16 @@ fun IngredientDetailScreen(
             if (ingredient != null) {
                 item {
                     Column(modifier = Modifier.padding(8.dp, 0.dp)) {
-                        HeaderImage(bitmap = bitmap.asImageBitmap())
+                        HeaderImage(bitmap = bitmap)
                         IngredientDetails(ingredient)
                     }
                 }
             }
-            if (variants.isNotEmpty()) {
-                item {
-                    Column(modifier = Modifier.padding(8.dp, 0.dp)) {
-                        VariantsList(variants, measures)
-                    }
+            item {
+                Column(modifier = Modifier.padding(8.dp, 0.dp)) {
+                    VariantsList(variants, measures)
                 }
+
             }
         }
     }
@@ -179,34 +207,76 @@ fun IngredientDetails(ingredient: Ingredient) {
         Text(text = ingredient.nameSi, style = MaterialTheme.typography.headlineSmall)
         Text(text = ingredient.nameTa, style = MaterialTheme.typography.headlineSmall)
 
-        Text(text = ingredient.description ?: "")
+        if ((ingredient.description != null) and (ingredient.description?.isNotBlank() == true) ) {
+            Text(text = ingredient.description!!)
+        } else {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .align(Alignment.CenterHorizontally),
+                    text = "No description given.",
+                    fontStyle = FontStyle.Italic,
+                    color = Color.Gray
+                )
+            }
+        }
     }
 }
 
 @Composable
-fun HeaderImage(bitmap: ImageBitmap) {
-    Image(
-        bitmap = bitmap,
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(240.dp)
-            .clip(RoundedCornerShape(24.dp))
-    )
+fun HeaderImage(bitmap: Bitmap?) {
+
+    if (bitmap != null) {
+        Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(240.dp)
+                .clip(RoundedCornerShape(12.dp))
+        )
+    } else {
+        val image: Painter = painterResource(id = R.drawable.placeholder)
+        Image(
+            painter = image,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(240.dp)
+                .clip(RoundedCornerShape(12.dp))
+        )
+    }
 }
 
 @Composable
 fun VariantsList(list: List<IngredientVariant?>, measures: List<Measure?>) {
     Column {
+        Log.d("TAG", "VariantsList: $list")
         Text(
             modifier = Modifier.padding(8.dp),
             text = "Variants",
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.primary
         )
-        list.forEach {
-            VariantCard(variant = it!!, measures = measures)
+        list.forEach { variant ->
+            if (variant?.variantName?.isNotBlank()!!) {
+                VariantCard(variant = variant, measures = measures)
+            }
+        }
+        if (list.isEmpty()) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .align(Alignment.CenterHorizontally),
+                    text = "No variants found",
+                    fontStyle = FontStyle.Italic,
+                    color = Color.Gray
+                )
+            }
         }
     }
 }
