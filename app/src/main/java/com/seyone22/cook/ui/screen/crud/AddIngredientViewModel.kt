@@ -63,11 +63,11 @@ class AddIngredientViewModel(
                 }
                 // Save the images
                 val imageHelper = ImageHelper(context)
-                images?.forEach { image ->
+                images?.forEachIndexed { index, image ->
                     val imageBitmap = imageHelper.loadImageFromUri(image)!!
                     val imagePath = imageHelper.saveImageToInternalStorage(
                         imageBitmap,
-                        "'ingredient_${ingredientId}_${System.currentTimeMillis()}.jpg"
+                        "ingredient_${ingredientId}_${index}_${System.currentTimeMillis()}.jpg"
                     )
                     val ingredientImage = IngredientImage(
                         ingredientId = ingredientId,
@@ -101,7 +101,7 @@ class AddIngredientViewModel(
                 }
 
                 // Update the image list
-                images?.forEach { image ->
+                images.forEach { image ->
                     if (image != null) {
                         ingredientImageRepository.updateIngredientImage(image)
                     }
