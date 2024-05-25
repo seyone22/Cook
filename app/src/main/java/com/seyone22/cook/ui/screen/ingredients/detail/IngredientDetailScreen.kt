@@ -62,7 +62,7 @@ fun IngredientDetailScreen(
 
     val ingredient =
         ingredientsViewState.ingredients.find { i -> i?.id.toString() == backStackEntry }
-    val images = ingredientsViewState.images.filter { i -> i?.id.toString() == backStackEntry }
+    val images = ingredientsViewState.images.filter { i -> i?.ingredientId.toString() == backStackEntry }
     val variants =
         ingredientsViewState.variants.filter { i -> i?.ingredientId.toString() == backStackEntry }
     val measures = ingredientsViewState.measures
