@@ -30,4 +30,6 @@ interface RecipeImageDao {
     @Query("SELECT * FROM recipe_images" +
             "   ORDER BY id ASC")
     fun getAllRecipeImages(): Flow<List<RecipeImage>>
+    @Query("DELETE FROM recipe_images WHERE recipeId = :recipeId")
+    suspend fun deleteImagesForRecipe(recipeId: Int)
 }

@@ -11,4 +11,6 @@ interface RecipeIngredientRepository {
     suspend fun getRecipeIngredientById(id: Int): Flow<RecipeIngredient?>
     suspend fun getRecipeIngredientsForRecipe(recipeId: Int): Flow<List<RecipeIngredient?>>
     suspend fun getAllRecipeIngredients(): Flow<List<RecipeIngredient?>>
+    suspend fun deleteIngredientsForRecipe(recipeId: Int)
+    suspend fun ingredientIsUsed(ingredientId: Int): Int
 }

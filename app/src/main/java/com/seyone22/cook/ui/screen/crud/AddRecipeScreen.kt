@@ -2,6 +2,7 @@ package com.seyone22.cook.ui.screen.crud
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -82,8 +83,6 @@ fun AddRecipeScreen(
     var servingSize by remember { mutableStateOf("") }
     var reference by remember { mutableStateOf("") }
     var photos by remember { mutableStateOf(listOf<Uri>()) }
-    var ingredientExpanded by remember { mutableStateOf(false) }
-    var measuresExpanded by remember { mutableStateOf(false) }
     val instructions = remember {
         mutableStateListOf(
             Instruction(
@@ -100,10 +99,10 @@ fun AddRecipeScreen(
     }
     // Launcher for selecting images
     val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            photos = photos + it
+        contract = ActivityResultContracts.PickMultipleVisualMedia(),
+    ) { uris: List<Uri> ->
+        uris.forEach { uri ->
+            photos = photos + uri
         }
     }
     val imageHelper = ImageHelper(context)
@@ -129,9 +128,9 @@ fun AddRecipeScreen(
                             Recipe(
                                 name = name,
                                 description = description,
-                                cookTime = cookTime.toInt(),
-                                prepTime = prepTime.toInt(),
-                                servingSize = servingSize.toInt(),
+                                cookTime = if (cookTime.isEmpty()) 0 else cookTime.toInt(),
+                                prepTime = if (prepTime.isEmpty()) 0 else prepTime.toInt(),
+                                servingSize = if (servingSize.isEmpty()) 1 else servingSize.toInt(),
                                 reference = reference
                             ), photos, instructions, recipeIngredients, context
                         )
@@ -186,7 +185,11 @@ fun AddRecipeScreen(
                         }
 
                         TextButton(onClick = {
-                            imagePickerLauncher.launch("image/*")
+                            imagePickerLauncher.launch(
+                                PickVisualMediaRequest(
+                                    ActivityResultContracts.PickVisualMedia.ImageOnly
+                                )
+                            )
                         }) {
                             Icon(imageVector = Icons.Filled.Add, contentDescription = null)
                             Text(text = "Add Photo")
@@ -222,7 +225,8 @@ fun AddRecipeScreen(
                             .padding(36.dp, 0.dp, 0.dp, 0.dp)
                     ) {
                         Row() {
-                            OutlinedTextField(value = prepTime,
+                            OutlinedTextField(
+                                value = prepTime,
                                 onValueChange = { prepTime = it },
                                 label = { Text("Prep") },
                                 modifier = Modifier.width(100.dp),
@@ -230,7 +234,8 @@ fun AddRecipeScreen(
                                     imeAction = ImeAction.Next, keyboardType = KeyboardType.Number
                                 )
                             )
-                            OutlinedTextField(value = cookTime,
+                            OutlinedTextField(
+                                value = cookTime,
                                 onValueChange = { cookTime = it },
                                 label = { Text("Cook") },
                                 modifier = Modifier.width(100.dp),
@@ -238,7 +243,8 @@ fun AddRecipeScreen(
                                     imeAction = ImeAction.Next, keyboardType = KeyboardType.Number
                                 )
                             )
-                            OutlinedTextField(value = servingSize,
+                            OutlinedTextField(
+                                value = servingSize,
                                 onValueChange = { servingSize = it },
                                 label = { Text("Serves") },
                                 modifier = Modifier.width(100.dp),
@@ -247,7 +253,8 @@ fun AddRecipeScreen(
                                 )
                             )
                         }
-                        OutlinedTextField(value = description,
+                        OutlinedTextField(
+                            value = description,
                             onValueChange = { description = it },
                             label = { Text("Description") },
                             modifier = Modifier.fillMaxWidth(),
@@ -266,6 +273,9 @@ fun AddRecipeScreen(
 
                     // Section for Recipe Ingredients
                     recipeIngredients.forEachIndexed { index, recipeIngredient ->
+                        var measuresExpanded by remember { mutableStateOf(false) }
+                        var ingredientExpanded by remember { mutableStateOf(false) }
+
                         Column {
                             Row(
                                 modifier = Modifier.fillMaxWidth()
@@ -323,7 +333,8 @@ fun AddRecipeScreen(
                                         },
                                         label = { Text("Qty") },
                                         keyboardOptions = KeyboardOptions.Default.copy(
-                                            imeAction = ImeAction.Next, keyboardType = KeyboardType.Number
+                                            imeAction = ImeAction.Next,
+                                            keyboardType = KeyboardType.Number
                                         )
                                     )
                                     ExposedDropdownMenuBox(

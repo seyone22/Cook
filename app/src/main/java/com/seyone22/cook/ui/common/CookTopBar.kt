@@ -29,21 +29,6 @@ fun CookTopBar(
     saveAction: () -> Unit
 ) {
     if ((currentActivity == HomeDestination.route) or (currentActivity == IngredientsDestination.route)) {
-        CenterAlignedTopAppBar(title = { Text(stringResource(id = R.string.app_name)) })
-    } else if ((currentActivity != AddIngredientDestination.route) and (currentActivity != AddRecipeDestination.route)) {
-        TopAppBar(
-            modifier = Modifier.padding(0.dp),
-            title = { Text(text = "Ingredient Details") },
-            navigationIcon = {
-                Icon(
-                    modifier = Modifier
-                        .padding(16.dp, 0.dp, 24.dp, 0.dp)
-                        .clickable { navController.popBackStack() },
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = null,
-                )
-            },
-            scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-        )
+        CenterAlignedTopAppBar(title = { Text(text = "All ${currentActivity}") })
     }
 }

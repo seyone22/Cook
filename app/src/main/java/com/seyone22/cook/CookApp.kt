@@ -38,9 +38,7 @@ fun CookApp(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-
         topBar = {
             CookTopBar(
                 currentActivity = navBackStackEntry?.destination?.route,
@@ -54,7 +52,6 @@ fun CookApp(
                 navigateToScreen = { screen -> navController.navigate(screen) },
             )
         },
-
         floatingActionButton = {
             CookFAB(
                 currentActivity = navBackStackEntry?.destination?.route,

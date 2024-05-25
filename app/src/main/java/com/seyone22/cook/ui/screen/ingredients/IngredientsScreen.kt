@@ -30,6 +30,7 @@ import com.seyone22.cook.data.model.IngredientImage
 import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
+import com.seyone22.cook.ui.screen.ingredients.detail.IngredientDetailDestination
 import java.io.File
 
 object IngredientsDestination : NavigationDestination {
@@ -40,6 +41,7 @@ object IngredientsDestination : NavigationDestination {
 
 @Composable
 fun IngredientsScreen(
+    modifier: Modifier,
     viewModel: IngredientsViewModel = viewModel(factory = AppViewModelProvider.Factory),
     navController: NavController
 ) {
@@ -53,13 +55,13 @@ fun IngredientsScreen(
     val images = ingredientsViewState.images
 
     // Implement the UI for the Ingredients screen using Jetpack Compose
-    LazyVerticalStaggeredGrid(modifier = Modifier.padding(16.dp),
+    LazyVerticalStaggeredGrid(modifier = modifier,
         columns = StaggeredGridCells.Adaptive(minSize = 140.dp),
         content = {
             items(count = ingredients.size, itemContent = {
                 IngredientItem(ingredient = ingredients[it]!!,
                     image = images.find { img -> img!!.ingredientId == ingredients[it]!!.id },
-                    modifier = Modifier.clickable { navController.navigate("Ingredient Details/${ingredients[it]?.id}") })
+                    modifier = Modifier.clickable { navController.navigate("${IngredientDetailDestination.route}/${ingredients[it]?.id}") })
             })
         })
 }

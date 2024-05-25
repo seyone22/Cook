@@ -14,4 +14,6 @@ class OfflineRecipeIngredientRepository(private val recipeIngredientDao: RecipeI
     override suspend fun getRecipeIngredientById(id: Int): Flow<RecipeIngredient?> = recipeIngredientDao.getRecipeIngredientById(id)
     override suspend fun getRecipeIngredientsForRecipe(recipeId: Int): Flow<List<RecipeIngredient?>> = recipeIngredientDao.getRecipeIngredientsForRecipe(recipeId)
     override suspend fun getAllRecipeIngredients(): Flow<List<RecipeIngredient?>> = recipeIngredientDao.getAllRecipeIngredients()
+    override suspend fun deleteIngredientsForRecipe(recipeId: Int) = recipeIngredientDao.deleteIngredientsForRecipe(recipeId)
+    override suspend fun ingredientIsUsed(ingredientId: Int): Int = recipeIngredientDao.ingredientIsUsed(ingredientId)
 }

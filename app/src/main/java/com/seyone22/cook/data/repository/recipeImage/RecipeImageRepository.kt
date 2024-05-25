@@ -11,4 +11,5 @@ interface RecipeImageRepository {
     suspend fun getImageById(id: Int): Flow<RecipeImage?>
     suspend fun getImagesForRecipe(recipeId: Int): Flow<List<RecipeImage?>>
     suspend fun getAllRecipeImages(): Flow<List<RecipeImage?>>
+    suspend fun deleteImagesForRecipe(recipeId: Int)
 }

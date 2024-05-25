@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
@@ -35,16 +36,18 @@ import com.seyone22.cook.data.model.RecipeImage
 import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
+import com.seyone22.cook.ui.screen.home.detail.RecipeDetailDestination
 import java.io.File
 
 object HomeDestination : NavigationDestination {
-    override val route = "Home"
+    override val route = "Recipes"
     override val titleRes = R.string.app_name
     override val routeId = 0
 }
 
 @Composable
 fun HomeScreen(
+    modifier: Modifier,
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
     navController: NavController
 ) {
@@ -57,16 +60,14 @@ fun HomeScreen(
     val recipes = homeViewState.recipes
     val images = homeViewState.images
 
-    Log.d("TAG", "HomeScreen: $recipes")
-
     // Implement the UI for the Ingredients screen using Jetpack Compose
-    LazyVerticalStaggeredGrid(modifier = Modifier.padding(16.dp),
-        columns = StaggeredGridCells.Adaptive(minSize = 240.dp),
+    LazyVerticalStaggeredGrid(modifier = modifier,
+        columns = StaggeredGridCells.Adaptive(minSize = 240.dp,),
         content = {
             items(count = recipes.size, itemContent = {
                 RecipeItem(recipe = recipes[it]!!,
                     image = images.find { img -> img!!.recipeId == recipes[it]!!.id },
-                    modifier = Modifier.clickable { navController.navigate("Recipe Details/${recipes[it]?.id}") })
+                    modifier = Modifier.clickable { navController.navigate("${RecipeDetailDestination.route}/${recipes[it]?.id}") })
             })
         })
 }
@@ -85,16 +86,23 @@ fun RecipeItem(modifier: Modifier, recipe: Recipe, image: RecipeImage?) {
                         contentScale = ContentScale.Crop,
                         contentDescription = null,
                         modifier = Modifier
-                            .aspectRatio(1f) // Maintain aspect ratio
-                            .clip(shape = RoundedCornerShape(8.dp))
+                            .fillMaxWidth()
+                            .height(216.dp)
+                            .clip(RoundedCornerShape(24.dp))
                     )
                 }
             }
             Text(
                 text = recipe.name,
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(8.dp),
+                modifier = Modifier.padding(16.dp, 8.dp, 16.dp, 0.dp),
+            )
+            Text(
+                text = recipe.description?: "",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(16.dp, 0.dp, 16.dp, 16.dp),
             )
         }
     }

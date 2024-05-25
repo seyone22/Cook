@@ -2,7 +2,9 @@ package com.seyone22.cook.data.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity(tableName = "recipes")
 data class Recipe(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

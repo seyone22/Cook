@@ -17,7 +17,7 @@ fun CookFAB(
     navigateToScreen: (String) -> Unit,
 ) {
     if ((currentActivity == HomeDestination.route) or (currentActivity == IngredientsDestination.route)) {
-        ExtendedFloatingActionButton(text = { Text(text = "Add $currentActivity") }, icon = {
+        ExtendedFloatingActionButton(text = { Text(text = "New $currentActivity") }, icon = {
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = null,

@@ -29,4 +29,9 @@ interface RecipeIngredientDao {
     @Query("SELECT * FROM recipe_ingredients" +
             "   ORDER BY id ASC")
     fun getAllRecipeIngredients(): Flow<List<RecipeIngredient>>
+    @Query("DELETE FROM recipe_ingredients WHERE recipeId = :recipeId")
+    suspend fun deleteIngredientsForRecipe(recipeId: Int)
+    // Query to check if ingredient is used by any recipes
+    @Query("SELECT COUNT(*) FROM recipe_ingredients WHERE ingredientId = :ingredientId")
+    suspend fun ingredientIsUsed(ingredientId: Int): Int
 }

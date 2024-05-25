@@ -24,7 +24,7 @@ fun CookNavBar(
     currentActivity: String?,
     navigateToScreen: (screen: String) -> Unit,
 ) {
-    if ((currentActivity != AddIngredientDestination.route) and (currentActivity != AddRecipeDestination.route)) {
+    if ((currentActivity == HomeDestination.route) or (currentActivity == IngredientsDestination.route)) {
         NavigationBar {
             destinations.forEachIndexed { _, pair ->
                 NavigationBarItem(

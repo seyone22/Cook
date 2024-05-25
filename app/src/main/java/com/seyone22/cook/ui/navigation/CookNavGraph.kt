@@ -17,6 +17,8 @@ import com.seyone22.cook.ui.screen.crud.AddIngredientDestination
 import com.seyone22.cook.ui.screen.crud.AddIngredientScreen
 import com.seyone22.cook.ui.screen.crud.AddRecipeDestination
 import com.seyone22.cook.ui.screen.crud.AddRecipeScreen
+import com.seyone22.cook.ui.screen.crud.EditIngredientDestination
+import com.seyone22.cook.ui.screen.crud.EditIngredientScreen
 import com.seyone22.cook.ui.screen.home.HomeDestination
 import com.seyone22.cook.ui.screen.home.HomeScreen
 import com.seyone22.cook.ui.screen.ingredients.IngredientsDestination
@@ -35,7 +37,6 @@ fun CookNavHost(
     innerPadding: PaddingValues
 ) {
     NavHost(
-        modifier = modifier.padding(innerPadding),
         navController = navController,
         startDestination = HomeDestination.route,
         enterTransition = { EnterTransition.None },
@@ -43,11 +44,13 @@ fun CookNavHost(
     ) {
         composable(route = HomeDestination.route) {
             HomeScreen(
-                navController = navController
+                modifier = modifier.padding(innerPadding),
+                navController = navController,
             )
         }
         composable(route = IngredientsDestination.route) {
             IngredientsScreen(
+                modifier = modifier.padding(innerPadding),
                 navController = navController
             )
         }
@@ -56,6 +59,16 @@ fun CookNavHost(
         composable(route = AddIngredientDestination.route) {
             AddIngredientScreen(
                 navController = navController
+            )
+        }
+        // Routes for CRUD operations
+        composable(
+            route = EditIngredientDestination.route + "/{id}",
+            arguments = listOf(navArgument("id") { type = NavType.StringType })
+        ) {
+            EditIngredientScreen(
+                navController = navController,
+                ingredientId = (it.arguments?.getString("id") ?: "-1").toLong()
             )
         }
         composable(route = AddRecipeDestination.route) {

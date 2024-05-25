@@ -17,13 +17,18 @@ object AppViewModelProvider {
                 recipeRepository = cookApplication().container.recipeRepository,
                 recipeImageRepository = cookApplication().container.recipeImageRepository,
                 instructionRepository = cookApplication().container.instructionRepository,
-            )
+                recipeIngredientRepository = cookApplication().container.recipeIngredientRepository,
+                measureRepository = cookApplication().container.measureRepository,
+                ingredientRepository = cookApplication().container.ingredientRepository,
+                )
         }
         initializer {
             IngredientsViewModel(
                 ingredientRepository = cookApplication().container.ingredientRepository,
                 ingredientVariantRepository = cookApplication().container.ingredientVariantRepository,
-                ingredientImageRepository = cookApplication().container.ingredientImageRepository
+                ingredientImageRepository = cookApplication().container.ingredientImageRepository,
+                recipeIngredientRepository = cookApplication().container.recipeIngredientRepository,
+                measureRepository = cookApplication().container.measureRepository
             )
         }
         initializer {
@@ -44,13 +49,13 @@ object AppViewModelProvider {
                 recipeIngredientRepository = cookApplication().container.recipeIngredientRepository
             )
         }
-/*        initializer {
-            IngredientDetailViewModel(
-                ingredientRepository = cookApplication().container.ingredientRepository,
-                ingredientVariantRepository = cookApplication().container.ingredientVariantRepository,
-                ingredientImageRepository = cookApplication().container.ingredientImageRepository
-            )
-        }*/
+        /*        initializer {
+                    IngredientDetailViewModel(
+                        ingredientRepository = cookApplication().container.ingredientRepository,
+                        ingredientVariantRepository = cookApplication().container.ingredientVariantRepository,
+                        ingredientImageRepository = cookApplication().container.ingredientImageRepository
+                    )
+                }*/
     }
 }
 
