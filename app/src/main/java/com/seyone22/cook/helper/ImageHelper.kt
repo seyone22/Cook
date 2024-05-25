@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Log
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
@@ -41,7 +42,9 @@ class ImageHelper(private val context: Context) {
 
     fun loadImageFromUri(uri: Uri): Bitmap? {
         return try {
-            val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
+            val inputStream: InputStream? = context.contentResolver.openInputStream(
+                if (uri.isAbsolute) uri else Uri.parse("file://$uri")
+            )
             BitmapFactory.decodeStream(inputStream)
         } catch (e: FileNotFoundException) {
             e.printStackTrace()
@@ -50,8 +53,9 @@ class ImageHelper(private val context: Context) {
     }
 
     // Function to delete image from internal storage
-    fun deleteImageFromInternalStorage(fileName: String): Boolean {
-        val file = File(context.filesDir, fileName)
+
+    fun deleteImageFromInternalStorage(fileUri: Uri): Boolean {
+        val file = File(if(fileUri.isAbsolute) fileUri.path else "file://"+fileUri.toString() ?: return false)
         return if (file.exists()) {
             file.delete()
         } else {
