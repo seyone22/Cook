@@ -5,12 +5,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -55,7 +57,7 @@ fun IngredientsScreen(
     val images = ingredientsViewState.images
 
     // Implement the UI for the Ingredients screen using Jetpack Compose
-    LazyVerticalStaggeredGrid(modifier = modifier,
+    LazyVerticalStaggeredGrid(modifier = modifier.padding(8.dp),
         columns = StaggeredGridCells.Adaptive(minSize = 140.dp),
         content = {
             items(count = ingredients.size, itemContent = {
@@ -69,7 +71,7 @@ fun IngredientsScreen(
 @Composable
 fun IngredientItem(modifier: Modifier, ingredient: Ingredient, image: IngredientImage?) {
     val imageHelper = ImageHelper(LocalContext.current)
-    Card(modifier = modifier.padding(8.dp)) {
+    Card(modifier = modifier.padding(4.dp)) {
         Column(modifier = Modifier.fillMaxSize()) {
             if (image != null) {
                 val bitmap = File(image.imagePath).takeIf { it.exists() }
@@ -80,14 +82,15 @@ fun IngredientItem(modifier: Modifier, ingredient: Ingredient, image: Ingredient
                         contentScale = ContentScale.Crop,
                         contentDescription = null,
                         modifier = Modifier
+                            .fillMaxWidth()
                             .aspectRatio(1f) // Maintain aspect ratio
-                            .clip(shape = RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(12.dp))
                     )
                 }
             }
             Text(
                 text = ingredient.nameEn,
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(8.dp),
             )
