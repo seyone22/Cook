@@ -319,7 +319,7 @@ fun IngredientsList(
                             .align(Alignment.CenterVertically)
                             .width(160.dp)
                             .clickable {
-                                navController.navigate("${IngredientDetailDestination.route}/${ingredient?.id}")
+                                navController.navigate("${IngredientDetailDestination.route}/${ingredient?.ingredientId}")
                             },
                         text = ingredients.find { i -> i?.id == ingredient?.ingredientId }?.nameEn
                             ?: "",
