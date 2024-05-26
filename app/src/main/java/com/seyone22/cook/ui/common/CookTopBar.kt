@@ -29,6 +29,6 @@ fun CookTopBar(
     saveAction: () -> Unit
 ) {
     if ((currentActivity == HomeDestination.route) or (currentActivity == IngredientsDestination.route)) {
-        CenterAlignedTopAppBar(title = { Text(text = "All ${currentActivity}") })
+        CenterAlignedTopAppBar(title = { Text(text = "All $currentActivity") })
     }
 }
