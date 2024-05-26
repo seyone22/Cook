@@ -2,7 +2,6 @@ package com.seyone22.cook.ui.screen.ingredients.detail
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -43,7 +42,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
@@ -104,7 +102,7 @@ fun IngredientDetailScreen(
     LaunchedEffect(images) {
         if (images.isNotEmpty()) {
             bitmap = File(images[0]?.imagePath).takeIf { it.exists() }
-                ?.let { imageHelper.loadImageFromUri(it.toUri()) }!!
+                ?.let { imageHelper.loadImageFromUri(it.toUri()) }
         }
     }
 
@@ -142,7 +140,7 @@ fun IngredientDetailScreen(
                     contentDescription = null,
                 )
             },
-            actions = @androidx.compose.runtime.Composable {
+            actions = @Composable {
                 // Share button
                 IconButton(onClick = {
                     // Handle share action
@@ -254,7 +252,6 @@ fun HeaderImage(bitmap: Bitmap?) {
 @Composable
 fun VariantsList(list: List<IngredientVariant?>, measures: List<Measure?>) {
     Column {
-        Log.d("TAG", "VariantsList: $list")
         Text(
             modifier = Modifier.padding(8.dp),
             text = "Variants",

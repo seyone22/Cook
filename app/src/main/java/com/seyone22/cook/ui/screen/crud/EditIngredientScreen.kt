@@ -40,7 +40,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -55,6 +54,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Ingredient
+import com.seyone22.cook.data.model.IngredientImage
 import com.seyone22.cook.data.model.IngredientVariant
 import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
@@ -91,9 +91,8 @@ fun EditIngredientScreen(
     var nameTa by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var showAltNames by remember { mutableStateOf(false) }
-    var photos by remember { mutableStateOf(listOf<Uri>()) }
-    val variants = remember { mutableStateListOf(*data.variants.toTypedArray()) }
-
+    var photos by remember { mutableStateOf(listOf<IngredientImage>()) }
+    var variants by remember { mutableStateOf(listOf<IngredientVariant>()) }
     var measuresExpanded by remember { mutableStateOf(false) }
 
     // Populate fields with existing data when ingredient data is loaded
@@ -104,7 +103,8 @@ fun EditIngredientScreen(
             nameTa = it.nameTa
             description = it.description ?: ""
         }
-        photos = dataPhotos.map { i -> Uri.parse(i?.imagePath) }
+        photos = dataPhotos.map { i -> i!! }
+        variants = dataVariants.map { i -> i!! }
     }
 
     // Launcher for selecting images
@@ -112,7 +112,7 @@ fun EditIngredientScreen(
         contract = ActivityResultContracts.PickMultipleVisualMedia(),
     ) { uris: List<Uri> ->
         uris.forEach { uri ->
-            photos = photos + uri
+            photos = photos + IngredientImage(imagePath = uri.toString(), ingredientId = ingredientId)
         }
     }
     val imageHelper = ImageHelper(context)
@@ -136,14 +136,14 @@ fun EditIngredientScreen(
                         onClick = {
                             viewModel.updateIngredient(
                                 Ingredient(
-                                    id = ingredientId.toLong(),
+                                    id = ingredientId,
                                     description = description,
                                     nameEn = nameEn,
                                     nameSi = nameSi,
                                     nameTa = nameTa,
                                 ),
-                                variants,
-                                dataPhotos,
+                                variants.map { i -> i.copy(ingredientId = ingredientId) },
+                                photos,
                                 context
                             )
                             navController.popBackStack()
@@ -166,8 +166,8 @@ fun EditIngredientScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             item {
-                                photos.forEach { uri ->
-                                    val bitmap = imageHelper.loadImageFromUri(uri)
+                                photos.forEach { photo ->
+                                    val bitmap = imageHelper.loadImageFromUri(Uri.parse(photo.imagePath))
                                     bitmap?.let {
                                         Row(
                                             modifier = Modifier
@@ -175,7 +175,7 @@ fun EditIngredientScreen(
                                                 .size(100.dp)
                                                 .align(Alignment.CenterHorizontally)
                                         ) {
-                                            IconButton(onClick = { photos = photos - uri },
+                                            IconButton(onClick = { photos = photos - photo },
                                                 modifier = Modifier
                                                     .align(Alignment.Top)
                                                     .size(24.dp),
@@ -301,23 +301,28 @@ fun EditIngredientScreen(
                                         contentDescription = null,
                                     )
                                 }
-                                if (variant != null) {
-                                    OutlinedTextField(
-                                        modifier = Modifier.width(310.dp),
-                                        value = variant.variantName,
-                                        onValueChange = { newVariantName ->
-                                            variants[index] =
+                                OutlinedTextField(
+                                    modifier = Modifier.width(310.dp),
+                                    value = variant.variantName,
+                                    onValueChange = { newVariantName ->
+                                        variants = variants.mapIndexed { i, variant ->
+                                            if (i == index) {
                                                 variant.copy(variantName = newVariantName)
-                                        },
-                                        label = { Text("Name") },
-                                    )
-                                }
+                                            } else {
+                                                variant
+                                            }
+                                        }
+                                    },
+                                    label = { Text("Name") },
+                                )
                                 Column(modifier = Modifier.align(Alignment.CenterVertically)) {
                                     IconButton(modifier = Modifier
 
                                         .width(48.dp)
                                         .height(48.dp),
-                                        onClick = { variants.remove(variant) },
+                                        onClick = {
+                                            variants = variants.filterIndexed { i, _ -> i != index }
+                                        },
                                         content = {
                                             Icon(
                                                 imageVector = Icons.Default.Close,
@@ -331,92 +336,98 @@ fun EditIngredientScreen(
                                     .width(346.dp)
                                     .padding(36.dp, 0.dp, 0.dp, 0.dp)
                             ) {
-                                if (variant != null) {
-                                    OutlinedTextField(
-                                        value = variant.brand ?: "",
-                                        onValueChange = { newVariantBrand ->
-                                            variants[index] = variant.copy(brand = newVariantBrand)
-                                        },
-                                        label = { Text("Brand") },
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-                                if (variant != null) {
-                                    OutlinedTextField(
-                                        value = variant.type ?: "",
-                                        onValueChange = { newVariantType ->
-                                            variants[index] = variant.copy(type = newVariantType)
-                                        },
-                                        label = { Text("Type") },
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
+                                OutlinedTextField(
+                                    value = variant.brand ?: "",
+                                    onValueChange = { newVariantBrand ->
+                                        variants = variants.mapIndexed { i, variant ->
+                                            if (i == index) {
+                                                variant.copy(brand = newVariantBrand)
+                                            } else {
+                                                variant
+                                            }
+                                        }
+                                    },
+                                    label = { Text("Brand") },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                                OutlinedTextField(
+                                    value = variant.type ?: "",
+                                    onValueChange = { newVariantType ->
+                                        variants = variants.mapIndexed { i, variant ->
+                                            if (i == index) {
+                                                variant.copy(type = newVariantType)
+                                            } else {
+                                                variant
+                                            }
+                                        }
+                                    },
+                                    label = { Text("Type") },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
                                 Row {
-                                    if (variant != null) {
-                                        OutlinedTextField(
-                                            value = variant.price.toString(),
-                                            onValueChange = { newVariantPrice ->
-                                                variants[index] =
-                                                    variant.copy(
-                                                        price = newVariantPrice.toDoubleOrNull()
-                                                            ?: 0.0
-                                                    )
-                                            },
-                                            label = { Text("Price") },
-                                            modifier = Modifier
-                                                .width(140.dp)
-                                                .padding(0.dp, 0.dp, 8.dp, 0.dp),
-                                            keyboardOptions = KeyboardOptions.Default.copy(
-                                                imeAction = ImeAction.Done,
-                                                keyboardType = KeyboardType.Number
-                                            )
+                                    OutlinedTextField(
+                                        value = variant.price.toString(),
+                                        onValueChange = { newVariantPrice ->
+                                            variants = variants.mapIndexed { i, variant ->
+                                                if (i == index) {
+                                                    variant.copy(price = newVariantPrice.toDouble())
+                                                } else {
+                                                    variant
+                                                }
+                                            }
+                                        },
+                                        label = { Text("Price") },
+                                        modifier = Modifier
+                                            .width(140.dp)
+                                            .padding(0.dp, 0.dp, 8.dp, 0.dp),
+                                        keyboardOptions = KeyboardOptions.Default.copy(
+                                            imeAction = ImeAction.Done,
+                                            keyboardType = KeyboardType.Number
                                         )
-                                    }
-                                    if (variant != null) {
-                                        OutlinedTextField(
-                                            value = variant.quantity.toString(),
-                                            onValueChange = { newVariantQuantity ->
-                                                variants[index] =
-                                                    variant.copy(
-                                                        quantity = newVariantQuantity.toIntOrNull()
-                                                            ?: 0
-                                                    )
-                                            },
-                                            label = { Text("Per") },
-                                            modifier = Modifier
-                                                .width(84.dp)
-                                                .padding(0.dp, 0.dp, 8.dp, 0.dp),
-                                            keyboardOptions = KeyboardOptions.Default.copy(
-                                                imeAction = ImeAction.Done,
-                                                keyboardType = KeyboardType.Number
-                                            )
+                                    )
+                                    OutlinedTextField(
+                                        value = variant.quantity.toString(),
+                                        onValueChange = { newVariantQuantity ->
+                                            variants = variants.mapIndexed { i, variant ->
+                                                if (i == index) {
+                                                    variant.copy(quantity = newVariantQuantity.toInt())
+                                                } else {
+                                                    variant
+                                                }
+                                            }
+                                        },
+                                        label = { Text("Per") },
+                                        modifier = Modifier
+                                            .width(84.dp)
+                                            .padding(0.dp, 0.dp, 8.dp, 0.dp),
+                                        keyboardOptions = KeyboardOptions.Default.copy(
+                                            imeAction = ImeAction.Done,
+                                            keyboardType = KeyboardType.Number
                                         )
-                                    }
+                                    )
                                     ExposedDropdownMenuBox(
                                         expanded = measuresExpanded,
                                         onExpandedChange = { measuresExpanded = !measuresExpanded }
                                     ) {
-                                        if (variant != null) {
-                                            OutlinedTextField(
-                                                modifier = Modifier
-                                                    .padding(0.dp, 8.dp)
-                                                    .menuAnchor()
-                                                    .clickable(enabled = true) {
-                                                        measuresExpanded = true
-                                                    },
-                                                value = data.measures.find { m -> m?.id?.toInt() == variant.unitId.toInt() }?.abbreviation
-                                                    ?: "",
-                                                readOnly = true,
-                                                onValueChange = { },
-                                                label = { Text("") },
-                                                singleLine = true,
-                                                trailingIcon = {
-                                                    ExposedDropdownMenuDefaults.TrailingIcon(
-                                                        expanded = measuresExpanded
-                                                    )
-                                                }
-                                            )
-                                        }
+                                        OutlinedTextField(
+                                            modifier = Modifier
+                                                .padding(0.dp, 8.dp)
+                                                .menuAnchor()
+                                                .clickable(enabled = true) {
+                                                    measuresExpanded = true
+                                                },
+                                            value = data.measures.find { m -> m?.id?.toInt() == variant.unitId.toInt() }?.abbreviation
+                                                ?: "",
+                                            readOnly = true,
+                                            onValueChange = { },
+                                            label = { Text("") },
+                                            singleLine = true,
+                                            trailingIcon = {
+                                                ExposedDropdownMenuDefaults.TrailingIcon(
+                                                    expanded = measuresExpanded
+                                                )
+                                            }
+                                        )
 
                                         ExposedDropdownMenu(
                                             expanded = measuresExpanded,
@@ -427,9 +438,12 @@ fun EditIngredientScreen(
                                                     DropdownMenuItem(
                                                         text = { Text(measure.abbreviation) },
                                                         onClick = {
-                                                            if (variant != null) {
-                                                                variants[index] =
+                                                            variants = variants.mapIndexed { i, variant ->
+                                                                if (i == index) {
                                                                     variant.copy(unitId = measure.id)
+                                                                } else {
+                                                                    variant
+                                                                }
                                                             }
                                                             measuresExpanded = false
                                                         }
@@ -443,17 +457,16 @@ fun EditIngredientScreen(
                         }
                     }
                     TextButton(onClick = {
-                        variants.add(
-                            IngredientVariant(
-                                brand = "",
-                                ingredientId = 0,
-                                price = 0.0,
-                                type = "",
-                                variantName = "",
-                                quantity = 0,
-                                unitId = 0
-                            )
+                        val newVariant = IngredientVariant(
+                            brand = "",
+                            ingredientId = 0,
+                            price = 0.0,
+                            type = "",
+                            variantName = "",
+                            quantity = 0,
+                            unitId = 0
                         )
+                        variants = variants + newVariant
                     }) {
                         Icon(imageVector = Icons.Filled.Add, contentDescription = null)
                         Text(text = "Add Variant")

@@ -2,6 +2,7 @@ package com.seyone22.cook.ui.screen.crud
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seyone22.cook.data.model.Ingredient
@@ -13,10 +14,13 @@ import com.seyone22.cook.data.repository.ingredientImage.IngredientImageReposito
 import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantRepository
 import com.seyone22.cook.data.repository.measure.MeasureRepository
 import com.seyone22.cook.helper.ImageHelper
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.cancellation.CancellationException
 
 class AddIngredientViewModel(
     private val ingredientRepository: IngredientRepository,
@@ -70,8 +74,7 @@ class AddIngredientViewModel(
                         "ingredient_${ingredientId}_${index}_${System.currentTimeMillis()}.jpg"
                     )
                     val ingredientImage = IngredientImage(
-                        ingredientId = ingredientId,
-                        imagePath = imagePath ?: "NULL"
+                        ingredientId = ingredientId, imagePath = imagePath ?: "NULL"
                     )
                     ingredientImageRepository.insertIngredientImage(ingredientImage)
                 }
@@ -84,33 +87,125 @@ class AddIngredientViewModel(
 
     fun updateIngredient(
         ingredient: Ingredient,
-        ingredientVariantList: List<IngredientVariant?>,
-        images: List<IngredientImage?>,
+        newVariants: List<IngredientVariant?>,
+        newImages: List<IngredientImage?>,
         context: Context
     ) {
         viewModelScope.launch {
             try {
-                // Update the ingredient in the database
-                ingredientRepository.updateIngredient(ingredient)
+                withContext(Dispatchers.IO) {
+                    Log.d("TAG", "updateIngredient: Start")
 
-                // Update the ingredient variants
-                ingredientVariantList.forEach {
-                    if (it != null) {
-                        ingredientVariantRepository.updateIngredientVariant(it)
-                    }
-                }
+                    // Update the ingredient in the database
+                    ingredientRepository.updateIngredient(ingredient)
+                    Log.d("TAG", "updateIngredient: Ingredient updated")
 
-                // Update the image list
-                images.forEach { image ->
-                    if (image != null) {
-                        ingredientImageRepository.updateIngredientImage(image)
+                    // Fetch the current variants and images from the database
+                    val currentVariants =
+                        ingredientVariantRepository.getVariantsForIngredient(ingredient.id.toInt())
+                            .first()
+                    val currentImages =
+                        ingredientImageRepository.getImagesForIngredient(ingredient.id.toInt())
+                            .first()
+                    Log.d("TAG", "updateIngredient: Fetched current variants and images")
+
+                    // Determine variants to add, update, and delete
+                    val variantsToAdd =
+                        newVariants.filter { it != null && currentVariants.find { i -> i!!.id == it.id } == null }
+                    val variantsToUpdate =
+                        newVariants.filter { it != null && currentVariants.find { i -> i!!.id == it.id } != null }
+                    val variantsToDelete =
+                        currentVariants.filter { it != null && newVariants.find { i -> i!!.id == it.id } == null }
+
+                    Log.d("TAG", "updateIngredient: variantsToAdd = $variantsToAdd")
+                    Log.d("TAG", "updateIngredient: variantsToUpdate = $variantsToUpdate")
+                    Log.d("TAG", "updateIngredient: variantsToDelete = $variantsToDelete")
+
+                    // Perform variant operations
+                    variantsToAdd.forEach { variant ->
+                        variant?.let {
+                            Log.d("TAG", "Adding variant: $it")
+                            ingredientVariantRepository.insertIngredientVariant(it)
+                        }
                     }
+
+                    variantsToUpdate.forEach { variant ->
+                        variant?.let {
+                            Log.d("TAG", "Updating variant: $it")
+                            ingredientVariantRepository.updateIngredientVariant(it)
+                        }
+                    }
+
+                    variantsToDelete.forEach { variant ->
+                        Log.d("TAG", "Deleting variant: $variant")
+                        ingredientVariantRepository.deleteIngredientVariant(variant!!)
+                    }
+
+                    // Determine images to add, update, and delete
+                    val imagesToAdd = newImages.filter { it != null && !currentImages.contains(it) }
+                    val imagesToUpdate =
+                        newImages.filter { it != null && currentImages.contains(it) }
+                    val imagesToDelete = currentImages.filter { !newImages.contains(it) }
+
+                    Log.d("TAG", "updateIngredient: imagesToAdd = $imagesToAdd")
+                    Log.d("TAG", "updateIngredient: imagesToUpdate = $imagesToUpdate")
+                    Log.d("TAG", "updateIngredient: imagesToDelete = $imagesToDelete")
+
+                    val imageHelper = ImageHelper(context)
+
+                    // Perform image operations
+                    imagesToAdd.forEachIndexed { index, image ->
+                        image?.let {
+                            try {
+                                val imageBitmap =
+                                    imageHelper.loadImageFromUri(Uri.parse(image.imagePath))
+                                Log.d("TAG", "Loaded image bitmap: $imageBitmap")
+
+                                imageBitmap?.let {
+                                    val imagePath = imageHelper.saveImageToInternalStorage(
+                                        it,
+                                        "ingredient_${ingredient.id}_${index}_${System.currentTimeMillis()}.jpg"
+                                    )
+
+                                    Log.d("TAG", "Saved image to internal storage: $imagePath")
+
+                                    val ingredientImage = IngredientImage(
+                                        ingredientId = ingredient.id,
+                                        imagePath = imagePath ?: "NULL"
+                                    )
+                                    Log.d("TAG", "updateIngredient: $ingredientImage")
+                                    ingredientImageRepository.insertIngredientImage(ingredientImage)
+                                }
+                            } catch (e: Exception) {
+                                Log.e("TAG", "Error adding image: ${e.message}", e)
+                            }
+                        }
+                    }
+
+                    imagesToDelete.forEach { image ->
+                        image?.let {
+                            try {
+                                ingredientImageRepository.deleteIngredientImage(it)
+                                Log.d("TAG", "Deleted image: $it")
+
+                                imageHelper.deleteImageFromInternalStorage(Uri.parse(it.imagePath))
+                            } catch (e: Exception) {
+                                Log.e("TAG", "Error deleting image: $image", e)
+                            }
+                        }
+                    }
+
+                    Log.d("TAG", "updateIngredient: Completed successfully")
                 }
+            } catch (e: CancellationException) {
+                Log.e("TAG", "updateIngredient: Job was cancelled", e)
             } catch (e: Exception) {
                 e.printStackTrace()
+                Log.e("TAG", "updateIngredient: Error occurred", e)
             }
         }
     }
+
 }
 
 // Define a data class to hold the list of measures
