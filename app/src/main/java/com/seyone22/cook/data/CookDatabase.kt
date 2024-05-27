@@ -57,7 +57,11 @@ abstract class CookDatabase : RoomDatabase() {
 
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
+                // Add the timesMade column to the recipes table
                 db.execSQL("ALTER TABLE recipes ADD COLUMN timesMade INTEGER NOT NULL DEFAULT 0")
+
+                // Add the stocked column to the ingredients table
+                db.execSQL("ALTER TABLE ingredients ADD COLUMN stocked INTEGER NOT NULL DEFAULT 0")
             }
         }
     }

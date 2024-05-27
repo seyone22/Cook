@@ -9,7 +9,8 @@ data class Ingredient(
     val nameEn: String,
     val nameSi: String,
     val nameTa: String,
-    val description: String?
+    val description: String?,
+    val stocked: Boolean = false
 )
 
 data class IngredientDetails(
@@ -17,7 +18,8 @@ data class IngredientDetails(
     val nameEn: String = "",
     val nameSi: String = "",
     val nameTa: String = "",
-    val description: String = ""
+    val description: String = "",
+    val stocked: Boolean = false
 )
 
 fun IngredientDetails.toIngredient(): Ingredient = Ingredient(
@@ -25,7 +27,8 @@ fun IngredientDetails.toIngredient(): Ingredient = Ingredient(
     nameEn = nameEn,
     nameSi = nameSi,
     nameTa = nameTa,
-    description = description
+    description = description,
+    stocked = stocked
 )
 
 fun Ingredient.toIngredientDetails(): IngredientDetails = IngredientDetails(
@@ -33,5 +36,6 @@ fun Ingredient.toIngredientDetails(): IngredientDetails = IngredientDetails(
     nameEn = nameEn,
     nameSi = nameSi,
     nameTa = nameTa,
-    description = description ?: ""
+    description = description ?: "",
+    stocked = stocked
 )
