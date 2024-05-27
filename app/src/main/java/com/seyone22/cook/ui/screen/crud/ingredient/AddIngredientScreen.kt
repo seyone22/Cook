@@ -53,8 +53,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.seyone22.cook.R
-import com.seyone22.cook.data.model.Ingredient
-import com.seyone22.cook.data.model.IngredientVariant
+import com.seyone22.cook.data.model.IngredientDetails
+import com.seyone22.cook.data.model.IngredientVariantDetails
+import com.seyone22.cook.data.model.toIngredient
+import com.seyone22.cook.data.model.toIngredientVariant
 import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
@@ -72,23 +74,15 @@ fun AddIngredientScreen(
     navController: NavController,
 ) {
     viewModel.fetchData()
+    val context = LocalContext.current
 
     val data by viewModel.addIngredientViewState.collectAsState()
 
-    val context = LocalContext.current
-    var nameEn by remember { mutableStateOf("") }
-    var nameSi by remember { mutableStateOf("") }
-    var nameTa by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
     var showAltNames by remember { mutableStateOf(false) }
+
     var photos by remember { mutableStateOf(listOf<Uri>()) }
-    val variants = remember {
-        mutableStateListOf(
-            IngredientVariant(
-                brand = "", ingredientId = 0, price = 0.0, type = "", variantName = "", quantity = 0, unitId = 0
-            )
-        )
-    }
+    var ingredient by remember { mutableStateOf(IngredientDetails()) }
+    val variants = remember { mutableStateListOf(IngredientVariantDetails()) }
 
     // Launcher for selecting images
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -100,39 +94,32 @@ fun AddIngredientScreen(
     }
     val imageHelper = ImageHelper(context)
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                modifier = Modifier.padding(0.dp),
-                title = { Text(text = "Add Ingredient") },
-                navigationIcon = {
-                    Icon(
-                        modifier = Modifier
-                            .padding(16.dp, 0.dp, 24.dp, 0.dp)
-                            .clickable { navController.popBackStack() },
-                        imageVector = Icons.Default.Close,
-                        contentDescription = null,
-                    )
-                }, actions = {
-                    Button(modifier = Modifier.padding(24.dp, 0.dp, 16.dp, 0.dp),
-                        content = { Text("Save") },
-                        onClick = {
-                            viewModel.saveIngredient(
-                                Ingredient(
-                                    description = description,
-                                    nameEn = nameEn,
-                                    nameSi = nameSi,
-                                    nameTa = nameTa,
-                                ),
-                                variants,
-                                photos,
-                                context
-                            )
-                            navController.popBackStack()
-                        })
-                }
-            )
-        }) {
+    Scaffold(topBar = {
+        TopAppBar(modifier = Modifier.padding(0.dp),
+            title = { Text(text = "Add Ingredient") },
+            navigationIcon = {
+                Icon(
+                    modifier = Modifier
+                        .padding(16.dp, 0.dp, 24.dp, 0.dp)
+                        .clickable { navController.popBackStack() },
+                    imageVector = Icons.Default.Close,
+                    contentDescription = null,
+                )
+            },
+            actions = {
+                Button(modifier = Modifier.padding(24.dp, 0.dp, 16.dp, 0.dp),
+                    content = { Text("Save") },
+                    onClick = {
+                        viewModel.saveIngredient(
+                            ingredient.toIngredient(),
+                            variants.map { it.toIngredientVariant() },
+                            photos,
+                            context
+                        )
+                        navController.popBackStack()
+                    })
+            })
+    }) {
         LazyColumn(modifier = Modifier.padding(it)) {
             item {
                 Column(modifier = Modifier.padding(12.dp, 0.dp)) {
@@ -180,8 +167,11 @@ fun AddIngredientScreen(
                         }
 
                         TextButton(onClick = {
-                            imagePickerLauncher.launch(PickVisualMediaRequest(
-                                ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            imagePickerLauncher.launch(
+                                PickVisualMediaRequest(
+                                    ActivityResultContracts.PickVisualMedia.ImageOnly
+                                )
+                            )
                         }) {
                             Icon(imageVector = Icons.Filled.Add, contentDescription = null)
                             Text(text = "Add Photo")
@@ -203,8 +193,8 @@ fun AddIngredientScreen(
                         }
                         OutlinedTextField(
                             modifier = Modifier.width(310.dp),
-                            value = nameEn,
-                            onValueChange = { nameEn = it },
+                            value = ingredient.nameEn,
+                            onValueChange = { ingredient = ingredient.copy(nameEn = it) },
                             label = { Text("Name") },
                             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
                         )
@@ -233,16 +223,14 @@ fun AddIngredientScreen(
                                 .width(346.dp)
                                 .padding(36.dp, 0.dp, 0.dp, 0.dp)
                         ) {
-                            OutlinedTextField(
-                                value = nameSi,
-                                onValueChange = { nameSi = it },
+                            OutlinedTextField(value = ingredient.nameSi,
+                                onValueChange = { ingredient = ingredient.copy(nameSi = it) },
                                 label = { Text("Name (Sinhala)") },
                                 modifier = Modifier.fillMaxWidth(),
                                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
                             )
-                            OutlinedTextField(
-                                value = nameTa,
-                                onValueChange = { nameTa = it },
+                            OutlinedTextField(value = ingredient.nameTa,
+                                onValueChange = { ingredient = ingredient.copy(nameTa = it) },
                                 label = { Text("Name (Tamil)") },
                                 modifier = Modifier.fillMaxWidth(),
                                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
@@ -256,9 +244,8 @@ fun AddIngredientScreen(
                             .width(346.dp)
                             .padding(36.dp, 0.dp, 0.dp, 0.dp)
                     ) {
-                        OutlinedTextField(
-                            value = description,
-                            onValueChange = { description = it },
+                        OutlinedTextField(value = ingredient.description,
+                            onValueChange = { ingredient = ingredient.copy(description = it) },
                             label = { Text("Description") },
                             modifier = Modifier.fillMaxWidth(),
                             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
@@ -328,8 +315,7 @@ fun AddIngredientScreen(
                                     OutlinedTextField(
                                         value = variant.price.toString(),
                                         onValueChange = { newVariantPrice ->
-                                            variants[index] =
-                                                variant.copy(price = newVariantPrice.toDouble())
+                                            variants[index] = variant.copy(price = newVariantPrice)
                                         },
                                         label = { Text("Price") },
                                         modifier = Modifier
@@ -344,7 +330,7 @@ fun AddIngredientScreen(
                                         value = variant.quantity.toString(),
                                         onValueChange = { newVariantQuantity ->
                                             variants[index] =
-                                                variant.copy(quantity = newVariantQuantity.toInt())
+                                                variant.copy(quantity = newVariantQuantity)
                                         },
                                         label = { Text("Per") },
                                         modifier = Modifier
@@ -355,41 +341,35 @@ fun AddIngredientScreen(
                                             keyboardType = KeyboardType.Number
                                         )
                                     )
-                                    ExposedDropdownMenuBox(
-                                        expanded = measuresExpanded,
-                                        onExpandedChange = { measuresExpanded = !measuresExpanded }
-                                    ) {
-                                        OutlinedTextField(
-                                            modifier = Modifier
-                                                .padding(0.dp, 8.dp)
-                                                .menuAnchor()
-                                                .clickable(enabled = true) {
-                                                    measuresExpanded = true
-                                                },
-                                            value = data.measures.find { m -> m?.id?.toInt() == variant.unitId.toInt() }?.abbreviation ?: "",
+                                    ExposedDropdownMenuBox(expanded = measuresExpanded,
+                                        onExpandedChange = {
+                                            measuresExpanded = !measuresExpanded
+                                        }) {
+                                        OutlinedTextField(modifier = Modifier
+                                            .menuAnchor()
+                                            .clickable(enabled = true) {
+                                                measuresExpanded = true
+                                            },
+                                            value = data.measures.find { m -> m?.id?.toInt() == variant.unitId.toInt() }?.abbreviation
+                                                ?: "",
                                             readOnly = true,
                                             onValueChange = { },
                                             label = { Text("") },
                                             singleLine = true,
                                             trailingIcon = {
                                                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = measuresExpanded)
-                                            }
-                                        )
+                                            })
 
-                                        ExposedDropdownMenu(
-                                            expanded = measuresExpanded,
-                                            onDismissRequest = { measuresExpanded = false }
-                                        ) {
+                                        ExposedDropdownMenu(expanded = measuresExpanded,
+                                            onDismissRequest = { measuresExpanded = false }) {
                                             data.measures.forEach { measure ->
                                                 measure?.let {
-                                                    DropdownMenuItem(
-                                                        text = { Text(measure.abbreviation) },
+                                                    DropdownMenuItem(text = { Text(measure.abbreviation) },
                                                         onClick = {
                                                             variants[index] =
                                                                 variant.copy(unitId = measure.id)
                                                             measuresExpanded = false
-                                                        }
-                                                    )
+                                                        })
                                                 }
                                             }
                                         }
@@ -400,13 +380,13 @@ fun AddIngredientScreen(
                     }
                     TextButton(onClick = {
                         variants.add(
-                            IngredientVariant(
+                            IngredientVariantDetails(
                                 brand = "",
                                 ingredientId = 0,
-                                price = 0.0,
+                                price = "",
                                 type = "",
                                 variantName = "",
-                                quantity = 0,
+                                quantity = "",
                                 unitId = 0
                             )
                         )

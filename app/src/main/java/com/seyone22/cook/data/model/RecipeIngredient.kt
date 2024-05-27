@@ -11,3 +11,27 @@ data class RecipeIngredient(
     val quantity: Double,
     val measureId: Long
 )
+
+data class RecipeIngredientDetails(
+    val id: Long = 0,
+    val recipeId: Long,
+    val ingredientId: Long,
+    val quantity: String,
+    val measureId: Long
+)
+
+fun RecipeIngredientDetails.toRecipeIngredient(): RecipeIngredient = RecipeIngredient(
+    id = id,
+    recipeId = recipeId,
+    ingredientId = ingredientId,
+    quantity = quantity.toDoubleOrNull() ?: 0.0,
+    measureId = measureId
+)
+
+fun RecipeIngredient.toRecipeIngredientDetails(): RecipeIngredientDetails = RecipeIngredientDetails(
+    id = id,
+    recipeId = recipeId,
+    ingredientId = ingredientId,
+    quantity = quantity.toString(),
+    measureId = measureId
+)

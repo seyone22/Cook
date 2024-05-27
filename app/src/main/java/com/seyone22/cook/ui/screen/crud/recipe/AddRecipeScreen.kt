@@ -55,6 +55,8 @@ import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Instruction
 import com.seyone22.cook.data.model.Recipe
 import com.seyone22.cook.data.model.RecipeIngredient
+import com.seyone22.cook.data.model.RecipeIngredientDetails
+import com.seyone22.cook.data.model.toRecipeIngredient
 import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
@@ -92,8 +94,8 @@ fun AddRecipeScreen(
     }
     val recipeIngredients = remember {
         mutableStateListOf(
-            RecipeIngredient(
-                ingredientId = -1, measureId = -1, quantity = 0.0, recipeId = -1
+            RecipeIngredientDetails(
+                ingredientId = -1, measureId = -1, quantity = "", recipeId = -1
             )
         )
     }
@@ -132,7 +134,7 @@ fun AddRecipeScreen(
                                 prepTime = if (prepTime.isEmpty()) 0 else prepTime.toInt(),
                                 servingSize = if (servingSize.isEmpty()) 1 else servingSize.toInt(),
                                 reference = reference
-                            ), photos, instructions, recipeIngredients, context
+                            ), photos, instructions, recipeIngredients.map { i -> i.toRecipeIngredient() }, context
                         )
                         navController.popBackStack()
                     })
@@ -229,7 +231,7 @@ fun AddRecipeScreen(
                                 value = prepTime,
                                 onValueChange = { prepTime = it },
                                 label = { Text("Prep") },
-                                modifier = Modifier.width(100.dp),
+                                modifier = Modifier.width(107.dp).padding(0.dp, 0.dp, 8.dp, 0.dp),
                                 keyboardOptions = KeyboardOptions.Default.copy(
                                     imeAction = ImeAction.Next, keyboardType = KeyboardType.Number
                                 )
@@ -238,7 +240,7 @@ fun AddRecipeScreen(
                                 value = cookTime,
                                 onValueChange = { cookTime = it },
                                 label = { Text("Cook") },
-                                modifier = Modifier.width(100.dp),
+                                modifier = Modifier.width(107.dp).padding(0.dp, 0.dp, 8.dp, 0.dp),
                                 keyboardOptions = KeyboardOptions.Default.copy(
                                     imeAction = ImeAction.Next, keyboardType = KeyboardType.Number
                                 )
@@ -247,7 +249,7 @@ fun AddRecipeScreen(
                                 value = servingSize,
                                 onValueChange = { servingSize = it },
                                 label = { Text("Serves") },
-                                modifier = Modifier.width(100.dp),
+                                modifier = Modifier.width(107.dp),
                                 keyboardOptions = KeyboardOptions.Default.copy(
                                     imeAction = ImeAction.Next, keyboardType = KeyboardType.Number
                                 )
@@ -293,8 +295,8 @@ fun AddRecipeScreen(
                                             ingredientExpanded = !ingredientExpanded
                                         }) {
                                         OutlinedTextField(modifier = Modifier
-                                            .padding(0.dp, 8.dp)
-                                            .width(160.dp)
+                                            .padding(0.dp, 0.dp, 8.dp, 0.dp)
+                                            .width(156.dp)
                                             .menuAnchor()
                                             .clickable(enabled = true) {
                                                 ingredientExpanded = true
@@ -324,14 +326,14 @@ fun AddRecipeScreen(
                                         }
                                     }
                                     OutlinedTextField(
-                                        modifier = Modifier.width(56.dp),
-                                        value = recipeIngredient.quantity.toString(),
+                                        modifier = Modifier.width(64.dp).padding(0.dp, 0.dp, 8.dp, 0.dp),
+                                        value = recipeIngredient.quantity,
                                         singleLine = true,
                                         onValueChange = { newQty ->
                                             recipeIngredients[index] =
-                                                recipeIngredient.copy(quantity = newQty.toDouble())
+                                                recipeIngredient.copy(quantity = newQty)
                                         },
-                                        label = { Text("Qty") },
+                                        label = { Text("No") },
                                         keyboardOptions = KeyboardOptions.Default.copy(
                                             imeAction = ImeAction.Next,
                                             keyboardType = KeyboardType.Number
@@ -343,7 +345,7 @@ fun AddRecipeScreen(
                                     ) {
                                         OutlinedTextField(
                                             modifier = Modifier
-                                                .padding(0.dp, 8.dp)
+                                                .padding(0.dp, 0.dp, 8.dp, 0.dp)
                                                 .menuAnchor()
                                                 .width(80.dp)
                                                 .clickable(enabled = true) {
@@ -397,8 +399,8 @@ fun AddRecipeScreen(
 
                     TextButton(onClick = {
                         recipeIngredients.add(
-                            RecipeIngredient(
-                                ingredientId = -1, measureId = -1, quantity = 0.0, recipeId = -1
+                            RecipeIngredientDetails(
+                                ingredientId = -1, measureId = -1, quantity = "", recipeId = -1
                             )
                         )
                     }) {

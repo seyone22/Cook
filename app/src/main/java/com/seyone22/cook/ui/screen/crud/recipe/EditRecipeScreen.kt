@@ -57,8 +57,11 @@ import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Instruction
 import com.seyone22.cook.data.model.RecipeImage
 import com.seyone22.cook.data.model.RecipeIngredient
+import com.seyone22.cook.data.model.RecipeIngredientDetails
 import com.seyone22.cook.data.model.toRecipe
 import com.seyone22.cook.data.model.toRecipeDetails
+import com.seyone22.cook.data.model.toRecipeIngredient
+import com.seyone22.cook.data.model.toRecipeIngredientDetails
 import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
@@ -92,7 +95,7 @@ fun EditRecipeScreen(
     var recipe by remember { mutableStateOf(dataRecipe?.toRecipeDetails()) }
     var images by remember { mutableStateOf(listOf<RecipeImage>()) }
     var instructions by remember { mutableStateOf(listOf<Instruction>()) }
-    var recipeIngredients by remember { mutableStateOf(listOf<RecipeIngredient>()) }
+    var recipeIngredients by remember { mutableStateOf(listOf<RecipeIngredientDetails>()) }
 
     var showAltNames by remember { mutableStateOf(false) }
 
@@ -103,7 +106,7 @@ fun EditRecipeScreen(
         }
         images = dataImages.map { i -> i!! }
         instructions = dataInstructions.map { i -> i!! }
-        recipeIngredients = dataRecipeIngredients.map { i -> i!! }
+        recipeIngredients = dataRecipeIngredients.map { i -> i!!.toRecipeIngredientDetails() }
     }
 
     // Launcher for selecting images
@@ -136,7 +139,7 @@ fun EditRecipeScreen(
                             recipe!!.toRecipe(),
                             images,
                             instructions.map { i -> i.copy(recipeId = recipeId) },
-                            recipeIngredients.map { i -> i.copy(recipeId = recipeId) },
+                            recipeIngredients.map { i -> i.copy(recipeId = recipeId).toRecipeIngredient() },
                             context
                         )
                         navController.popBackStack()
@@ -223,7 +226,7 @@ fun EditRecipeScreen(
                             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
                         )
                         OutlinedTextField(
-                            modifier = Modifier.width(72.dp),
+                            modifier = Modifier.width(80.dp),
                             value = recipe?.timesMade.toString() ?: "",
                             onValueChange = { recipe = recipe?.copy(timesMade = it) },
                             label = { Text("Count") },
@@ -242,7 +245,7 @@ fun EditRecipeScreen(
                                 value = recipe?.prepTime.toString(),
                                 onValueChange = { recipe = recipe?.copy(prepTime = it) },
                                 label = { Text("Prep") },
-                                modifier = Modifier.width(100.dp),
+                                modifier = Modifier.width(107.dp).padding(0.dp, 0.dp, 8.dp, 0.dp),
                                 keyboardOptions = KeyboardOptions.Default.copy(
                                     imeAction = ImeAction.Next, keyboardType = KeyboardType.Number
                                 )
@@ -251,7 +254,7 @@ fun EditRecipeScreen(
                                 value = recipe?.cookTime.toString(),
                                 onValueChange = { recipe = recipe?.copy(cookTime = it) },
                                 label = { Text("Cook") },
-                                modifier = Modifier.width(100.dp),
+                                modifier = Modifier.width(107.dp).padding(0.dp, 0.dp, 8.dp, 0.dp),
                                 keyboardOptions = KeyboardOptions.Default.copy(
                                     imeAction = ImeAction.Next, keyboardType = KeyboardType.Number
                                 )
@@ -260,7 +263,7 @@ fun EditRecipeScreen(
                                 value = recipe?.servingSize.toString(),
                                 onValueChange = { recipe = recipe?.copy(servingSize = it) },
                                 label = { Text("Serves") },
-                                modifier = Modifier.width(100.dp),
+                                modifier = Modifier.width(107.dp),
                                 keyboardOptions = KeyboardOptions.Default.copy(
                                     imeAction = ImeAction.Next, keyboardType = KeyboardType.Number
                                 )
@@ -307,8 +310,8 @@ fun EditRecipeScreen(
                                             ingredientExpanded = !ingredientExpanded
                                         }) {
                                         OutlinedTextField(modifier = Modifier
-                                            .padding(0.dp, 8.dp)
-                                            .width(160.dp)
+                                            .padding(0.dp, 0.dp, 8.dp, 0.dp)
+                                            .width(156.dp)
                                             .menuAnchor()
                                             .clickable(enabled = true) {
                                                 ingredientExpanded = true
@@ -346,20 +349,20 @@ fun EditRecipeScreen(
                                         }
                                     }
                                     OutlinedTextField(
-                                        modifier = Modifier.width(56.dp),
+                                        modifier = Modifier.width(64.dp).padding(0.dp, 0.dp, 8.dp, 0.dp),
                                         value = recipeIngredient.quantity.toString(),
                                         singleLine = true,
                                         onValueChange = { newQty ->
                                             recipeIngredients =
                                                 recipeIngredients.mapIndexed { i, recipeIngredient ->
                                                     if (i == index) {
-                                                        recipeIngredient.copy(quantity = newQty.toDouble())
+                                                        recipeIngredient.copy(quantity = newQty)
                                                     } else {
                                                         recipeIngredient
                                                     }
                                                 }
                                         },
-                                        label = { Text("Qty") },
+                                        label = { Text("No") },
                                         keyboardOptions = KeyboardOptions.Default.copy(
                                             imeAction = ImeAction.Next,
                                             keyboardType = KeyboardType.Number
@@ -370,7 +373,7 @@ fun EditRecipeScreen(
                                             measuresExpanded = !measuresExpanded
                                         }) {
                                         OutlinedTextField(modifier = Modifier
-                                            .padding(0.dp, 8.dp)
+                                            .padding(0.dp, 0.dp, 8.dp, 0.dp)
                                             .menuAnchor()
                                             .width(80.dp)
                                             .clickable(enabled = true) {
@@ -428,8 +431,8 @@ fun EditRecipeScreen(
                     }
 
                     TextButton(onClick = {
-                        recipeIngredients = recipeIngredients + RecipeIngredient(
-                            ingredientId = -1, measureId = -1, quantity = 0.0, recipeId = -1
+                        recipeIngredients = recipeIngredients + RecipeIngredientDetails(
+                            ingredientId = -1, measureId = -1, quantity = "", recipeId = -1
                         )
                     }) {
                         Icon(imageVector = Icons.Filled.Add, contentDescription = null)
