@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.CompareArrows
@@ -43,12 +44,15 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -60,6 +64,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.createBitmap
@@ -93,6 +98,7 @@ fun RecipeDetailScreen(
     backStackEntry: String,
     navController: NavController
 ) {
+    val imageHelper = ImageHelper(LocalContext.current)
     // Call the ViewModel function to fetch ingredients when the screen is first displayed
     viewModel.fetchData()
 
@@ -105,17 +111,22 @@ fun RecipeDetailScreen(
         homeViewState.instructions.filter { i -> i?.recipeId.toString() == backStackEntry }
     val recipeIngredients =
         homeViewState.recipeIngredients.filter { i -> i?.recipeId.toString() == backStackEntry }
+
     val measures = homeViewState.measures
     val ingredients = homeViewState.ingredients
-    val imageHelper = ImageHelper(LocalContext.current)
+    var scaleFactor by remember { mutableDoubleStateOf(1.0) }
+
     var bitmap by remember { mutableStateOf(createBitmap(1, 1)) }
+
     var showDeleteConfirmationDialog by remember { mutableStateOf(false) }
+    var showScaleDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(images) {
         if (images.isNotEmpty()) {
             bitmap = File(images[0]?.imagePath).takeIf { it.exists() }
                 ?.let { imageHelper.loadImageFromUri(it.toUri()) }!!
         }
+        scaleFactor = recipe?.servingSize?.toDouble() ?: -1.0
     }
 
     if (showDeleteConfirmationDialog) {
@@ -126,6 +137,16 @@ fun RecipeDetailScreen(
             navController.popBackStack()
         }, onDismiss = {
             showDeleteConfirmationDialog = false
+        })
+    }
+
+    if (showScaleDialog) {
+        ScaleDialog(onConfirm = { sF ->
+            // Handle scale action
+            scaleFactor = sF
+            showScaleDialog = false
+        }, onDismiss = {
+            showScaleDialog = false
         })
     }
 
@@ -186,7 +207,7 @@ fun RecipeDetailScreen(
                 item {
                     Column(modifier = Modifier.padding(8.dp, 0.dp)) {
                         HeaderImage(bitmap = bitmap.asImageBitmap(), recipe.name)
-                        RecipeDetail(viewModel, recipe)
+                        RecipeDetail(viewModel, recipe, onScaleClick = { showScaleDialog = true })
                     }
                 }
             }
@@ -197,7 +218,9 @@ fun RecipeDetailScreen(
                             navController = navController,
                             list = recipeIngredients,
                             measures = measures,
-                            ingredients = ingredients
+                            ingredients = ingredients,
+                            scaleFactor = scaleFactor,
+                            serves = recipe?.servingSize ?: -1
                         )
                     }
                 }
@@ -233,7 +256,8 @@ fun HeaderImage(bitmap: ImageBitmap, title: String) {
             text = title,
             color = Color.White,
             style = MaterialTheme.typography.displayMedium,
-            modifier = Modifier.padding(16.dp, 0.dp, 16.dp, 16.dp)
+            modifier = Modifier
+                .padding(16.dp, 0.dp, 16.dp, 16.dp)
                 .align(Alignment.BottomStart)
         )
     }
@@ -241,15 +265,17 @@ fun HeaderImage(bitmap: ImageBitmap, title: String) {
 }
 
 @Composable
-fun RecipeDetail(viewModel: HomeViewModel, recipe: Recipe) {
+fun RecipeDetail(viewModel: HomeViewModel, recipe: Recipe, onScaleClick: () -> Unit) {
     val context = LocalContext.current
     Column(
         modifier = Modifier.padding(8.dp, 0.dp, 8.dp, 16.dp)
     ) {
         RecipeOptionRow(
-            viewModel = viewModel, recipe = recipe, context = context
+            viewModel = viewModel, recipe = recipe, context = context, onScaleClick = onScaleClick
         )
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)
+        ) {
             Icon(
                 imageVector = Icons.Default.Timer,
                 contentDescription = null,
@@ -294,7 +320,7 @@ fun RecipeDetail(viewModel: HomeViewModel, recipe: Recipe) {
                 modifier = Modifier.padding(start = 4.dp)
             )
         }
-        if(recipe.description != null) {
+        if (recipe.description != null) {
             Text(
                 modifier = Modifier.padding(0.dp, 8.dp),
                 text = recipe.description,
@@ -324,7 +350,9 @@ fun IngredientsList(
     navController: NavController,
     list: List<RecipeIngredient?>,
     measures: List<Measure?>,
-    ingredients: List<Ingredient?>
+    ingredients: List<Ingredient?>,
+    scaleFactor: Double,
+    serves: Int
 ) {
     OutlinedCard(
         modifier = Modifier
@@ -348,14 +376,13 @@ fun IngredientsList(
                     Checkbox(modifier = Modifier.height(32.dp),
                         checked = checked.value,
                         onCheckedChange = { checked.value = !checked.value })
-                    Text(
-                        modifier = Modifier
-                            .padding(4.dp, 0.dp, 16.dp, 0.dp)
-                            .align(Alignment.CenterVertically)
-                            .width(160.dp)
-                            .clickable {
-                                navController.navigate("${IngredientDetailDestination.route}/${ingredient?.ingredientId}")
-                            },
+                    Text(modifier = Modifier
+                        .padding(4.dp, 0.dp, 16.dp, 0.dp)
+                        .align(Alignment.CenterVertically)
+                        .width(160.dp)
+                        .clickable {
+                            navController.navigate("${IngredientDetailDestination.route}/${ingredient?.ingredientId}")
+                        },
                         text = ingredients.find { i -> i?.id == ingredient?.ingredientId }?.nameEn
                             ?: "",
                         style = MaterialTheme.typography.bodyLarge,
@@ -365,7 +392,7 @@ fun IngredientsList(
                         modifier = Modifier
                             .padding(4.dp, 0.dp, 16.dp, 0.dp)
                             .align(Alignment.CenterVertically),
-                        text = (ingredient?.quantity.toString() + measures.find { m -> m?.id == ingredient?.measureId }?.abbreviation),
+                        text = "${String.format("%.2f", (ingredient?.quantity?.div(serves))?.times(scaleFactor)?.toFloat())} ${measures.find { m -> m?.id == ingredient?.measureId }?.abbreviation}",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -376,7 +403,7 @@ fun IngredientsList(
 }
 
 @Composable
-fun RecipeOptionRow(viewModel: HomeViewModel, context: Context, recipe: Recipe) {
+fun RecipeOptionRow(viewModel: HomeViewModel, context: Context, recipe: Recipe, onScaleClick: () -> Unit) {
     LazyRow(
     ) {
         item {
@@ -392,7 +419,7 @@ fun RecipeOptionRow(viewModel: HomeViewModel, context: Context, recipe: Recipe) 
         }
         item {
             AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
-                onClick = { },
+                onClick = { onScaleClick() },
                 label = { Text("Scale Recipe") },
                 leadingIcon = {
                     Icon(
@@ -476,4 +503,31 @@ fun DeleteConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 Text("Cancel")
             }
         })
+}
+
+@Composable
+fun ScaleDialog(onConfirm: (Double) -> Unit, onDismiss: () -> Unit) {
+    var scaleFactor by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        title = { Text(text = "How many people are we serving?") },
+        text = {
+            TextField(
+                value = scaleFactor,
+                onValueChange = { sF -> scaleFactor = sF },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                label = { Text("People count") }
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(scaleFactor.toDouble()) }) {
+                Text("Confirm")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
