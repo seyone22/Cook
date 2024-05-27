@@ -18,12 +18,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.AlternateEmail
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
@@ -63,6 +61,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Ingredient
+import com.seyone22.cook.data.model.IngredientDetails
 import com.seyone22.cook.data.model.IngredientVariant
 import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.helper.ImageHelper
@@ -138,8 +137,7 @@ fun IngredientDetailScreen(
     }
 
     Scaffold(topBar = {
-        TopAppBar(
-            modifier = Modifier.padding(0.dp),
+        TopAppBar(modifier = Modifier.padding(0.dp),
             title = { Text(text = ingredient?.nameEn ?: "") },
             navigationIcon = {
                 Icon(
@@ -163,8 +161,7 @@ fun IngredientDetailScreen(
 
                 IconButton(onClick = { expanded = true }) {
                     Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = "More options"
+                        imageVector = Icons.Default.MoreVert, contentDescription = "More options"
                     )
                 }
 
@@ -211,82 +208,70 @@ fun IngredientDetailScreen(
 fun IngredientOptionRow(viewModel: IngredientsViewModel, ingredient: Ingredient) {
     var x: Boolean by remember { mutableStateOf(ingredient.stocked) }
 
+    var showSubstituteDialog by remember { mutableStateOf(false) }
+    var showVariantDialog by remember { mutableStateOf(false) }
+
+    if (showVariantDialog) {
+        NewVariantDialog(onConfirm = { showVariantDialog = false }, onDismiss = { showVariantDialog = false })
+    }
+    if (showSubstituteDialog) {
+        NewSubstituteDialog(onConfirm = { showSubstituteDialog = false }, onDismiss = { showSubstituteDialog = false })
+    }
+
     LazyRow(
     ) {
         if (x) {
             item {
-                AssistChip(
-                    modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
-                    onClick = {
-                        x = false
-                        viewModel.updateStock(ingredient.copy(stocked = false))
-                              },
-                    label = { Text("Mark Ran Out") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.NotificationsNone,
-                            contentDescription = null
-                        )
-                    }
-                )
+                AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp), onClick = {
+                    x = false
+                    viewModel.updateStock(ingredient.copy(stocked = false))
+                }, label = { Text("Mark Ran Out") }, leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.NotificationsNone, contentDescription = null
+                    )
+                })
             }
         } else {
             item {
-                AssistChip(
-                    modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
-                    onClick = {
-                        x = true
-                        viewModel.updateStock(ingredient.copy(stocked = true))
+                AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp), onClick = {
+                    x = true
+                    viewModel.updateStock(ingredient.copy(stocked = true))
 
-                    },
-                    label = { Text("Mark Restocked") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = null
-                        )
-                    }
-                )
+                }, label = { Text("Mark Restocked") }, leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Notifications, contentDescription = null
+                    )
+                })
             }
         }
         item {
-            AssistChip(
-                modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
+            AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
                 onClick = { /*TODO*/ },
                 label = { Text("Add to Shopping list") },
                 leadingIcon = {
                     Icon(
-                        imageVector = Icons.Default.AddShoppingCart,
-                        contentDescription = null
+                        imageVector = Icons.Default.AddShoppingCart, contentDescription = null
                     )
-                }
-            )
+                })
         }
         item {
-            AssistChip(
-                modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
-                onClick = { /*TODO*/ },
+            AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
+                onClick = { showSubstituteDialog = true },
                 label = { Text("Add Substitute") },
                 leadingIcon = {
                     Icon(
-                        imageVector = Icons.Default.AlternateEmail,
-                        contentDescription = null
+                        imageVector = Icons.Default.AlternateEmail, contentDescription = null
                     )
-                }
-            )
+                })
         }
         item {
-            AssistChip(
-                modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
-                onClick = { /*TODO*/ },
-                label = { Text("Add Variant") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Tag,
-                        contentDescription = null
-                    )
-                }
-            )
+            AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp), onClick = {
+                showVariantDialog = true
+            }, label = { Text("Add Variant") }, leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Tag, contentDescription = null
+                )
+            })
         }
     }
 }
@@ -299,7 +284,7 @@ fun IngredientDetails(ingredient: Ingredient) {
         Text(text = ingredient.nameSi, style = MaterialTheme.typography.headlineSmall)
         Text(text = ingredient.nameTa, style = MaterialTheme.typography.headlineSmall)
 
-        if ((ingredient.description != null) and (ingredient.description?.isNotBlank() == true) ) {
+        if ((ingredient.description != null) and (ingredient.description?.isNotBlank() == true)) {
             Text(text = ingredient.description!!)
         } else {
             Column(modifier = Modifier.fillMaxWidth()) {
@@ -427,6 +412,44 @@ fun DeleteConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text("Delete")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        })
+}
+
+@Composable
+fun NewVariantDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(onDismissRequest = { onDismiss() },
+        title = { Text(text = "Add new Variant") },
+        text = {
+
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("Add")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        })
+}
+
+@Composable
+fun NewSubstituteDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(onDismissRequest = { onDismiss() },
+        title = { Text(text = "Add new Substitute") },
+        text = {
+
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("Add")
             }
         },
         dismissButton = {
