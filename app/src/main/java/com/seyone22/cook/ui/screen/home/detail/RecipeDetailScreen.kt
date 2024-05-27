@@ -2,6 +2,7 @@ package com.seyone22.cook.ui.screen.home.detail
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -62,8 +63,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -116,7 +119,7 @@ fun RecipeDetailScreen(
     val ingredients = homeViewState.ingredients
     var scaleFactor by remember { mutableDoubleStateOf(1.0) }
 
-    var bitmap by remember { mutableStateOf(createBitmap(1, 1)) }
+    var bitmap: Bitmap? by remember { mutableStateOf(null) }
 
     var showDeleteConfirmationDialog by remember { mutableStateOf(false) }
     var showScaleDialog by remember { mutableStateOf(false) }
@@ -206,7 +209,7 @@ fun RecipeDetailScreen(
             if (recipe != null) {
                 item {
                     Column(modifier = Modifier.padding(8.dp, 0.dp)) {
-                        HeaderImage(bitmap = bitmap.asImageBitmap(), recipe.name)
+                        HeaderImage(bitmap = bitmap, recipe.name)
                         RecipeDetail(viewModel, recipe, onScaleClick = { showScaleDialog = true })
                     }
                 }
@@ -237,21 +240,34 @@ fun RecipeDetailScreen(
 }
 
 @Composable
-fun HeaderImage(bitmap: ImageBitmap, title: String) {
+fun HeaderImage(bitmap: Bitmap?, title: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(240.dp)
     ) {
-        Image(
-            bitmap = bitmap,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(240.dp)
-                .clip(RoundedCornerShape(24.dp))
-        )
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(240.dp)
+                    .clip(RoundedCornerShape(24.dp))
+            )
+        } else {
+            val image: Painter = painterResource(id = R.drawable.placeholder)
+            Image(
+                painter = image,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(240.dp)
+                    .clip(RoundedCornerShape(12.dp))
+            )
+        }
         Text(
             text = title,
             color = Color.White,
