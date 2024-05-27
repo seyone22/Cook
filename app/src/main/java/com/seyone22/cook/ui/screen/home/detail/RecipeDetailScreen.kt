@@ -324,7 +324,7 @@ fun IngredientsList(
                         text = ingredients.find { i -> i?.id == ingredient?.ingredientId }?.nameEn
                             ?: "",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         modifier = Modifier
