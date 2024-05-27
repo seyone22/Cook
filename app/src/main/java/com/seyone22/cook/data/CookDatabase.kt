@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.model.IngredientImage
@@ -27,7 +28,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [Ingredient::class, IngredientVariant::class, IngredientImage::class, RecipeImage::class, Measure::class, Recipe::class, Instruction::class, RecipeIngredient::class],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class CookDatabase : RoomDatabase() {
@@ -47,8 +48,16 @@ abstract class CookDatabase : RoomDatabase() {
         fun getDatabase(context: Context, scope: CoroutineScope): CookDatabase {
             return Instance ?: synchronized(this) {
                 Room.databaseBuilder(context, CookDatabase::class.java, "cook_database")
-                    .fallbackToDestructiveMigration().addCallback(CookDatabaseCallback(scope))
+                    .addMigrations(MIGRATION_1_2)
+                    .fallbackToDestructiveMigration()
+                    .addCallback(CookDatabaseCallback(scope))
                     .build().also { Instance = it }
+            }
+        }
+
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE recipes ADD COLUMN timesMade INTEGER NOT NULL DEFAULT 0")
             }
         }
     }

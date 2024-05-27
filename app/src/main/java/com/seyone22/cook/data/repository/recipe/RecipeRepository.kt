@@ -8,6 +8,7 @@ interface RecipeRepository {
     suspend fun deleteRecipe(recipe: Recipe)
     suspend fun updateRecipe(recipe: Recipe)
 
-    suspend fun getRecipeById(recipeId: Int): Flow<Recipe?>
+    suspend fun getRecipeById(recipeId: Long): Flow<Recipe?>
     suspend fun getAllRecipes(): Flow<List<Recipe?>>
+    suspend fun incrementTimesMade(recipeId: Long)
 }

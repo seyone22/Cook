@@ -1,7 +1,9 @@
 package com.seyone22.cook.ui.screen.home.detail
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -13,13 +15,22 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.CompareArrows
+import androidx.compose.material.icons.filled.AddShoppingCart
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.FitScreen
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.RiceBowl
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.ThumbUpOffAlt
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
@@ -108,79 +119,64 @@ fun RecipeDetailScreen(
     }
 
     if (showDeleteConfirmationDialog) {
-        DeleteConfirmationDialog(
-            onConfirm = {
-                // Handle delete action
-                showDeleteConfirmationDialog = false
-                viewModel.deleteRecipe(recipe!!)
-                navController.popBackStack()
-            },
-            onDismiss = {
-                showDeleteConfirmationDialog = false
-            }
-        )
+        DeleteConfirmationDialog(onConfirm = {
+            // Handle delete action
+            showDeleteConfirmationDialog = false
+            viewModel.deleteRecipe(recipe!!)
+            navController.popBackStack()
+        }, onDismiss = {
+            showDeleteConfirmationDialog = false
+        })
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                modifier = Modifier.padding(0.dp),
-                title = { Text(text = recipe?.name ?: "") },
-                scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
-                navigationIcon = {
+    Scaffold(topBar = {
+        TopAppBar(
+            modifier = Modifier.padding(0.dp),
+            title = { Text(text = recipe?.name ?: "") },
+            scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
+            navigationIcon = {
+                Icon(
+                    modifier = Modifier
+                        .padding(16.dp, 0.dp, 24.dp, 0.dp)
+                        .clickable { navController.popBackStack() },
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = null,
+                )
+            },
+            actions = @Composable {
+                // Share button
+                IconButton(onClick = {
+                    // Handle share action
+                }) {
+                    Icon(imageVector = Icons.Default.Share, contentDescription = "Share")
+                }
+
+                // Overflow menu
+                var expanded by remember { mutableStateOf(false) }
+
+                IconButton(onClick = { expanded = true }) {
                     Icon(
-                        modifier = Modifier
-                            .padding(16.dp, 0.dp, 24.dp, 0.dp)
-                            .clickable { navController.popBackStack() },
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = null,
+                        imageVector = Icons.Default.MoreVert, contentDescription = "More options"
                     )
-                },
-                actions = @Composable {
-                    // Share button
-                    IconButton(onClick = {
-                        // Handle share action
-                    }) {
-                        Icon(imageVector = Icons.Default.Share, contentDescription = "Share")
-                    }
+                }
 
-                    // Overflow menu
-                    var expanded by remember { mutableStateOf(false) }
-
-                    IconButton(onClick = { expanded = true }) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "More options"
-                        )
-                    }
-
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Edit") },
-                            onClick = {
-                                expanded = false
-                                // Handle edit action
-                                if (recipe != null) {
-                                    navController.navigate("Edit Recipe/${recipe.id}")
-                                }
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Delete") },
-                            onClick = {
-                                expanded = false
-                                // Handle delete action
-                                showDeleteConfirmationDialog = true
-                            }
-                        )
-                    }
-                },
-            )
-        }
-    ) {
+                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    DropdownMenuItem(text = { Text("Edit") }, onClick = {
+                        expanded = false
+                        // Handle edit action
+                        if (recipe != null) {
+                            navController.navigate("Edit Recipe/${recipe.id}")
+                        }
+                    })
+                    DropdownMenuItem(text = { Text("Delete") }, onClick = {
+                        expanded = false
+                        // Handle delete action
+                        showDeleteConfirmationDialog = true
+                    })
+                }
+            },
+        )
+    }) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -190,7 +186,7 @@ fun RecipeDetailScreen(
                 item {
                     Column(modifier = Modifier.padding(8.dp, 0.dp)) {
                         HeaderImage(bitmap = bitmap.asImageBitmap(), recipe.name)
-                        RecipeDetail(recipe)
+                        RecipeDetail(viewModel, recipe)
                     }
                 }
             }
@@ -233,52 +229,93 @@ fun HeaderImage(bitmap: ImageBitmap, title: String) {
                 .height(240.dp)
                 .clip(RoundedCornerShape(24.dp))
         )
-
         Text(
             text = title,
             color = Color.White,
             style = MaterialTheme.typography.displayMedium,
-            modifier = Modifier
+            modifier = Modifier.padding(16.dp, 0.dp, 16.dp, 16.dp)
                 .align(Alignment.BottomStart)
-                .padding(16.dp, 0.dp, 16.dp, 16.dp)
         )
     }
+
 }
 
 @Composable
-fun RecipeDetail(recipe: Recipe) {
+fun RecipeDetail(viewModel: HomeViewModel, recipe: Recipe) {
     val context = LocalContext.current
     Column(
         modifier = Modifier.padding(8.dp, 0.dp, 8.dp, 16.dp)
     ) {
-        Text(
-            modifier = Modifier.padding(0.dp, 8.dp),
-            text = "${recipe.cookTime} mins to cook | ${recipe.prepTime} mins to prepare | ${recipe.servingSize} servings",
-            style = MaterialTheme.typography.labelLarge
+        RecipeOptionRow(
+            viewModel = viewModel, recipe = recipe, context = context
         )
-        Text(
-            modifier = Modifier.padding(0.dp, 8.dp),
-            text = recipe.description ?: "",
-            style = MaterialTheme.typography.bodyLarge
-        )
-        TextButton(
-            modifier = Modifier.padding(0.dp, 0.dp),
-            content = {
-                Icon(
-                    modifier = Modifier.padding(0.dp,0.dp,4.dp,0.dp),
-                    imageVector = Icons.Default.Link,
-                    contentDescription = null,
-                )
-                Text(text = (recipe.reference ?: ""), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                      },
-            onClick = {
-                val urlIntent = Intent(
-                    Intent.ACTION_VIEW,
-                    Uri.parse(recipe.reference)
-                )
-                context.startActivity(urlIntent)
-            }
-        )
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+            Icon(
+                imageVector = Icons.Default.Timer,
+                contentDescription = null,
+                modifier = Modifier.height(20.dp)
+            )
+            Text(
+                text = "Cook ${recipe.cookTime}min",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(start = 4.dp, end = 8.dp)
+            )
+
+            Icon(
+                imageVector = Icons.Default.Timer,
+                contentDescription = null,
+                modifier = Modifier.height(20.dp)
+            )
+            Text(
+                text = "Prep ${recipe.prepTime}min",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(start = 4.dp, end = 8.dp)
+            )
+
+            Icon(
+                imageVector = Icons.Default.RiceBowl,
+                contentDescription = null,
+                modifier = Modifier.height(20.dp)
+            )
+            Text(
+                text = "Serves ${recipe.servingSize}",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(start = 4.dp, end = 8.dp)
+            )
+
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                modifier = Modifier.height(20.dp)
+            )
+            Text(
+                text = "${recipe.timesMade} times",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(start = 4.dp)
+            )
+        }
+        if(recipe.description != null) {
+            Text(
+                modifier = Modifier.padding(0.dp, 8.dp),
+                text = recipe.description,
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+        TextButton(modifier = Modifier.padding(0.dp, 0.dp), content = {
+            Icon(
+                modifier = Modifier.padding(0.dp, 0.dp, 4.dp, 0.dp),
+                imageVector = Icons.Default.Link,
+                contentDescription = null,
+            )
+            Text(
+                text = (recipe.reference ?: ""), maxLines = 1, overflow = TextOverflow.Ellipsis
+            )
+        }, onClick = {
+            val urlIntent = Intent(
+                Intent.ACTION_VIEW, Uri.parse(recipe.reference)
+            )
+            context.startActivity(urlIntent)
+        })
     }
 }
 
@@ -308,11 +345,9 @@ fun IngredientsList(
                     modifier = Modifier.padding(0.dp),
                 ) {
                     val checked = remember { mutableStateOf(false) }
-                    Checkbox(
-                        modifier = Modifier.height(32.dp),
+                    Checkbox(modifier = Modifier.height(32.dp),
                         checked = checked.value,
-                        onCheckedChange = { checked.value = !checked.value }
-                    )
+                        onCheckedChange = { checked.value = !checked.value })
                     Text(
                         modifier = Modifier
                             .padding(4.dp, 0.dp, 16.dp, 0.dp)
@@ -341,10 +376,59 @@ fun IngredientsList(
 }
 
 @Composable
+fun RecipeOptionRow(viewModel: HomeViewModel, context: Context, recipe: Recipe) {
+    LazyRow(
+    ) {
+        item {
+            AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp), onClick = {
+                viewModel.incrementMakeCounter(recipe.id)
+                viewModel.fetchData()
+                Toast.makeText(context, "You made it another time!", Toast.LENGTH_SHORT).show()
+            }, label = { Text("I made it!") }, leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.ThumbUpOffAlt, contentDescription = null
+                )
+            })
+        }
+        item {
+            AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
+                onClick = { },
+                label = { Text("Scale Recipe") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.CompareArrows,
+                        contentDescription = null
+                    )
+                })
+        }
+        item {
+            AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
+                onClick = { /*TODO*/ },
+                label = { Text("Enable Cooking Mode") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.FitScreen, contentDescription = null
+                    )
+                })
+        }
+        item {
+            AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
+                onClick = { /*TODO*/ },
+                label = { Text("Add all to Shopping list") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.AddShoppingCart, contentDescription = null
+                    )
+                })
+        }
+    }
+}
+
+
+@Composable
 fun InstructionList(list: List<Instruction?>) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
             modifier = Modifier.padding(16.dp, 0.dp)
@@ -379,8 +463,7 @@ fun InstructionList(list: List<Instruction?>) {
 
 @Composable
 fun DeleteConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = { onDismiss() },
+    AlertDialog(onDismissRequest = { onDismiss() },
         title = { Text(text = "Delete Recipe") },
         text = { Text(text = "Are you sure you want to delete this recipe?") },
         confirmButton = {
@@ -392,6 +475,5 @@ fun DeleteConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
-        }
-    )
+        })
 }

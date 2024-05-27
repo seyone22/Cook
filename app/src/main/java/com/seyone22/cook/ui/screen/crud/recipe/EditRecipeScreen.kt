@@ -57,6 +57,8 @@ import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Instruction
 import com.seyone22.cook.data.model.RecipeImage
 import com.seyone22.cook.data.model.RecipeIngredient
+import com.seyone22.cook.data.model.toRecipe
+import com.seyone22.cook.data.model.toRecipeDetails
 import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
@@ -87,7 +89,7 @@ fun EditRecipeScreen(
     val dataImages = data.images
     val dataRecipeIngredients = data.recipeIngredients
 
-    var recipe by remember { mutableStateOf(dataRecipe) }
+    var recipe by remember { mutableStateOf(dataRecipe?.toRecipeDetails()) }
     var images by remember { mutableStateOf(listOf<RecipeImage>()) }
     var instructions by remember { mutableStateOf(listOf<Instruction>()) }
     var recipeIngredients by remember { mutableStateOf(listOf<RecipeIngredient>()) }
@@ -97,7 +99,7 @@ fun EditRecipeScreen(
     // Populate fields with existing data when recipe data is loaded
     LaunchedEffect(dataRecipe) {
         dataRecipe?.let {
-            recipe = it
+            recipe = it.toRecipeDetails()
         }
         images = dataImages.map { i -> i!! }
         instructions = dataInstructions.map { i -> i!! }
@@ -131,7 +133,7 @@ fun EditRecipeScreen(
                     content = { Text("Save") },
                     onClick = {
                         viewModel.updateRecipe(
-                            recipe!!,
+                            recipe!!.toRecipe(),
                             images,
                             instructions.map { i -> i.copy(recipeId = recipeId) },
                             recipeIngredients.map { i -> i.copy(recipeId = recipeId) },
@@ -214,28 +216,19 @@ fun EditRecipeScreen(
                             )
                         }
                         OutlinedTextField(
-                            modifier = Modifier.width(310.dp),
+                            modifier = Modifier.width(230.dp).padding(end = 8.dp),
                             value = recipe?.name ?: "",
                             onValueChange = { recipe = recipe?.copy(name = it) },
                             label = { Text("Name") },
                             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
                         )
-                        Column(modifier = Modifier.align(Alignment.CenterVertically)) {
-                            IconButton(modifier = Modifier
-                                .width(48.dp)
-                                .height(48.dp),
-                                onClick = { showAltNames = !showAltNames },
-                                content = {
-                                    Icon(
-                                        imageVector = if (showAltNames) {
-                                            Icons.Default.ArrowDropUp
-                                        } else {
-                                            Icons.Default.ArrowDropDown
-                                        },
-                                        contentDescription = null,
-                                    )
-                                })
-                        }
+                        OutlinedTextField(
+                            modifier = Modifier.width(72.dp),
+                            value = recipe?.timesMade.toString() ?: "",
+                            onValueChange = { recipe = recipe?.copy(timesMade = it) },
+                            label = { Text("Count") },
+                            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
+                        )
                     }
 
                     // Section for quick descriptions
@@ -247,7 +240,7 @@ fun EditRecipeScreen(
                         Row() {
                             OutlinedTextField(
                                 value = recipe?.prepTime.toString(),
-                                onValueChange = { recipe = recipe?.copy(prepTime = it.toInt()) },
+                                onValueChange = { recipe = recipe?.copy(prepTime = it) },
                                 label = { Text("Prep") },
                                 modifier = Modifier.width(100.dp),
                                 keyboardOptions = KeyboardOptions.Default.copy(
@@ -256,7 +249,7 @@ fun EditRecipeScreen(
                             )
                             OutlinedTextField(
                                 value = recipe?.cookTime.toString(),
-                                onValueChange = { recipe = recipe?.copy(cookTime = it.toInt()) },
+                                onValueChange = { recipe = recipe?.copy(cookTime = it) },
                                 label = { Text("Cook") },
                                 modifier = Modifier.width(100.dp),
                                 keyboardOptions = KeyboardOptions.Default.copy(
@@ -265,7 +258,7 @@ fun EditRecipeScreen(
                             )
                             OutlinedTextField(
                                 value = recipe?.servingSize.toString(),
-                                onValueChange = { recipe = recipe?.copy(servingSize = it.toInt()) },
+                                onValueChange = { recipe = recipe?.copy(servingSize = it) },
                                 label = { Text("Serves") },
                                 modifier = Modifier.width(100.dp),
                                 keyboardOptions = KeyboardOptions.Default.copy(
@@ -506,3 +499,5 @@ fun EditRecipeScreen(
         }
     }
 }
+
+

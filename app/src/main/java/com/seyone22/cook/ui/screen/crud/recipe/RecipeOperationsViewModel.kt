@@ -1,5 +1,6 @@
 package com.seyone22.cook.ui.screen.crud.recipe
 
+import android.accounts.Account
 import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
@@ -39,7 +40,7 @@ class RecipeOperationsViewModel(
         viewModelScope.launch {
             val measures = measureRepository.getAllMeasures().first()
             val ingredients = ingredientRepository.getAllIngredients().first()
-            val recipe = recipeRepository.getRecipeById(id.toInt()).first()
+            val recipe = recipeRepository.getRecipeById(id).first()
             val images = recipeImageRepository.getImagesForRecipe(id.toInt()).first()
             val instructions = instructionRepository.getInstructionsForRecipe(id.toInt()).first()
             val recipeIngredients = recipeIngredientRepository.getRecipeIngredientsForRecipe(id.toInt()).first()

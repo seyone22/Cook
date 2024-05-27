@@ -51,6 +51,12 @@ class HomeViewModel(
         }
     }
 
+    fun incrementMakeCounter(recipeId: Long) {
+        viewModelScope.launch {
+            recipeRepository.incrementTimesMade(recipeId)
+        }
+    }
+
 }
 
 data class HomeViewState(

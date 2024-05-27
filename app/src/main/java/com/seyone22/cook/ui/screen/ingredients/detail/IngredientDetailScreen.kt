@@ -12,12 +12,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AddShoppingCart
+import androidx.compose.material.icons.filled.AlternateEmail
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -60,6 +69,7 @@ import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
 import com.seyone22.cook.ui.screen.home.detail.DeleteConfirmationDialog
+import com.seyone22.cook.ui.screen.home.detail.HeaderImage
 import com.seyone22.cook.ui.screen.ingredients.IngredientsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -183,6 +193,7 @@ fun IngredientDetailScreen(
                 item {
                     Column(modifier = Modifier.padding(8.dp, 0.dp)) {
                         HeaderImage(bitmap = bitmap)
+                        IngredientOptionRow()
                         IngredientDetails(ingredient)
                     }
                 }
@@ -193,6 +204,83 @@ fun IngredientDetailScreen(
                 }
 
             }
+        }
+    }
+}
+
+@Composable
+fun IngredientOptionRow() {
+    var x: Boolean by remember { mutableStateOf(false) }
+
+    LazyRow(
+    ) {
+        if (x) {
+            item {
+                AssistChip(
+                    modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
+                    onClick = { x = false },
+                    label = { Text("Mark Ran Out") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.NotificationsNone,
+                            contentDescription = null
+                        )
+                    }
+                )
+            }
+        } else {
+            item {
+                AssistChip(
+                    modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
+                    onClick = { x = true },
+                    label = { Text("Mark Restocked") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = null
+                        )
+                    }
+                )
+            }
+        }
+        item {
+            AssistChip(
+                modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
+                onClick = { /*TODO*/ },
+                label = { Text("Add to Shopping list") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.AddShoppingCart,
+                        contentDescription = null
+                    )
+                }
+            )
+        }
+        item {
+            AssistChip(
+                modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
+                onClick = { /*TODO*/ },
+                label = { Text("Add Substitute") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.AlternateEmail,
+                        contentDescription = null
+                    )
+                }
+            )
+        }
+        item {
+            AssistChip(
+                modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
+                onClick = { /*TODO*/ },
+                label = { Text("Add Variant") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Tag,
+                        contentDescription = null
+                    )
+                }
+            )
         }
     }
 }

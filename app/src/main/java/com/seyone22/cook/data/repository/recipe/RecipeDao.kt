@@ -21,9 +21,10 @@ interface RecipeDao {
     @Query("SELECT * FROM recipes" +
             "   WHERE id = :recipeId" +
             "   ORDER BY name ASC")
-    fun getRecipeById(recipeId: Int): Flow<Recipe>
-
+    fun getRecipeById(recipeId: Long): Flow<Recipe>
     @Query("SELECT * FROM recipes" +
             "   ORDER BY name ASC")
     fun getAllRecipes(): Flow<List<Recipe>>
+    @Query("UPDATE recipes SET timesMade = timesMade + 1 WHERE id = :recipeId")
+    suspend fun incrementTimesMade(recipeId: Long)
 }
