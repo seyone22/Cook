@@ -1,4 +1,4 @@
-package com.seyone22.cook.ui.screen.crud
+package com.seyone22.cook.ui.screen.crud.ingredient
 
 import android.content.Context
 import android.net.Uri
@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.cancellation.CancellationException
 
-class AddIngredientViewModel(
+class IngredientOperationsViewModel(
     private val ingredientRepository: IngredientRepository,
     private val ingredientVariantRepository: IngredientVariantRepository,
     private val ingredientImageRepository: IngredientImageRepository,

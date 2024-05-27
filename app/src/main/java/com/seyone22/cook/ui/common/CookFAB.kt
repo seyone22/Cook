@@ -6,8 +6,8 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import com.seyone22.cook.ui.screen.crud.AddIngredientDestination
-import com.seyone22.cook.ui.screen.crud.AddRecipeDestination
+import com.seyone22.cook.ui.screen.crud.ingredient.AddIngredientDestination
+import com.seyone22.cook.ui.screen.crud.recipe.AddRecipeDestination
 import com.seyone22.cook.ui.screen.home.HomeDestination
 import com.seyone22.cook.ui.screen.ingredients.IngredientsDestination
 

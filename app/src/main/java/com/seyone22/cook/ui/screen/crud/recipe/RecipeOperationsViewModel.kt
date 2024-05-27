@@ -1,0 +1,199 @@
+package com.seyone22.cook.ui.screen.crud.recipe
+
+import android.content.Context
+import android.net.Uri
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.seyone22.cook.data.model.Ingredient
+import com.seyone22.cook.data.model.Instruction
+import com.seyone22.cook.data.model.Measure
+import com.seyone22.cook.data.model.Recipe
+import com.seyone22.cook.data.model.RecipeImage
+import com.seyone22.cook.data.model.RecipeIngredient
+import com.seyone22.cook.data.repository.ingredient.IngredientRepository
+import com.seyone22.cook.data.repository.instruction.InstructionRepository
+import com.seyone22.cook.data.repository.measure.MeasureRepository
+import com.seyone22.cook.data.repository.recipe.RecipeRepository
+import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
+import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientRepository
+import com.seyone22.cook.helper.ImageHelper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+class RecipeOperationsViewModel(
+    private val recipeRepository: RecipeRepository,
+    private val recipeImageRepository: RecipeImageRepository,
+    private val measureRepository: MeasureRepository,
+    private val instructionRepository: InstructionRepository,
+    private val ingredientRepository: IngredientRepository,
+    private val recipeIngredientRepository: RecipeIngredientRepository
+) : ViewModel() {
+    private val _addRecipeViewState = MutableStateFlow(AddRecipeViewState())
+    val addRecipeViewState: StateFlow<AddRecipeViewState> get() = _addRecipeViewState
+
+    fun fetchData(id: Long = -1) {
+        viewModelScope.launch {
+            val measures = measureRepository.getAllMeasures().first()
+            val ingredients = ingredientRepository.getAllIngredients().first()
+            val recipe = recipeRepository.getRecipeById(id.toInt()).first()
+            val images = recipeImageRepository.getImagesForRecipe(id.toInt()).first()
+            val instructions = instructionRepository.getInstructionsForRecipe(id.toInt()).first()
+            val recipeIngredients = recipeIngredientRepository.getRecipeIngredientsForRecipe(id.toInt()).first()
+            _addRecipeViewState.value = AddRecipeViewState(measures, ingredients, recipe, images, instructions, recipeIngredients)
+        }
+    }
+
+    fun saveRecipe(
+        recipe: Recipe,
+        images: List<Uri>?,
+        instructions: List<Instruction>,
+        recipeIngredients: List<RecipeIngredient>,
+        context: Context
+    ) {
+        viewModelScope.launch {
+            try {
+                // Insert the recipe into the database
+                val recipeId = recipeRepository.insertRecipe(recipe)
+
+                // Update the recipeId for each instruction and insert them into the database
+                val updatedInstructions = instructions.map { instruction ->
+                    instruction.copy(recipeId = recipeId)
+                }
+                updatedInstructions.forEach { instruction ->
+                    instructionRepository.insertInstruction(instruction)
+                }
+
+                // Update the recipeId for each recipeIngredient and insert them into the database
+                val updatedRecipeIngredients = recipeIngredients.map { recipeIngredient ->
+                    recipeIngredient.copy(recipeId = recipeId)
+                }
+                updatedRecipeIngredients.forEach { recipeIngredient ->
+                    recipeIngredientRepository.insertRecipeIngredient(recipeIngredient)
+                }
+
+                // Save the images
+                val imageHelper = ImageHelper(context)
+                images?.forEach { image ->
+                    val imageBitmap = imageHelper.loadImageFromUri(image)!!
+                    val imagePath = imageHelper.saveImageToInternalStorage(
+                        imageBitmap,
+                        "'recipe_${recipeId}_${System.currentTimeMillis()}.jpg"
+                    )
+                    val recipeImage =
+                        RecipeImage(recipeId = recipeId, imagePath = imagePath ?: "NULL")
+                    recipeImageRepository.insertRecipeImage(recipeImage)
+                }
+            } catch (e: Exception) {
+                // Handle any errors that might occur during the database operations
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun updateRecipe(
+        recipe: Recipe,
+        images: List<RecipeImage?>,
+        instructions: List<Instruction?>,
+        recipeIngredients: List<RecipeIngredient?>,
+        context: Context
+    ) {
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    val imageHelper = ImageHelper(context)
+
+                    // Update Recipe main details
+                    recipeRepository.updateRecipe(recipe)
+
+                    // Fetch current data for modification
+                    val currentInstructions =
+                        instructionRepository.getInstructionsForRecipe(recipe.id.toInt()).first()
+                    val currentRecipeIngredients =
+                        recipeIngredientRepository.getRecipeIngredientsForRecipe(recipe.id.toInt())
+                            .first()
+                    val currentImages =
+                        recipeImageRepository.getImagesForRecipe(recipe.id.toInt()).first()
+
+                    // Determine whether to add, update, or delete instructions
+                    val instructionsToAdd =
+                        instructions.filter { it != null && currentInstructions.find { i -> i!!.id == it.id } == null }
+                    val instructionsToUpdate =
+                        instructions.filter { it != null && currentInstructions.find { i -> i!!.id == it.id } != null }
+                    val instructionsToDelete =
+                        currentInstructions.filter { it != null && instructions.find { i -> i!!.id == it.id } == null }
+
+                    // Determine whether to add, update, or delete recipe ingredients
+                    val recipeIngredientsToAdd =
+                        recipeIngredients.filter { it != null && currentRecipeIngredients.find { i -> i!!.id == it.id } == null }
+                    val recipeIngredientsToUpdate =
+                        recipeIngredients.filter { it != null && currentRecipeIngredients.find { i -> i!!.id == it.id } != null }
+                    val recipeIngredientsToDelete =
+                        currentRecipeIngredients.filter { it != null && recipeIngredients.find { i -> i!!.id == it.id } == null }
+
+                    // Determine whether to add, update, or delete images
+                    val imagesToAdd =
+                        images.filter { it != null && currentImages.find { i -> i!!.id == it.id } == null }
+                    val imagesToUpdate =
+                        images.filter { it != null && currentImages.find { i -> i!!.id == it.id } != null }
+                    val imagesToDelete =
+                        currentImages.filter { it != null && images.find { i -> i!!.id == it.id } == null }
+
+                    // Operate on Instructions
+                    instructionsToAdd.forEach { instruction ->
+                        instructionRepository.insertInstruction(instruction!!)
+                    }
+                    instructionsToUpdate.forEach { instruction ->
+                        instructionRepository.updateInstruction(instruction!!)
+                    }
+                    instructionsToDelete.forEach { instruction ->
+                        instructionRepository.deleteInstruction(instruction!!)
+                    }
+
+                    // Operate on Recipe Ingredients
+                    recipeIngredientsToAdd.forEach { recipeIngredient ->
+                        recipeIngredientRepository.insertRecipeIngredient(recipeIngredient!!)
+                    }
+                    recipeIngredientsToUpdate.forEach { recipeIngredient ->
+                        recipeIngredientRepository.updateRecipeIngredient(recipeIngredient!!)
+                    }
+                    recipeIngredientsToDelete.forEach { recipeIngredient ->
+                        recipeIngredientRepository.deleteRecipeIngredient(recipeIngredient!!)
+                    }
+
+                    // Operate on Images
+                    imagesToAdd.forEach { image ->
+                        val imageBitmap = imageHelper.loadImageFromUri(Uri.parse(image!!.imagePath))!!
+                        val imagePath = imageHelper.saveImageToInternalStorage(
+                            imageBitmap,
+                            "'recipe_${recipe.id}_${System.currentTimeMillis()}.jpg"
+                        )
+                        val recipeImage =
+                            RecipeImage(recipeId = recipe.id, imagePath = imagePath ?: "NULL")
+                        recipeImageRepository.insertRecipeImage(recipeImage)
+                    }
+                    imagesToDelete.forEach { image ->
+                        recipeImageRepository.deleteRecipeImage(image!!)
+                        imageHelper.deleteImageFromInternalStorage(Uri.parse(image.imagePath))
+                    }
+                }
+            } catch (e: Exception) {
+                // Handle any errors that might occur during the database operations
+                e.printStackTrace()
+            }
+        }
+    }
+}
+
+// Define a data class to hold the list of measures
+data class AddRecipeViewState(
+    val measures: List<Measure?> = emptyList(),
+    val ingredients: List<Ingredient?> = emptyList(),
+    val recipe: Recipe? = null,
+    val images: List<RecipeImage?> = emptyList(),
+    val instructions: List<Instruction?> = emptyList(),
+    val recipeIngredients: List<RecipeIngredient?> = emptyList()
+)

@@ -6,7 +6,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -52,7 +51,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat.startActivity
 import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -68,7 +66,6 @@ import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
 import com.seyone22.cook.ui.screen.home.HomeViewModel
 import com.seyone22.cook.ui.screen.ingredients.detail.DeleteConfirmationDialog
-import com.seyone22.cook.ui.screen.ingredients.detail.HeaderImage
 import com.seyone22.cook.ui.screen.ingredients.detail.IngredientDetailDestination
 import java.io.File
 
@@ -139,7 +136,7 @@ fun RecipeDetailScreen(
                         contentDescription = null,
                     )
                 },
-                actions = @androidx.compose.runtime.Composable {
+                actions = @Composable {
                     // Share button
                     IconButton(onClick = {
                         // Handle share action
@@ -166,6 +163,9 @@ fun RecipeDetailScreen(
                             onClick = {
                                 expanded = false
                                 // Handle edit action
+                                if (recipe != null) {
+                                    navController.navigate("Edit Recipe/${recipe.id}")
+                                }
                             }
                         )
                         DropdownMenuItem(

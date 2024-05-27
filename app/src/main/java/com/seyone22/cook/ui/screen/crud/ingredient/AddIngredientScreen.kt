@@ -1,4 +1,4 @@
-package com.seyone22.cook.ui.screen.crud
+package com.seyone22.cook.ui.screen.crud.ingredient
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -37,9 +37,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -54,57 +54,40 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Ingredient
-import com.seyone22.cook.data.model.IngredientImage
 import com.seyone22.cook.data.model.IngredientVariant
 import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
 
-object EditIngredientDestination : NavigationDestination {
-    override val route = "Edit Ingredient"
+object AddIngredientDestination : NavigationDestination {
+    override val route = "Add Ingredient"
     override val titleRes = R.string.app_name
     override val routeId = 10
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditIngredientScreen(
-    ingredientId: Long,
-    viewModel: AddIngredientViewModel = viewModel(factory = AppViewModelProvider.Factory),
+fun AddIngredientScreen(
+    viewModel: IngredientOperationsViewModel = viewModel(factory = AppViewModelProvider.Factory),
     navController: NavController,
 ) {
-    val context = LocalContext.current
-
-    // Fetch existing ingredient data based on the provided ingredientId
-    LaunchedEffect(ingredientId) {
-        viewModel.fetchData(ingredientId)
-    }
+    viewModel.fetchData()
 
     val data by viewModel.addIngredientViewState.collectAsState()
-    val ingredient = data.ingredient
-    val dataVariants = data.variants
-    val dataPhotos = data.photos
 
-
+    val context = LocalContext.current
     var nameEn by remember { mutableStateOf("") }
     var nameSi by remember { mutableStateOf("") }
     var nameTa by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var showAltNames by remember { mutableStateOf(false) }
-    var photos by remember { mutableStateOf(listOf<IngredientImage>()) }
-    var variants by remember { mutableStateOf(listOf<IngredientVariant>()) }
-    var measuresExpanded by remember { mutableStateOf(false) }
-
-    // Populate fields with existing data when ingredient data is loaded
-    LaunchedEffect(ingredient) {
-        ingredient?.let {
-            nameEn = it.nameEn
-            nameSi = it.nameSi
-            nameTa = it.nameTa
-            description = it.description ?: ""
-        }
-        photos = dataPhotos.map { i -> i!! }
-        variants = dataVariants.map { i -> i!! }
+    var photos by remember { mutableStateOf(listOf<Uri>()) }
+    val variants = remember {
+        mutableStateListOf(
+            IngredientVariant(
+                brand = "", ingredientId = 0, price = 0.0, type = "", variantName = "", quantity = 0, unitId = 0
+            )
+        )
     }
 
     // Launcher for selecting images
@@ -112,7 +95,7 @@ fun EditIngredientScreen(
         contract = ActivityResultContracts.PickMultipleVisualMedia(),
     ) { uris: List<Uri> ->
         uris.forEach { uri ->
-            photos = photos + IngredientImage(imagePath = uri.toString(), ingredientId = ingredientId)
+            photos = photos + uri
         }
     }
     val imageHelper = ImageHelper(context)
@@ -121,7 +104,7 @@ fun EditIngredientScreen(
         topBar = {
             TopAppBar(
                 modifier = Modifier.padding(0.dp),
-                title = { Text(text = "Edit Ingredient") },
+                title = { Text(text = "Add Ingredient") },
                 navigationIcon = {
                     Icon(
                         modifier = Modifier
@@ -134,15 +117,14 @@ fun EditIngredientScreen(
                     Button(modifier = Modifier.padding(24.dp, 0.dp, 16.dp, 0.dp),
                         content = { Text("Save") },
                         onClick = {
-                            viewModel.updateIngredient(
+                            viewModel.saveIngredient(
                                 Ingredient(
-                                    id = ingredientId,
                                     description = description,
                                     nameEn = nameEn,
                                     nameSi = nameSi,
                                     nameTa = nameTa,
                                 ),
-                                variants.map { i -> i.copy(ingredientId = ingredientId) },
+                                variants,
                                 photos,
                                 context
                             )
@@ -166,8 +148,8 @@ fun EditIngredientScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             item {
-                                photos.forEach { photo ->
-                                    val bitmap = imageHelper.loadImageFromUri(Uri.parse(photo.imagePath))
+                                photos.forEach { uri ->
+                                    val bitmap = imageHelper.loadImageFromUri(uri)
                                     bitmap?.let {
                                         Row(
                                             modifier = Modifier
@@ -175,7 +157,7 @@ fun EditIngredientScreen(
                                                 .size(100.dp)
                                                 .align(Alignment.CenterHorizontally)
                                         ) {
-                                            IconButton(onClick = { photos = photos - photo },
+                                            IconButton(onClick = { photos = photos - uri },
                                                 modifier = Modifier
                                                     .align(Alignment.Top)
                                                     .size(24.dp),
@@ -198,11 +180,8 @@ fun EditIngredientScreen(
                         }
 
                         TextButton(onClick = {
-                            imagePickerLauncher.launch(
-                                PickVisualMediaRequest(
-                                    ActivityResultContracts.PickVisualMedia.ImageOnly
-                                )
-                            )
+                            imagePickerLauncher.launch(PickVisualMediaRequest(
+                                ActivityResultContracts.PickVisualMedia.ImageOnly))
                         }) {
                             Icon(imageVector = Icons.Filled.Add, contentDescription = null)
                             Text(text = "Add Photo")
@@ -290,6 +269,8 @@ fun EditIngredientScreen(
 
                     // Section for Variants
                     variants.forEachIndexed { index, variant ->
+                        var measuresExpanded by remember { mutableStateOf(false) }
+
                         Column {
                             Row(
                                 modifier = Modifier.fillMaxWidth()
@@ -305,24 +286,15 @@ fun EditIngredientScreen(
                                     modifier = Modifier.width(310.dp),
                                     value = variant.variantName,
                                     onValueChange = { newVariantName ->
-                                        variants = variants.mapIndexed { i, variant ->
-                                            if (i == index) {
-                                                variant.copy(variantName = newVariantName)
-                                            } else {
-                                                variant
-                                            }
-                                        }
+                                        variants[index] = variant.copy(variantName = newVariantName)
                                     },
                                     label = { Text("Name") },
                                 )
                                 Column(modifier = Modifier.align(Alignment.CenterVertically)) {
                                     IconButton(modifier = Modifier
-
                                         .width(48.dp)
                                         .height(48.dp),
-                                        onClick = {
-                                            variants = variants.filterIndexed { i, _ -> i != index }
-                                        },
+                                        onClick = { variants.remove(variant) },
                                         content = {
                                             Icon(
                                                 imageVector = Icons.Default.Close,
@@ -337,29 +309,17 @@ fun EditIngredientScreen(
                                     .padding(36.dp, 0.dp, 0.dp, 0.dp)
                             ) {
                                 OutlinedTextField(
-                                    value = variant.brand ?: "",
+                                    value = variant.brand.toString(),
                                     onValueChange = { newVariantBrand ->
-                                        variants = variants.mapIndexed { i, variant ->
-                                            if (i == index) {
-                                                variant.copy(brand = newVariantBrand)
-                                            } else {
-                                                variant
-                                            }
-                                        }
+                                        variants[index] = variant.copy(brand = newVariantBrand)
                                     },
                                     label = { Text("Brand") },
                                     modifier = Modifier.fillMaxWidth()
                                 )
                                 OutlinedTextField(
-                                    value = variant.type ?: "",
+                                    value = variant.type.toString(),
                                     onValueChange = { newVariantType ->
-                                        variants = variants.mapIndexed { i, variant ->
-                                            if (i == index) {
-                                                variant.copy(type = newVariantType)
-                                            } else {
-                                                variant
-                                            }
-                                        }
+                                        variants[index] = variant.copy(type = newVariantType)
                                     },
                                     label = { Text("Type") },
                                     modifier = Modifier.fillMaxWidth()
@@ -368,13 +328,8 @@ fun EditIngredientScreen(
                                     OutlinedTextField(
                                         value = variant.price.toString(),
                                         onValueChange = { newVariantPrice ->
-                                            variants = variants.mapIndexed { i, variant ->
-                                                if (i == index) {
-                                                    variant.copy(price = newVariantPrice.toDouble())
-                                                } else {
-                                                    variant
-                                                }
-                                            }
+                                            variants[index] =
+                                                variant.copy(price = newVariantPrice.toDouble())
                                         },
                                         label = { Text("Price") },
                                         modifier = Modifier
@@ -388,13 +343,8 @@ fun EditIngredientScreen(
                                     OutlinedTextField(
                                         value = variant.quantity.toString(),
                                         onValueChange = { newVariantQuantity ->
-                                            variants = variants.mapIndexed { i, variant ->
-                                                if (i == index) {
-                                                    variant.copy(quantity = newVariantQuantity.toInt())
-                                                } else {
-                                                    variant
-                                                }
-                                            }
+                                            variants[index] =
+                                                variant.copy(quantity = newVariantQuantity.toInt())
                                         },
                                         label = { Text("Per") },
                                         modifier = Modifier
@@ -416,16 +366,13 @@ fun EditIngredientScreen(
                                                 .clickable(enabled = true) {
                                                     measuresExpanded = true
                                                 },
-                                            value = data.measures.find { m -> m?.id?.toInt() == variant.unitId.toInt() }?.abbreviation
-                                                ?: "",
+                                            value = data.measures.find { m -> m?.id?.toInt() == variant.unitId.toInt() }?.abbreviation ?: "",
                                             readOnly = true,
                                             onValueChange = { },
                                             label = { Text("") },
                                             singleLine = true,
                                             trailingIcon = {
-                                                ExposedDropdownMenuDefaults.TrailingIcon(
-                                                    expanded = measuresExpanded
-                                                )
+                                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = measuresExpanded)
                                             }
                                         )
 
@@ -438,13 +385,8 @@ fun EditIngredientScreen(
                                                     DropdownMenuItem(
                                                         text = { Text(measure.abbreviation) },
                                                         onClick = {
-                                                            variants = variants.mapIndexed { i, variant ->
-                                                                if (i == index) {
-                                                                    variant.copy(unitId = measure.id)
-                                                                } else {
-                                                                    variant
-                                                                }
-                                                            }
+                                                            variants[index] =
+                                                                variant.copy(unitId = measure.id)
                                                             measuresExpanded = false
                                                         }
                                                     )
@@ -457,16 +399,17 @@ fun EditIngredientScreen(
                         }
                     }
                     TextButton(onClick = {
-                        val newVariant = IngredientVariant(
-                            brand = "",
-                            ingredientId = 0,
-                            price = 0.0,
-                            type = "",
-                            variantName = "",
-                            quantity = 0,
-                            unitId = 0
+                        variants.add(
+                            IngredientVariant(
+                                brand = "",
+                                ingredientId = 0,
+                                price = 0.0,
+                                type = "",
+                                variantName = "",
+                                quantity = 0,
+                                unitId = 0
+                            )
                         )
-                        variants = variants + newVariant
                     }) {
                         Icon(imageVector = Icons.Filled.Add, contentDescription = null)
                         Text(text = "Add Variant")
