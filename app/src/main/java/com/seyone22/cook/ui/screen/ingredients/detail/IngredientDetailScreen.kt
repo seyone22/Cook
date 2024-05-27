@@ -193,7 +193,7 @@ fun IngredientDetailScreen(
                 item {
                     Column(modifier = Modifier.padding(8.dp, 0.dp)) {
                         HeaderImage(bitmap = bitmap)
-                        IngredientOptionRow()
+                        IngredientOptionRow(viewModel, ingredient)
                         IngredientDetails(ingredient)
                     }
                 }
@@ -202,15 +202,14 @@ fun IngredientDetailScreen(
                 Column(modifier = Modifier.padding(8.dp, 0.dp)) {
                     VariantsList(variants, measures)
                 }
-
             }
         }
     }
 }
 
 @Composable
-fun IngredientOptionRow() {
-    var x: Boolean by remember { mutableStateOf(false) }
+fun IngredientOptionRow(viewModel: IngredientsViewModel, ingredient: Ingredient) {
+    var x: Boolean by remember { mutableStateOf(ingredient.stocked) }
 
     LazyRow(
     ) {
@@ -218,7 +217,10 @@ fun IngredientOptionRow() {
             item {
                 AssistChip(
                     modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
-                    onClick = { x = false },
+                    onClick = {
+                        x = false
+                        viewModel.updateStock(ingredient.copy(stocked = false))
+                              },
                     label = { Text("Mark Ran Out") },
                     leadingIcon = {
                         Icon(
@@ -232,7 +234,11 @@ fun IngredientOptionRow() {
             item {
                 AssistChip(
                     modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
-                    onClick = { x = true },
+                    onClick = {
+                        x = true
+                        viewModel.updateStock(ingredient.copy(stocked = true))
+
+                    },
                     label = { Text("Mark Restocked") },
                     leadingIcon = {
                         Icon(

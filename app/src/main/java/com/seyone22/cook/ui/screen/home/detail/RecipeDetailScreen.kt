@@ -368,12 +368,13 @@ fun IngredientsList(
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary
             )
-            list.forEach { ingredient ->
+            list.forEach { recipeIngredient ->
                 Row(
                     modifier = Modifier.padding(0.dp),
                 ) {
-                    val checked = remember { mutableStateOf(false) }
+                    val checked = remember { mutableStateOf(ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.stocked ?: false) }
                     Checkbox(modifier = Modifier.height(32.dp),
+                        enabled = !(ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.stocked ?: false),
                         checked = checked.value,
                         onCheckedChange = { checked.value = !checked.value })
                     Text(modifier = Modifier
@@ -381,9 +382,9 @@ fun IngredientsList(
                         .align(Alignment.CenterVertically)
                         .width(160.dp)
                         .clickable {
-                            navController.navigate("${IngredientDetailDestination.route}/${ingredient?.ingredientId}")
+                            navController.navigate("${IngredientDetailDestination.route}/${recipeIngredient?.ingredientId}")
                         },
-                        text = ingredients.find { i -> i?.id == ingredient?.ingredientId }?.nameEn
+                        text = ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.nameEn
                             ?: "",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -392,7 +393,7 @@ fun IngredientsList(
                         modifier = Modifier
                             .padding(4.dp, 0.dp, 16.dp, 0.dp)
                             .align(Alignment.CenterVertically),
-                        text = "${String.format("%.2f", (ingredient?.quantity?.div(serves))?.times(scaleFactor)?.toFloat())} ${measures.find { m -> m?.id == ingredient?.measureId }?.abbreviation}",
+                        text = "${String.format("%.2f", (recipeIngredient?.quantity?.div(serves))?.times(scaleFactor)?.toFloat())} ${measures.find { m -> m?.id == recipeIngredient?.measureId }?.abbreviation}",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )

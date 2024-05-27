@@ -49,6 +49,12 @@ class IngredientsViewModel(
             return false
         }
     }
+
+    fun updateStock(ingredient: Ingredient) {
+        viewModelScope.launch {
+            ingredientRepository.updateIngredient(ingredient)
+        }
+    }
 }
 
 
