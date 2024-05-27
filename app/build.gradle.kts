@@ -15,7 +15,7 @@ android {
         minSdk = 30
         targetSdk = 34
         versionCode = 1
-        versionName = "Cook v1.0.0-beta2"
+        versionName = "Cook v1.0.0-beta4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
