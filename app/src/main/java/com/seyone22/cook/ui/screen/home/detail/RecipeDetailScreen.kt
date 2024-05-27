@@ -67,6 +67,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -342,22 +343,33 @@ fun RecipeDetail(viewModel: HomeViewModel, recipe: Recipe, onScaleClick: () -> U
                 text = recipe.description,
                 style = MaterialTheme.typography.bodyLarge
             )
-        }
-        TextButton(modifier = Modifier.padding(0.dp, 0.dp), content = {
-            Icon(
-                modifier = Modifier.padding(0.dp, 0.dp, 4.dp, 0.dp),
-                imageVector = Icons.Default.Link,
-                contentDescription = null,
-            )
+        } else {
             Text(
-                text = (recipe.reference ?: ""), maxLines = 1, overflow = TextOverflow.Ellipsis
+                modifier = Modifier
+                    .padding(8.dp)
+                    .align(Alignment.CenterHorizontally),
+                text = "No description given.",
+                fontStyle = FontStyle.Italic,
+                color = Color.Gray
             )
-        }, onClick = {
-            val urlIntent = Intent(
-                Intent.ACTION_VIEW, Uri.parse(recipe.reference)
-            )
-            context.startActivity(urlIntent)
-        })
+        }
+        if (recipe.reference?.isNotBlank() == true && recipe.reference.isNotEmpty()) {
+            TextButton(modifier = Modifier.padding(0.dp, 0.dp), content = {
+                Icon(
+                    modifier = Modifier.padding(0.dp, 0.dp, 4.dp, 0.dp),
+                    imageVector = Icons.Default.Link,
+                    contentDescription = null,
+                )
+                Text(
+                    text = (recipe.reference), maxLines = 1, overflow = TextOverflow.Ellipsis
+                )
+            }, onClick = {
+                val urlIntent = Intent(
+                    Intent.ACTION_VIEW, Uri.parse(recipe.reference)
+                )
+                context.startActivity(urlIntent)
+            })
+        }
     }
 }
 
