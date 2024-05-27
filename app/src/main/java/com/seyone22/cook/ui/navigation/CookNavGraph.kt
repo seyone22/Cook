@@ -35,7 +35,6 @@ import com.seyone22.cook.ui.screen.ingredients.detail.IngredientDetailScreen
 fun CookNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    setTopBarAction: (Int) -> Unit,
     innerPadding: PaddingValues
 ) {
     NavHost(
