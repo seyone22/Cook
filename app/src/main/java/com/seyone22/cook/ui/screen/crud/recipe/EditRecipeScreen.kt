@@ -1,4 +1,4 @@
-package com.seyone22.cook.ui.screen.crud
+package com.seyone22.cook.ui.screen.crud.recipe
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -19,6 +19,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Tag
@@ -36,9 +38,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -53,64 +55,68 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Instruction
-import com.seyone22.cook.data.model.Recipe
+import com.seyone22.cook.data.model.RecipeImage
 import com.seyone22.cook.data.model.RecipeIngredient
 import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
 
-object AddRecipeDestination : NavigationDestination {
-    override val route = "Add Recipe"
+object EditRecipeDestination : NavigationDestination {
+    override val route = "Edit Recipe"
     override val titleRes = R.string.app_name
     override val routeId = 10
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddRecipeScreen(
-    viewModel: AddRecipeViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    navController: NavController
+fun EditRecipeScreen(
+    recipeId: Long,
+    viewModel: RecipeOperationsViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    navController: NavController,
 ) {
-    viewModel.fetchData()
+    val context = LocalContext.current
+
+    // Fetch existing recipe data based on the provided recipeId
+    LaunchedEffect(recipeId) {
+        viewModel.fetchData(recipeId)
+    }
 
     val data by viewModel.addRecipeViewState.collectAsState()
+    val dataRecipe = data.recipe
+    val dataInstructions = data.instructions
+    val dataImages = data.images
+    val dataRecipeIngredients = data.recipeIngredients
 
-    val context = LocalContext.current
-    var name by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var cookTime by remember { mutableStateOf("") }
-    var prepTime by remember { mutableStateOf("") }
-    var servingSize by remember { mutableStateOf("") }
-    var reference by remember { mutableStateOf("") }
-    var photos by remember { mutableStateOf(listOf<Uri>()) }
-    val instructions = remember {
-        mutableStateListOf(
-            Instruction(
-                description = "", stepNumber = 1, recipeId = 0
-            )
-        )
+    var recipe by remember { mutableStateOf(dataRecipe) }
+    var images by remember { mutableStateOf(listOf<RecipeImage>()) }
+    var instructions by remember { mutableStateOf(listOf<Instruction>()) }
+    var recipeIngredients by remember { mutableStateOf(listOf<RecipeIngredient>()) }
+
+    var showAltNames by remember { mutableStateOf(false) }
+
+    // Populate fields with existing data when recipe data is loaded
+    LaunchedEffect(dataRecipe) {
+        dataRecipe?.let {
+            recipe = it
+        }
+        images = dataImages.map { i -> i!! }
+        instructions = dataInstructions.map { i -> i!! }
+        recipeIngredients = dataRecipeIngredients.map { i -> i!! }
     }
-    val recipeIngredients = remember {
-        mutableStateListOf(
-            RecipeIngredient(
-                ingredientId = -1, measureId = -1, quantity = 0.0, recipeId = -1
-            )
-        )
-    }
+
     // Launcher for selecting images
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(),
     ) { uris: List<Uri> ->
         uris.forEach { uri ->
-            photos = photos + uri
+            images = images + RecipeImage(imagePath = uri.toString(), recipeId = recipeId)
         }
     }
     val imageHelper = ImageHelper(context)
 
-
     Scaffold(topBar = {
         TopAppBar(modifier = Modifier.padding(0.dp),
-            title = { Text(text = "Add Recipe") },
+            title = { Text(text = "Edit Recipe") },
             navigationIcon = {
                 Icon(
                     modifier = Modifier
@@ -124,21 +130,18 @@ fun AddRecipeScreen(
                 Button(modifier = Modifier.padding(24.dp, 0.dp, 16.dp, 0.dp),
                     content = { Text("Save") },
                     onClick = {
-                        viewModel.saveRecipe(
-                            Recipe(
-                                name = name,
-                                description = description,
-                                cookTime = if (cookTime.isEmpty()) 0 else cookTime.toInt(),
-                                prepTime = if (prepTime.isEmpty()) 0 else prepTime.toInt(),
-                                servingSize = if (servingSize.isEmpty()) 1 else servingSize.toInt(),
-                                reference = reference
-                            ), photos, instructions, recipeIngredients, context
+                        viewModel.updateRecipe(
+                            recipe!!,
+                            images,
+                            instructions.map { i -> i.copy(recipeId = recipeId) },
+                            recipeIngredients.map { i -> i.copy(recipeId = recipeId) },
+                            context
                         )
                         navController.popBackStack()
                     })
             })
-    }) {
-        LazyColumn(modifier = Modifier.padding(it)) {
+    }) { paddingValues ->
+        LazyColumn(modifier = Modifier.padding(paddingValues)) {
             item {
                 Column(modifier = Modifier.padding(12.dp, 0.dp)) {
                     // Section for Photos
@@ -153,8 +156,9 @@ fun AddRecipeScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             item {
-                                photos.forEach { uri ->
-                                    val bitmap = imageHelper.loadImageFromUri(uri)
+                                images.forEach { image ->
+                                    val bitmap =
+                                        imageHelper.loadImageFromUri(Uri.parse(image.imagePath))
                                     bitmap?.let {
                                         Row(
                                             modifier = Modifier
@@ -162,7 +166,7 @@ fun AddRecipeScreen(
                                                 .size(100.dp)
                                                 .align(Alignment.CenterHorizontally)
                                         ) {
-                                            IconButton(onClick = { photos = photos - uri },
+                                            IconButton(onClick = { images = images - image },
                                                 modifier = Modifier
                                                     .align(Alignment.Top)
                                                     .size(24.dp),
@@ -211,14 +215,30 @@ fun AddRecipeScreen(
                         }
                         OutlinedTextField(
                             modifier = Modifier.width(310.dp),
-                            value = name,
-                            onValueChange = { name = it },
+                            value = recipe?.name ?: "",
+                            onValueChange = { recipe = recipe?.copy(name = it) },
                             label = { Text("Name") },
                             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
                         )
+                        Column(modifier = Modifier.align(Alignment.CenterVertically)) {
+                            IconButton(modifier = Modifier
+                                .width(48.dp)
+                                .height(48.dp),
+                                onClick = { showAltNames = !showAltNames },
+                                content = {
+                                    Icon(
+                                        imageVector = if (showAltNames) {
+                                            Icons.Default.ArrowDropUp
+                                        } else {
+                                            Icons.Default.ArrowDropDown
+                                        },
+                                        contentDescription = null,
+                                    )
+                                })
+                        }
                     }
 
-                    // Section for description
+                    // Section for quick descriptions
                     Column(
                         modifier = Modifier
                             .width(346.dp)
@@ -226,8 +246,8 @@ fun AddRecipeScreen(
                     ) {
                         Row() {
                             OutlinedTextField(
-                                value = prepTime,
-                                onValueChange = { prepTime = it },
+                                value = recipe?.prepTime.toString(),
+                                onValueChange = { recipe = recipe?.copy(prepTime = it.toInt()) },
                                 label = { Text("Prep") },
                                 modifier = Modifier.width(100.dp),
                                 keyboardOptions = KeyboardOptions.Default.copy(
@@ -235,8 +255,8 @@ fun AddRecipeScreen(
                                 )
                             )
                             OutlinedTextField(
-                                value = cookTime,
-                                onValueChange = { cookTime = it },
+                                value = recipe?.cookTime.toString(),
+                                onValueChange = { recipe = recipe?.copy(cookTime = it.toInt()) },
                                 label = { Text("Cook") },
                                 modifier = Modifier.width(100.dp),
                                 keyboardOptions = KeyboardOptions.Default.copy(
@@ -244,8 +264,8 @@ fun AddRecipeScreen(
                                 )
                             )
                             OutlinedTextField(
-                                value = servingSize,
-                                onValueChange = { servingSize = it },
+                                value = recipe?.servingSize.toString(),
+                                onValueChange = { recipe = recipe?.copy(servingSize = it.toInt()) },
                                 label = { Text("Serves") },
                                 modifier = Modifier.width(100.dp),
                                 keyboardOptions = KeyboardOptions.Default.copy(
@@ -254,16 +274,16 @@ fun AddRecipeScreen(
                             )
                         }
                         OutlinedTextField(
-                            value = description,
-                            onValueChange = { description = it },
+                            value = recipe?.description ?: "",
+                            onValueChange = { recipe = recipe?.copy(description = it) },
                             label = { Text("Description") },
                             modifier = Modifier.fillMaxWidth(),
                             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
                         )
                         OutlinedTextField(
                             modifier = Modifier.width(310.dp),
-                            value = reference,
-                            onValueChange = { reference = it },
+                            value = recipe?.reference ?: "",
+                            onValueChange = { recipe = recipe?.copy(reference = it) },
                             label = { Text("Reference URL") },
                             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
                         )
@@ -288,7 +308,8 @@ fun AddRecipeScreen(
                                     )
                                 }
                                 Row {
-                                    ExposedDropdownMenuBox(expanded = ingredientExpanded,
+                                    ExposedDropdownMenuBox(
+                                        expanded = ingredientExpanded,
                                         onExpandedChange = {
                                             ingredientExpanded = !ingredientExpanded
                                         }) {
@@ -315,8 +336,16 @@ fun AddRecipeScreen(
                                                 ingredient?.let {
                                                     DropdownMenuItem(text = { Text(ingredient.nameEn) },
                                                         onClick = {
-                                                            recipeIngredients[index] =
-                                                                recipeIngredient.copy(ingredientId = ingredient.id)
+                                                            recipeIngredients =
+                                                                recipeIngredients.mapIndexed { i, recipeIngredient ->
+                                                                    if (i == index) {
+                                                                        recipeIngredient.copy(
+                                                                            ingredientId = ingredient.id
+                                                                        )
+                                                                    } else {
+                                                                        recipeIngredient
+                                                                    }
+                                                                }
                                                             ingredientExpanded = false
                                                         })
                                                 }
@@ -328,8 +357,14 @@ fun AddRecipeScreen(
                                         value = recipeIngredient.quantity.toString(),
                                         singleLine = true,
                                         onValueChange = { newQty ->
-                                            recipeIngredients[index] =
-                                                recipeIngredient.copy(quantity = newQty.toDouble())
+                                            recipeIngredients =
+                                                recipeIngredients.mapIndexed { i, recipeIngredient ->
+                                                    if (i == index) {
+                                                        recipeIngredient.copy(quantity = newQty.toDouble())
+                                                    } else {
+                                                        recipeIngredient
+                                                    }
+                                                }
                                         },
                                         label = { Text("Qty") },
                                         keyboardOptions = KeyboardOptions.Default.copy(
@@ -337,18 +372,17 @@ fun AddRecipeScreen(
                                             keyboardType = KeyboardType.Number
                                         )
                                     )
-                                    ExposedDropdownMenuBox(
-                                        expanded = measuresExpanded,
-                                        onExpandedChange = { measuresExpanded = !measuresExpanded }
-                                    ) {
-                                        OutlinedTextField(
-                                            modifier = Modifier
-                                                .padding(0.dp, 8.dp)
-                                                .menuAnchor()
-                                                .width(80.dp)
-                                                .clickable(enabled = true) {
-                                                    measuresExpanded = true
-                                                },
+                                    ExposedDropdownMenuBox(expanded = measuresExpanded,
+                                        onExpandedChange = {
+                                            measuresExpanded = !measuresExpanded
+                                        }) {
+                                        OutlinedTextField(modifier = Modifier
+                                            .padding(0.dp, 8.dp)
+                                            .menuAnchor()
+                                            .width(80.dp)
+                                            .clickable(enabled = true) {
+                                                measuresExpanded = true
+                                            },
                                             value = data.measures.find { m -> m?.id?.toInt() == recipeIngredient.measureId.toInt() }?.abbreviation
                                                 ?: "",
                                             readOnly = true,
@@ -357,23 +391,26 @@ fun AddRecipeScreen(
                                             singleLine = true,
                                             trailingIcon = {
                                                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = measuresExpanded)
-                                            }
-                                        )
+                                            })
 
-                                        ExposedDropdownMenu(
-                                            expanded = measuresExpanded,
-                                            onDismissRequest = { measuresExpanded = false }
-                                        ) {
+                                        ExposedDropdownMenu(expanded = measuresExpanded,
+                                            onDismissRequest = { measuresExpanded = false }) {
                                             data.measures.forEach { measure ->
                                                 measure?.let {
-                                                    DropdownMenuItem(
-                                                        text = { Text(measure.abbreviation) },
+                                                    DropdownMenuItem(text = { Text(measure.abbreviation) },
                                                         onClick = {
-                                                            recipeIngredients[index] =
-                                                                recipeIngredient.copy(measureId = measure.id)
+                                                            recipeIngredients =
+                                                                recipeIngredients.mapIndexed { i, recipeIngredient ->
+                                                                    if (i == index) {
+                                                                        recipeIngredient.copy(
+                                                                            measureId = measure.id
+                                                                        )
+                                                                    } else {
+                                                                        recipeIngredient
+                                                                    }
+                                                                }
                                                             measuresExpanded = false
-                                                        }
-                                                    )
+                                                        })
                                                 }
                                             }
                                         }
@@ -383,7 +420,9 @@ fun AddRecipeScreen(
                                     IconButton(modifier = Modifier
                                         .width(48.dp)
                                         .height(48.dp),
-                                        onClick = { recipeIngredients.remove(recipeIngredient) },
+                                        onClick = {
+                                            recipeIngredients = recipeIngredients - recipeIngredient
+                                        },
                                         content = {
                                             Icon(
                                                 imageVector = Icons.Default.Close,
@@ -396,10 +435,8 @@ fun AddRecipeScreen(
                     }
 
                     TextButton(onClick = {
-                        recipeIngredients.add(
-                            RecipeIngredient(
-                                ingredientId = -1, measureId = -1, quantity = 0.0, recipeId = -1
-                            )
+                        recipeIngredients = recipeIngredients + RecipeIngredient(
+                            ingredientId = -1, measureId = -1, quantity = 0.0, recipeId = -1
                         )
                     }) {
                         Icon(imageVector = Icons.Filled.Add, contentDescription = null)
@@ -424,8 +461,15 @@ fun AddRecipeScreen(
                                     modifier = Modifier.width(310.dp),
                                     value = instruction.description,
                                     onValueChange = { newInstructionDescription ->
-                                        instructions[index] =
-                                            instruction.copy(description = newInstructionDescription)
+                                        instructions = instructions.mapIndexed { i, instruction ->
+                                            if (i == index) {
+                                                instruction.copy(
+                                                    description = newInstructionDescription
+                                                )
+                                            } else {
+                                                instruction
+                                            }
+                                        }
                                     },
                                     label = { Text("Describe the step") },
                                 )
@@ -433,7 +477,7 @@ fun AddRecipeScreen(
                                     IconButton(modifier = Modifier
                                         .width(48.dp)
                                         .height(48.dp),
-                                        onClick = { instructions.remove(instruction) },
+                                        onClick = { instructions = instructions - instruction },
                                         content = {
                                             Icon(
                                                 imageVector = Icons.Default.Close,
@@ -445,11 +489,12 @@ fun AddRecipeScreen(
                         }
                     }
                     TextButton(onClick = {
-                        instructions.add(
-                            Instruction(
-                                description = "", stepNumber = instructions.size + 1, recipeId = 0
-                            )
-                        )
+                        instructions = instructions +
+                                Instruction(
+                                    description = "",
+                                    stepNumber = instructions.size + 1,
+                                    recipeId = 0
+                                )
                     }) {
                         Icon(imageVector = Icons.Filled.Add, contentDescription = null)
                         Text(text = "Add Step")

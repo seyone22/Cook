@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Log
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
@@ -19,7 +20,7 @@ class ImageHelper(private val context: Context) {
             fileOutputStream.close()
             context.filesDir.absolutePath + "/" + fileName
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("ImageHelper", "Error saving image to internal storage", e)
             null
         }
     }
@@ -27,31 +28,28 @@ class ImageHelper(private val context: Context) {
     // Function to retrieve bitmap image from internal storage
     fun loadImageFromInternalStorage(fileName: String): Bitmap? {
         val file = File(context.filesDir, fileName)
-        if (file.exists()) {
-            return try {
-                BitmapFactory.decodeFile(file.absolutePath)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
+        return try {
+            BitmapFactory.decodeFile(file.absolutePath)
+        } catch (e: Exception) {
+            Log.e("ImageHelper", "Error loading image from internal storage", e)
+            null
         }
-        return null
     }
 
-
+    // Function to retrieve bitmap image from URI
     fun loadImageFromUri(uri: Uri): Bitmap? {
         return try {
-            val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
+            val inputStream: InputStream? = context.contentResolver.openInputStream(if(uri.isAbsolute) uri else Uri.parse("file://${uri.toString()}"))
             BitmapFactory.decodeStream(inputStream)
         } catch (e: FileNotFoundException) {
-            e.printStackTrace()
+            Log.e("ImageHelper", "Error loading image from URI", e)
             null
         }
     }
 
     // Function to delete image from internal storage
-    fun deleteImageFromInternalStorage(fileName: String): Boolean {
-        val file = File(context.filesDir, fileName)
+    fun deleteImageFromInternalStorage(fileUri: Uri): Boolean {
+        val file = File(fileUri.path ?: return false)
         return if (file.exists()) {
             file.delete()
         } else {

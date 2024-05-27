@@ -13,12 +13,14 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.seyone22.cook.ui.screen.crud.AddIngredientDestination
-import com.seyone22.cook.ui.screen.crud.AddIngredientScreen
-import com.seyone22.cook.ui.screen.crud.AddRecipeDestination
-import com.seyone22.cook.ui.screen.crud.AddRecipeScreen
-import com.seyone22.cook.ui.screen.crud.EditIngredientDestination
-import com.seyone22.cook.ui.screen.crud.EditIngredientScreen
+import com.seyone22.cook.ui.screen.crud.ingredient.AddIngredientDestination
+import com.seyone22.cook.ui.screen.crud.ingredient.AddIngredientScreen
+import com.seyone22.cook.ui.screen.crud.recipe.AddRecipeDestination
+import com.seyone22.cook.ui.screen.crud.recipe.AddRecipeScreen
+import com.seyone22.cook.ui.screen.crud.ingredient.EditIngredientDestination
+import com.seyone22.cook.ui.screen.crud.ingredient.EditIngredientScreen
+import com.seyone22.cook.ui.screen.crud.recipe.EditRecipeDestination
+import com.seyone22.cook.ui.screen.crud.recipe.EditRecipeScreen
 import com.seyone22.cook.ui.screen.home.HomeDestination
 import com.seyone22.cook.ui.screen.home.HomeScreen
 import com.seyone22.cook.ui.screen.ingredients.IngredientsDestination
@@ -33,7 +35,6 @@ import com.seyone22.cook.ui.screen.ingredients.detail.IngredientDetailScreen
 fun CookNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    setTopBarAction: (Int) -> Unit,
     innerPadding: PaddingValues
 ) {
     NavHost(
@@ -42,6 +43,7 @@ fun CookNavHost(
         enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None },
     ) {
+        // Main Navigation Destinations
         composable(route = HomeDestination.route) {
             HomeScreen(
                 modifier = modifier.padding(innerPadding),
@@ -61,7 +63,6 @@ fun CookNavHost(
                 navController = navController
             )
         }
-        // Routes for CRUD operations
         composable(
             route = EditIngredientDestination.route + "/{id}",
             arguments = listOf(navArgument("id") { type = NavType.StringType })
@@ -76,6 +77,16 @@ fun CookNavHost(
                 navController = navController
             )
         }
+        composable(route = EditRecipeDestination.route + "/{id}",
+            arguments = listOf(navArgument("id") { type = NavType.StringType })
+        ) {
+            EditRecipeScreen(
+                navController = navController,
+                recipeId = (it.arguments?.getString("id") ?: "-1").toLong()
+            )
+        }
+
+        // Detail Screen Destinations
         composable(
             route = IngredientDetailDestination.route + "/{id}",
             arguments = listOf(navArgument("id") { type = NavType.StringType })

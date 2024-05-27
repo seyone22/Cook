@@ -9,8 +9,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import com.seyone22.cook.ui.navigation.BottomNavigationDestination
-import com.seyone22.cook.ui.screen.crud.AddIngredientDestination
-import com.seyone22.cook.ui.screen.crud.AddRecipeDestination
 import com.seyone22.cook.ui.screen.home.HomeDestination
 import com.seyone22.cook.ui.screen.ingredients.IngredientsDestination
 

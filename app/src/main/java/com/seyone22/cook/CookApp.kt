@@ -61,7 +61,6 @@ fun CookApp(
     ) { innerPadding ->
         CookNavHost(
             navController = navController,
-            setTopBarAction = { action: Int -> topBarOperation = action },
             innerPadding = innerPadding
         )
     }
