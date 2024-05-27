@@ -270,7 +270,7 @@ fun HeaderImage(bitmap: Bitmap?, title: String) {
         }
         Text(
             text = title,
-            color = Color.White,
+            color = if (bitmap!=null) Color.White else Color.Black,
             style = MaterialTheme.typography.displayMedium,
             modifier = Modifier
                 .padding(16.dp, 0.dp, 16.dp, 16.dp)
