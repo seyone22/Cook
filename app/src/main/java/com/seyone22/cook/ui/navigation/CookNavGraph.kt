@@ -13,6 +13,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.seyone22.cook.ui.screen.cooking.CookingDestination
+import com.seyone22.cook.ui.screen.cooking.CookingScreen
 import com.seyone22.cook.ui.screen.crud.ingredient.AddIngredientDestination
 import com.seyone22.cook.ui.screen.crud.ingredient.AddIngredientScreen
 import com.seyone22.cook.ui.screen.crud.recipe.AddRecipeDestination
@@ -101,6 +103,17 @@ fun CookNavHost(
             arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) {
             RecipeDetailScreen(
+                navController = navController,
+                backStackEntry = it.arguments?.getString("id") ?: "-1"
+            )
+        }
+
+        // Destination for the Cooking Mode Screen
+        composable(
+            route = CookingDestination.route + "/{id}",
+            arguments = listOf(navArgument("id") { type = NavType.StringType })
+        ) {
+            CookingScreen(
                 navController = navController,
                 backStackEntry = it.arguments?.getString("id") ?: "-1"
             )

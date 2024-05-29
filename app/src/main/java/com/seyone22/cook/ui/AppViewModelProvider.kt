@@ -5,6 +5,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.seyone22.cook.CookApplication
+import com.seyone22.cook.ui.screen.cooking.CookingViewModel
 import com.seyone22.cook.ui.screen.crud.ingredient.IngredientOperationsViewModel
 import com.seyone22.cook.ui.screen.crud.recipe.RecipeOperationsViewModel
 import com.seyone22.cook.ui.screen.home.HomeViewModel
@@ -49,13 +50,11 @@ object AppViewModelProvider {
                 recipeIngredientRepository = cookApplication().container.recipeIngredientRepository
             )
         }
-        /*        initializer {
-                    IngredientDetailViewModel(
-                        ingredientRepository = cookApplication().container.ingredientRepository,
-                        ingredientVariantRepository = cookApplication().container.ingredientVariantRepository,
-                        ingredientImageRepository = cookApplication().container.ingredientImageRepository
-                    )
-                }*/
+        initializer {
+            CookingViewModel(
+
+            )
+        }
     }
 }
 
