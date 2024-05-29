@@ -71,6 +71,8 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat.startActivity
+import androidx.core.content.FileProvider
 import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -81,12 +83,16 @@ import com.seyone22.cook.data.model.Instruction
 import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.model.Recipe
 import com.seyone22.cook.data.model.RecipeIngredient
+import com.seyone22.cook.helper.DataHelper
 import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
 import com.seyone22.cook.ui.screen.home.HomeViewModel
 import com.seyone22.cook.ui.screen.ingredients.detail.DeleteConfirmationDialog
 import com.seyone22.cook.ui.screen.ingredients.detail.IngredientDetailDestination
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.File
 
 object RecipeDetailDestination : NavigationDestination {
@@ -100,7 +106,8 @@ object RecipeDetailDestination : NavigationDestination {
 fun RecipeDetailScreen(
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
     backStackEntry: String,
-    navController: NavController
+    navController: NavController,
+    context: Context = LocalContext.current
 ) {
     val imageHelper = ImageHelper(LocalContext.current)
     // Call the ViewModel function to fetch ingredients when the screen is first displayed
@@ -171,7 +178,21 @@ fun RecipeDetailScreen(
             actions = @Composable {
                 // Share button
                 IconButton(onClick = {
+                    val dataHelper = DataHelper()
                     // Handle share action
+                    CoroutineScope(Dispatchers.Main).launch {
+                        val zipFile = dataHelper.exportRecipe(context, recipe!!, instructions, recipeIngredients, images )
+                        val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", zipFile)
+
+                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            type = "application/zip"
+                        }
+                        val shareIntent = Intent.createChooser(sendIntent, null)
+
+                        context.startActivity(Intent.createChooser(shareIntent, "Share Recipe"))
+                    }
                 }) {
                     Icon(imageVector = Icons.Default.Share, contentDescription = "Share")
                 }

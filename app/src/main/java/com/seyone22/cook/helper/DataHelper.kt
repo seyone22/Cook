@@ -24,16 +24,16 @@ class DataHelper {
     suspend fun exportRecipe(
         context: Context,
         recipe: Recipe,
-        instructions: List<Instruction>,
-        ingredients: List<RecipeIngredient>,
-        images: List<RecipeImage>
+        instructions: List<Instruction?>,
+        ingredients: List<RecipeIngredient?>,
+        images: List<RecipeImage?>
     ): File {
         return withContext(Dispatchers.IO) {
             val jsonRecipe = Json.encodeToString(recipe)
             val jsonInstructions = Json.encodeToString(instructions)
             val jsonIngredients = Json.encodeToString(ingredients)
 
-            val tempFile = File(context.cacheDir, "${recipe.id}_${recipe.name}_temp.json")
+            val tempFile = File(context.cacheDir, "${recipe.name}.recipe")
             ZipOutputStream(FileOutputStream(tempFile)).use { zip ->
                 zip.putNextEntry(ZipEntry("recipe.json"))
                 zip.write(jsonRecipe.toByteArray())
@@ -48,7 +48,7 @@ class DataHelper {
                 zip.closeEntry()
 
                 images.forEach { image ->
-                    val imageFile = File(image.imagePath)
+                    val imageFile = File(image?.imagePath ?: "")
                     zip.putNextEntry(ZipEntry("images/${imageFile.name}"))
                     zip.write(imageFile.readBytes())
                     zip.closeEntry()
