@@ -427,7 +427,7 @@ fun IngredientsList(
                     val quantity : Double = ((recipeIngredient?.quantity?.div(serves))?.times(scaleFactor)) ?: 0.0
                     var price by remember { mutableDoubleStateOf(0.0) }
 
-                    LaunchedEffect(key1 = price) {
+                    LaunchedEffect(key1 = quantity) {
                         price = PriceHelper.getCheapestPrice(recipeIngredient?.ingredientId, variants, quantity)
                     }
 
