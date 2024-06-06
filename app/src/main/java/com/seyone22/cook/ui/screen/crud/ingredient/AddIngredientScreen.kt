@@ -308,7 +308,7 @@ fun AddIngredientScreen(
                                     onValueChange = { newVariantType ->
                                         variants[index] = variant.copy(type = newVariantType)
                                     },
-                                    label = { Text("Type") },
+                                    label = { Text("Purchased From") },
                                     modifier = Modifier.fillMaxWidth()
                                 )
                                 Row {

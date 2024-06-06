@@ -369,7 +369,7 @@ fun EditIngredientScreen(
                                             }
                                         }
                                     },
-                                    label = { Text("Type") },
+                                    label = { Text("Purchased from") },
                                     modifier = Modifier.fillMaxWidth()
                                 )
                                 Row {
