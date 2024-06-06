@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -53,7 +54,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -61,7 +61,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
@@ -71,20 +70,20 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.FileProvider
-import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Ingredient
+import com.seyone22.cook.data.model.IngredientVariant
 import com.seyone22.cook.data.model.Instruction
 import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.model.Recipe
 import com.seyone22.cook.data.model.RecipeIngredient
 import com.seyone22.cook.helper.DataHelper
 import com.seyone22.cook.helper.ImageHelper
+import com.seyone22.cook.helper.PriceHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
 import com.seyone22.cook.ui.screen.home.HomeViewModel
@@ -117,6 +116,7 @@ fun RecipeDetailScreen(
     val homeViewState by viewModel.homeViewState.collectAsState()
 
     val recipe = homeViewState.recipes.find { r -> r?.id.toString() == backStackEntry }
+    val variants = homeViewState.variants
     val images = homeViewState.images.filter { i -> i?.id.toString() == backStackEntry }
     val instructions =
         homeViewState.instructions.filter { i -> i?.recipeId.toString() == backStackEntry }
@@ -232,7 +232,7 @@ fun RecipeDetailScreen(
                 item {
                     Column(modifier = Modifier.padding(8.dp, 0.dp)) {
                         HeaderImage(bitmap = bitmap, recipe.name)
-                        RecipeDetail(viewModel, recipe, onScaleClick = { showScaleDialog = true })
+                        RecipeDetail(viewModel, recipe,scaleFactor, onScaleClick = { showScaleDialog = true })
                     }
                 }
             }
@@ -245,7 +245,8 @@ fun RecipeDetailScreen(
                             measures = measures,
                             ingredients = ingredients,
                             scaleFactor = scaleFactor,
-                            serves = recipe?.servingSize ?: -1
+                            serves = recipe?.servingSize ?: -1,
+                            variants = variants
                         )
                     }
                 }
@@ -303,7 +304,7 @@ fun HeaderImage(bitmap: Bitmap?, title: String) {
 }
 
 @Composable
-fun RecipeDetail(viewModel: HomeViewModel, recipe: Recipe, onScaleClick: () -> Unit) {
+fun RecipeDetail(viewModel: HomeViewModel, recipe: Recipe, scaleFactor: Double, onScaleClick: () -> Unit) {
     val context = LocalContext.current
     Column(
         modifier = Modifier.padding(8.dp, 0.dp, 8.dp, 16.dp)
@@ -342,7 +343,7 @@ fun RecipeDetail(viewModel: HomeViewModel, recipe: Recipe, onScaleClick: () -> U
                 modifier = Modifier.height(20.dp)
             )
             Text(
-                text = "Serves ${recipe.servingSize}",
+                text = "Serves ${scaleFactor.toInt()}",
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(start = 4.dp, end = 8.dp)
             )
@@ -400,6 +401,7 @@ fun IngredientsList(
     list: List<RecipeIngredient?>,
     measures: List<Measure?>,
     ingredients: List<Ingredient?>,
+    variants: List<IngredientVariant?>,
     scaleFactor: Double,
     serves: Int
 ) {
@@ -422,6 +424,13 @@ fun IngredientsList(
                     modifier = Modifier.padding(0.dp),
                 ) {
                     val checked = remember { mutableStateOf(ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.stocked ?: false) }
+                    val quantity : Double = ((recipeIngredient?.quantity?.div(serves))?.times(scaleFactor)) ?: 0.0
+                    var price by remember { mutableDoubleStateOf(0.0) }
+
+                    LaunchedEffect(key1 = price) {
+                        price = PriceHelper.getCheapestPrice(recipeIngredient?.ingredientId, variants, quantity)
+                    }
+
                     Checkbox(modifier = Modifier.height(32.dp),
                         enabled = !(ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.stocked ?: false),
                         checked = checked.value,
@@ -429,7 +438,7 @@ fun IngredientsList(
                     Text(modifier = Modifier
                         .padding(4.dp, 0.dp, 16.dp, 0.dp)
                         .align(Alignment.CenterVertically)
-                        .width(160.dp)
+                        .width(120.dp)
                         .clickable {
                             navController.navigate("${IngredientDetailDestination.route}/${recipeIngredient?.ingredientId}")
                         },
@@ -442,7 +451,15 @@ fun IngredientsList(
                         modifier = Modifier
                             .padding(4.dp, 0.dp, 16.dp, 0.dp)
                             .align(Alignment.CenterVertically),
-                        text = "${String.format("%.2f", (recipeIngredient?.quantity?.div(serves))?.times(scaleFactor)?.toFloat())} ${measures.find { m -> m?.id == recipeIngredient?.measureId }?.abbreviation}",
+                        text = "${String.format("%.2f", quantity)} ${measures.find { m -> m?.id == recipeIngredient?.measureId }?.abbreviation}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        modifier = Modifier
+                            .padding(4.dp, 0.dp, 16.dp, 0.dp)
+                            .align(Alignment.CenterVertically),
+                        text = "Rs.${String.format("%.2f", price)}",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -481,7 +498,7 @@ fun RecipeOptionRow(viewModel: HomeViewModel, context: Context, recipe: Recipe, 
         item {
             AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
                 onClick = { /*TODO*/ },
-                label = { Text("Enable Cooking Mode") },
+                label = { Text("Cooking Mode") },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.FitScreen, contentDescription = null

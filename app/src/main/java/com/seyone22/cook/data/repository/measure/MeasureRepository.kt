@@ -10,4 +10,6 @@ interface MeasureRepository {
 
     suspend fun getMeasureById(measureId: Int): Flow<Measure?>
     suspend fun getAllMeasures(): Flow<List<Measure?>>
+    suspend fun getMeasureByName(name: String): Flow<Measure?>
+
 }

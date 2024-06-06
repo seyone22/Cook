@@ -31,6 +31,10 @@ import com.seyone22.cook.ui.screen.home.detail.RecipeDetailDestination
 import com.seyone22.cook.ui.screen.home.detail.RecipeDetailScreen
 import com.seyone22.cook.ui.screen.ingredients.detail.IngredientDetailDestination
 import com.seyone22.cook.ui.screen.ingredients.detail.IngredientDetailScreen
+import com.seyone22.cook.ui.screen.more.MoreDestination
+import com.seyone22.cook.ui.screen.more.MoreScreen
+import com.seyone22.cook.ui.screen.more.SettingsDestination
+import com.seyone22.cook.ui.screen.more.SettingsDetailScreen
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -54,6 +58,12 @@ fun CookNavHost(
         }
         composable(route = IngredientsDestination.route) {
             IngredientsScreen(
+                modifier = modifier.padding(innerPadding),
+                navController = navController
+            )
+        }
+        composable(route = MoreDestination.route) {
+            MoreScreen(
                 modifier = modifier.padding(innerPadding),
                 navController = navController
             )
@@ -116,6 +126,16 @@ fun CookNavHost(
             CookingScreen(
                 navController = navController,
                 backStackEntry = it.arguments?.getString("id") ?: "-1"
+            )
+        }
+        // Settings Screens
+        composable(route = SettingsDestination.route + "/{setting}",
+            arguments = listOf(navArgument("setting") { type = NavType.StringType })
+        ) {
+            SettingsDetailScreen(
+                navigateToScreen = { screen -> navController.navigate(screen) },
+                navigateBack = { navController.popBackStack() },
+                backStackEntry = it.arguments?.getString("setting") ?: "-1",
             )
         }
     }

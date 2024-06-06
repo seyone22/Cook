@@ -10,6 +10,7 @@ import com.seyone22.cook.ui.screen.crud.ingredient.IngredientOperationsViewModel
 import com.seyone22.cook.ui.screen.crud.recipe.RecipeOperationsViewModel
 import com.seyone22.cook.ui.screen.home.HomeViewModel
 import com.seyone22.cook.ui.screen.ingredients.IngredientsViewModel
+import com.seyone22.cook.ui.screen.more.MoreViewModel
 
 object AppViewModelProvider {
     val Factory = viewModelFactory {
@@ -21,6 +22,7 @@ object AppViewModelProvider {
                 recipeIngredientRepository = cookApplication().container.recipeIngredientRepository,
                 measureRepository = cookApplication().container.measureRepository,
                 ingredientRepository = cookApplication().container.ingredientRepository,
+                ingredientVariantRepository = cookApplication().container.ingredientVariantRepository,
                 )
         }
         initializer {
@@ -52,6 +54,11 @@ object AppViewModelProvider {
         }
         initializer {
             CookingViewModel(
+
+            )
+        }
+        initializer {
+            MoreViewModel(
 
             )
         }

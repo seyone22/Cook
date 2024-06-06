@@ -3,12 +3,14 @@ package com.seyone22.cook.ui.screen.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seyone22.cook.data.model.Ingredient
+import com.seyone22.cook.data.model.IngredientVariant
 import com.seyone22.cook.data.model.Instruction
 import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.model.Recipe
 import com.seyone22.cook.data.model.RecipeImage
 import com.seyone22.cook.data.model.RecipeIngredient
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
+import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantRepository
 import com.seyone22.cook.data.repository.instruction.InstructionRepository
 import com.seyone22.cook.data.repository.measure.MeasureRepository
 import com.seyone22.cook.data.repository.recipe.RecipeRepository
@@ -24,6 +26,7 @@ class HomeViewModel(
     private val recipeImageRepository: RecipeImageRepository,
     private val instructionRepository: InstructionRepository,
     private val recipeIngredientRepository: RecipeIngredientRepository,
+    private val ingredientVariantRepository: IngredientVariantRepository,
     private val measureRepository: MeasureRepository,
     private val ingredientRepository: IngredientRepository
 ) : ViewModel() {
@@ -38,8 +41,9 @@ class HomeViewModel(
             val recipeIngredients = recipeIngredientRepository.getAllRecipeIngredients().first()
             val measures = measureRepository.getAllMeasures().first()
             val ingredients = ingredientRepository.getAllIngredients().first()
+            val variants = ingredientVariantRepository.getAllIngredientVariants().first()
 
-            _homeViewState.value = HomeViewState(recipes, images, instructions, recipeIngredients, measures, ingredients)
+            _homeViewState.value = HomeViewState(recipes, images, instructions, recipeIngredients, measures, ingredients, variants)
         }
     }
 
@@ -65,5 +69,6 @@ data class HomeViewState(
     val instructions: List<Instruction?> = emptyList(),
     val recipeIngredients: List<RecipeIngredient?> = emptyList(),
     val measures: List<Measure?> = emptyList(),
-    val ingredients: List<Ingredient?> = emptyList()
+    val ingredients: List<Ingredient?> = emptyList(),
+    val variants: List<IngredientVariant?> = emptyList()
 )

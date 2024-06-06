@@ -26,4 +26,8 @@ interface MeasureDao {
     @Query("SELECT * FROM measures" +
             "   ORDER BY abbreviation ASC")
     fun getAllMeasures(): Flow<List<Measure>>
+    @Query("SELECT * FROM measures" +
+            "   WHERE name = :name" +
+            "   ORDER BY name ASC")
+    fun getMeasureByName(name: String): Flow<Measure>
 }

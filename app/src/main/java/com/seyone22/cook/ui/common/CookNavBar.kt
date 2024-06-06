@@ -2,6 +2,7 @@ package com.seyone22.cook.ui.common
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Fastfood
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.ShoppingBasket
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -11,10 +12,12 @@ import androidx.compose.runtime.Composable
 import com.seyone22.cook.ui.navigation.BottomNavigationDestination
 import com.seyone22.cook.ui.screen.home.HomeDestination
 import com.seyone22.cook.ui.screen.ingredients.IngredientsDestination
+import com.seyone22.cook.ui.screen.more.MoreDestination
 
 val destinations = listOf(
     BottomNavigationDestination(HomeDestination, Icons.Default.Fastfood, Icons.Filled.Fastfood),
-    BottomNavigationDestination(IngredientsDestination, Icons.Default.ShoppingBasket, Icons.Filled.ShoppingBasket)
+    BottomNavigationDestination(IngredientsDestination, Icons.Default.ShoppingBasket, Icons.Filled.ShoppingBasket),
+    BottomNavigationDestination(MoreDestination, Icons.Default.MoreHoriz, Icons.Filled.MoreHoriz),
 )
 
 @Composable
@@ -22,7 +25,7 @@ fun CookNavBar(
     currentActivity: String?,
     navigateToScreen: (screen: String) -> Unit,
 ) {
-    if ((currentActivity == HomeDestination.route) or (currentActivity == IngredientsDestination.route)) {
+    if ((currentActivity == HomeDestination.route) or (currentActivity == IngredientsDestination.route) or (currentActivity == MoreDestination.route)) {
         NavigationBar {
             destinations.forEachIndexed { _, pair ->
                 NavigationBarItem(
