@@ -419,7 +419,6 @@ fun EditIngredientScreen(
                                     ) {
                                         OutlinedTextField(
                                             modifier = Modifier
-                                                .padding(0.dp, 8.dp)
                                                 .menuAnchor()
                                                 .clickable(enabled = true) {
                                                     measuresExpanded = true
