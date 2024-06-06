@@ -1,5 +1,8 @@
 package com.seyone22.cook.ui.screen.more
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -17,6 +20,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CatchingPokemon
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -44,6 +49,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -68,6 +74,7 @@ fun SettingsDetailScreen(
     navigateToScreen: (screen: String) -> Unit,
     navigateBack: () -> Unit,
     backStackEntry: String,
+    context: Context = LocalContext.current,
     viewModel: MoreViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     Scaffold(
@@ -102,7 +109,7 @@ fun SettingsDetailScreen(
                 }
                 "About" -> {
                     AboutList(
-
+                        context = context
                     )
                 }
             }
@@ -111,7 +118,7 @@ fun SettingsDetailScreen(
 }
 
 @Composable
-fun AboutList() {
+fun AboutList(context: Context) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -127,7 +134,7 @@ fun AboutList() {
         )
     }
     HorizontalDivider()
-    Column {
+    Column(modifier = Modifier.fillMaxWidth()) {
         ListItem(
             headlineContent = { Text(text = "Version") },
             supportingContent = {
@@ -140,6 +147,74 @@ fun AboutList() {
                 )
             },
             modifier = Modifier.clickable { }
+        )
+        ListItem(
+            headlineContent = { Text(text = "Database Version") },
+            supportingContent = {
+                Text(
+                    text = stringResource(id = R.string.db_version)
+                )
+            },
+            modifier = Modifier.clickable { }
+        )
+        ListItem(
+            headlineContent = { Text(text = "Check for new versions") },
+            supportingContent = {
+                Text(
+                    text = stringResource(id = R.string.db_version)
+                )
+            },
+            modifier = Modifier.clickable {
+                val urlIntent = Intent(
+                    Intent.ACTION_VIEW, Uri.parse("https://github.com/seyone22/Cook/tags")
+                )
+                context.startActivity(urlIntent)
+            }
+        )
+        ListItem(
+            modifier = Modifier.fillMaxWidth(),
+            headlineContent = { Text(text = "Contact") },
+            supportingContent = {
+                Row(
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                        .fillMaxWidth()
+                ) {
+                    IconButton(
+                        onClick = {
+                            // Open the URL in a web browser
+                            val intent = Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("http://seyone22.github.io")
+                            )
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier
+                            .padding(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Link,
+                            contentDescription = "Open URL"
+                        )
+                    }
+                    IconButton(
+                        onClick = {
+                            // Open the URL in a web browser
+                            val intent = Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("mailto:s.g.seyone@live.com")
+                            )
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier
+                            .padding(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Email,
+                            contentDescription = "Email"
+                        )
+                    }
+                }
+            },
         )
     }
 }

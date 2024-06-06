@@ -8,18 +8,17 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.ImportExport
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Palette
-import androidx.compose.material.icons.outlined.Security
+import androidx.compose.material.icons.outlined.ShoppingBag
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,27 +32,28 @@ import androidx.navigation.NavController
 import com.seyone22.cook.R
 import com.seyone22.cook.ui.navigation.NavigationDestination
 
-object MoreDestination: NavigationDestination {
+object MoreDestination : NavigationDestination {
     override val route = "More"
     override val titleRes = R.string.app_name
     override val routeId = 2
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MoreScreen(
     modifier: Modifier = Modifier,
-    navController : NavController
+    navController: NavController
 ) {
     Scaffold(
         modifier = Modifier,
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            MediumTopAppBar(
+            TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                 ),
-                title = { Text(text = "Settings") },
+                title = { Text(text = MoreDestination.route) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
@@ -70,24 +70,26 @@ fun MoreScreen(
             Modifier.padding(innerPadding)
         ) {
             SettingsListItem(
-                settingName = "General",
+                settingName = "Shopping List",
+                settingSubtext = "View and edit your shopping list",
+                settingIcon = Icons.Outlined.ShoppingBag,
+                action = { navController.navigate("Shopping List") }
+            )
+            HorizontalDivider()
+            SettingsListItem(
+                settingName = "Settings",
                 settingSubtext = "General application settings",
                 settingIcon = Icons.Outlined.Checklist,
                 action = { navController.navigate("Settings/General") }
             )
+
+            SettingsListItem(
+                settingName = "Data Management",
+                settingSubtext = "Import and Export Data",
+                settingIcon = Icons.Outlined.ImportExport,
+                action = { navController.navigate("SettingsDetail/Data") }
+            )
             /*            SettingsListItem(
-                            settingName = "Appearance",
-                            settingSubtext = "Theme, date & time formats",
-                            settingIcon = Icons.Outlined.Palette,
-                            action = { navController.navigate("SettingsDetail/Appearance") }
-                        )
-                        SettingsListItem(
-                            settingName = "Fetch Data",
-                            settingSubtext = "Update Exchange Rates",
-                            settingIcon = Icons.Outlined.Palette,
-                            action = { navController.navigate("SettingsDetail/Data") }
-                        )
-                        SettingsListItem(
                             settingName = "Privacy and Security",
                             settingSubtext = "App lock, Secure Screen",
                             settingIcon = Icons.Outlined.Security,
@@ -151,7 +153,8 @@ fun SettingsToggleListItem(
     ListItem(
         modifier = modifier.clickable(onClick = {
             tx = !tx
-            onToggleChange(tx) }),
+            onToggleChange(tx)
+        }),
         headlineContent = { Text(text = settingName) },
         supportingContent = {
             if (settingSubtext != null) {
