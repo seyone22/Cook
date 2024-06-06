@@ -1,5 +1,6 @@
 package com.seyone22.cook.ui.screen.home.detail
 
+import android.content.ClipData.Item
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -28,6 +29,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.FitScreen
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PriceCheck
 import androidx.compose.material.icons.filled.RiceBowl
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ThumbUpOffAlt
@@ -126,6 +128,7 @@ fun RecipeDetailScreen(
     val measures = homeViewState.measures
     val ingredients = homeViewState.ingredients
     var scaleFactor by remember { mutableDoubleStateOf(1.0) }
+    var cost by remember { mutableDoubleStateOf(0.0) }
 
     var bitmap: Bitmap? by remember { mutableStateOf(null) }
 
@@ -138,6 +141,11 @@ fun RecipeDetailScreen(
                 ?.let { imageHelper.loadImageFromUri(it.toUri()) }!!
         }
         scaleFactor = recipe?.servingSize?.toDouble() ?: -1.0
+    }
+
+    LaunchedEffect(key1 = scaleFactor) {
+        cost = PriceHelper.getCostOfRecipe(recipeIngredients, variants, scaleFactor)
+        Log.d("TAG", "priceOf: ${cost}")
     }
 
     if (showDeleteConfirmationDialog) {
@@ -232,7 +240,7 @@ fun RecipeDetailScreen(
                 item {
                     Column(modifier = Modifier.padding(8.dp, 0.dp)) {
                         HeaderImage(bitmap = bitmap, recipe.name)
-                        RecipeDetail(viewModel, recipe,scaleFactor, onScaleClick = { showScaleDialog = true })
+                        RecipeDetail(viewModel, recipe, cost, scaleFactor, onScaleClick = { showScaleDialog = true })
                     }
                 }
             }
@@ -304,7 +312,7 @@ fun HeaderImage(bitmap: Bitmap?, title: String) {
 }
 
 @Composable
-fun RecipeDetail(viewModel: HomeViewModel, recipe: Recipe, scaleFactor: Double, onScaleClick: () -> Unit) {
+fun RecipeDetail(viewModel: HomeViewModel, recipe: Recipe, cost: Double, scaleFactor: Double, onScaleClick: () -> Unit) {
     val context = LocalContext.current
     Column(
         modifier = Modifier.padding(8.dp, 0.dp, 8.dp, 16.dp)
@@ -312,52 +320,79 @@ fun RecipeDetail(viewModel: HomeViewModel, recipe: Recipe, scaleFactor: Double, 
         RecipeOptionRow(
             viewModel = viewModel, recipe = recipe, context = context, onScaleClick = onScaleClick
         )
-        Row(
+        LazyRow(
             verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.Timer,
-                contentDescription = null,
-                modifier = Modifier.height(20.dp)
-            )
-            Text(
-                text = "Cook ${recipe.cookTime}min",
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.padding(start = 4.dp, end = 8.dp)
-            )
-
-            Icon(
-                imageVector = Icons.Default.Timer,
-                contentDescription = null,
-                modifier = Modifier.height(20.dp)
-            )
-            Text(
-                text = "Prep ${recipe.prepTime}min",
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.padding(start = 4.dp, end = 8.dp)
-            )
-
-            Icon(
-                imageVector = Icons.Default.RiceBowl,
-                contentDescription = null,
-                modifier = Modifier.height(20.dp)
-            )
-            Text(
-                text = "Serves ${scaleFactor.toInt()}",
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.padding(start = 4.dp, end = 8.dp)
-            )
-
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = null,
-                modifier = Modifier.height(20.dp)
-            )
-            Text(
-                text = "${recipe.timesMade} times",
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.padding(start = 4.dp)
-            )
+            item {
+                Row {
+                    Icon(
+                        imageVector = Icons.Default.Timer,
+                        contentDescription = null,
+                        modifier = Modifier.height(20.dp)
+                    )
+                    Text(
+                        text = "Cook ${recipe.cookTime}min",
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(start = 4.dp, end = 8.dp)
+                    )
+                }
+            }
+            item {
+                Row {
+                    Icon(
+                        imageVector = Icons.Default.Timer,
+                        contentDescription = null,
+                        modifier = Modifier.height(20.dp)
+                    )
+                    Text(
+                        text = "Prep ${recipe.prepTime}min",
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(start = 4.dp, end = 8.dp)
+                    )
+                }
+            }
+            item {
+                Row {
+                    Icon(
+                        imageVector = Icons.Default.RiceBowl,
+                        contentDescription = null,
+                        modifier = Modifier.height(20.dp)
+                    )
+                    Text(
+                        text = "Serves ${scaleFactor.toInt()}",
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(start = 4.dp, end = 8.dp)
+                    )
+                }
+            }
+            item {
+                Row {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        modifier = Modifier.height(20.dp)
+                    )
+                    Text(
+                        text = "${recipe.timesMade} times",
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(start = 4.dp, end = 8.dp)
+                    )
+                }
+            }
+            item {
+                Row {
+                    Icon(
+                        imageVector = Icons.Default.PriceCheck,
+                        contentDescription = null,
+                        modifier = Modifier.height(20.dp)
+                    )
+                    Text(
+                        text = "Rs. $cost",
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                }
+            }
         }
         if (recipe.description != null) {
             Text(
