@@ -394,7 +394,7 @@ fun RecipeDetail(viewModel: HomeViewModel, recipe: Recipe, cost: Double, scaleFa
                 }
             }
         }
-        if (recipe.description != null) {
+        if (!recipe.description.isNullOrEmpty()) {
             Text(
                 modifier = Modifier.padding(0.dp, 8.dp),
                 text = recipe.description,
