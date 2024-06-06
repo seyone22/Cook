@@ -161,7 +161,7 @@ fun AboutList(context: Context) {
             headlineContent = { Text(text = "Check for new versions") },
             supportingContent = {
                 Text(
-                    text = stringResource(id = R.string.db_version)
+                    text = "Download and update the app from Github"
                 )
             },
             modifier = Modifier.clickable {
