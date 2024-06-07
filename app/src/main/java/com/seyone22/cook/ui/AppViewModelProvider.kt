@@ -11,6 +11,7 @@ import com.seyone22.cook.ui.screen.crud.recipe.RecipeOperationsViewModel
 import com.seyone22.cook.ui.screen.home.HomeViewModel
 import com.seyone22.cook.ui.screen.ingredients.IngredientsViewModel
 import com.seyone22.cook.ui.screen.more.MoreViewModel
+import com.seyone22.cook.ui.screen.search.SearchViewModel
 
 object AppViewModelProvider {
     val Factory = viewModelFactory {
@@ -60,6 +61,12 @@ object AppViewModelProvider {
         initializer {
             MoreViewModel(
 
+            )
+        }
+        initializer {
+            SearchViewModel(
+                recipeRepository = cookApplication().container.recipeRepository,
+                recipeImageRepository = cookApplication().container.recipeImageRepository,
             )
         }
     }

@@ -17,24 +17,26 @@ import com.seyone22.cook.ui.screen.cooking.CookingDestination
 import com.seyone22.cook.ui.screen.cooking.CookingScreen
 import com.seyone22.cook.ui.screen.crud.ingredient.AddIngredientDestination
 import com.seyone22.cook.ui.screen.crud.ingredient.AddIngredientScreen
-import com.seyone22.cook.ui.screen.crud.recipe.AddRecipeDestination
-import com.seyone22.cook.ui.screen.crud.recipe.AddRecipeScreen
 import com.seyone22.cook.ui.screen.crud.ingredient.EditIngredientDestination
 import com.seyone22.cook.ui.screen.crud.ingredient.EditIngredientScreen
+import com.seyone22.cook.ui.screen.crud.recipe.AddRecipeDestination
+import com.seyone22.cook.ui.screen.crud.recipe.AddRecipeScreen
 import com.seyone22.cook.ui.screen.crud.recipe.EditRecipeDestination
 import com.seyone22.cook.ui.screen.crud.recipe.EditRecipeScreen
 import com.seyone22.cook.ui.screen.home.HomeDestination
 import com.seyone22.cook.ui.screen.home.HomeScreen
-import com.seyone22.cook.ui.screen.ingredients.IngredientsDestination
-import com.seyone22.cook.ui.screen.ingredients.IngredientsScreen
 import com.seyone22.cook.ui.screen.home.detail.RecipeDetailDestination
 import com.seyone22.cook.ui.screen.home.detail.RecipeDetailScreen
+import com.seyone22.cook.ui.screen.ingredients.IngredientsDestination
+import com.seyone22.cook.ui.screen.ingredients.IngredientsScreen
 import com.seyone22.cook.ui.screen.ingredients.detail.IngredientDetailDestination
 import com.seyone22.cook.ui.screen.ingredients.detail.IngredientDetailScreen
 import com.seyone22.cook.ui.screen.more.MoreDestination
 import com.seyone22.cook.ui.screen.more.MoreScreen
 import com.seyone22.cook.ui.screen.more.SettingsDestination
 import com.seyone22.cook.ui.screen.more.SettingsDetailScreen
+import com.seyone22.cook.ui.screen.search.SearchDestination
+import com.seyone22.cook.ui.screen.search.SearchScreen
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -49,6 +51,10 @@ fun CookNavHost(
         enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None },
     ) {
+        composable(route = SearchDestination.route) {
+            SearchScreen(navController = navController, modifier = modifier.padding(innerPadding))
+        }
+
         // Main Navigation Destinations
         composable(route = HomeDestination.route) {
             HomeScreen(
@@ -89,7 +95,8 @@ fun CookNavHost(
                 navController = navController
             )
         }
-        composable(route = EditRecipeDestination.route + "/{id}",
+        composable(
+            route = EditRecipeDestination.route + "/{id}",
             arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) {
             EditRecipeScreen(
@@ -129,7 +136,8 @@ fun CookNavHost(
             )
         }
         // Settings Screens
-        composable(route = SettingsDestination.route + "/{setting}",
+        composable(
+            route = SettingsDestination.route + "/{setting}",
             arguments = listOf(navArgument("setting") { type = NavType.StringType })
         ) {
             SettingsDetailScreen(
