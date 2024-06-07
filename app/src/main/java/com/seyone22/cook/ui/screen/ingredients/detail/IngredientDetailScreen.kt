@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.AlternateEmail
 import androidx.compose.material.icons.filled.MoreVert
@@ -45,6 +46,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -70,10 +73,11 @@ import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.model.IngredientVariant
 import com.seyone22.cook.data.model.IngredientVariantDetails
 import com.seyone22.cook.data.model.Measure
+import com.seyone22.cook.data.model.ShoppingList
+import com.seyone22.cook.data.model.ShoppingListItem
 import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
-import com.seyone22.cook.ui.screen.home.detail.DeleteConfirmationDialog
 import com.seyone22.cook.ui.screen.ingredients.IngredientsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -103,7 +107,7 @@ fun IngredientDetailScreen(
     val ingredient =
         ingredientsViewState.ingredients.find { i -> i?.id.toString() == backStackEntry }
     val images =
-        ingredientsViewState.images.filter { i -> i?.ingredientId.toString() == backStackEntry }
+        ingredientsViewState.ingredientImages.filter { i -> i?.ingredientId.toString() == backStackEntry }
     val variants =
         ingredientsViewState.variants.filter { i -> i?.ingredientId.toString() == backStackEntry }
     val measures = ingredientsViewState.measures
@@ -142,8 +146,7 @@ fun IngredientDetailScreen(
     }
 
     Scaffold(topBar = {
-        TopAppBar(
-            modifier = Modifier.padding(0.dp),
+        TopAppBar(modifier = Modifier.padding(0.dp),
             title = { Text(text = ingredient?.nameEn ?: "") },
             navigationIcon = {
                 Icon(
@@ -196,7 +199,12 @@ fun IngredientDetailScreen(
                 item {
                     Column(modifier = Modifier.padding(8.dp, 0.dp)) {
                         HeaderImage(bitmap = bitmap)
-                        IngredientOptionRow(viewModel, ingredient, ingredientsViewState.measures)
+                        IngredientOptionRow(
+                            viewModel,
+                            ingredientsViewState.shoppingLists,
+                            ingredient,
+                            ingredientsViewState.measures
+                        )
                         IngredientDetails(ingredient)
                     }
                 }
@@ -213,6 +221,7 @@ fun IngredientDetailScreen(
 @Composable
 fun IngredientOptionRow(
     viewModel: IngredientsViewModel,
+    shoppingLists: List<ShoppingList?>,
     ingredient: Ingredient,
     measures: List<Measure?>
 ) {
@@ -220,21 +229,28 @@ fun IngredientOptionRow(
 
     var showSubstituteDialog by remember { mutableStateOf(false) }
     var showVariantDialog by remember { mutableStateOf(false) }
+    var showAddShoppingListDialog by remember { mutableStateOf(false) }
 
     if (showVariantDialog) {
-        NewVariantDialog(
-            measures = measures,
-            onConfirm = {
-                viewModel.addVariant(ingredient.id, variant = it)
-                showVariantDialog = false
-                viewModel.fetchData()
-            },
-            onDismiss = { showVariantDialog = false })
+        NewVariantDialog(measures = measures, onConfirm = {
+            viewModel.addVariant(ingredient.id, variant = it)
+            showVariantDialog = false
+            viewModel.fetchData()
+        }, onDismiss = { showVariantDialog = false })
     }
     if (showSubstituteDialog) {
-        NewSubstituteDialog(
-            onConfirm = { showSubstituteDialog = false },
+        NewSubstituteDialog(onConfirm = { showSubstituteDialog = false },
             onDismiss = { showSubstituteDialog = false })
+    }
+    if (showAddShoppingListDialog) {
+        AddToShoppingListDialog(ingredientId = ingredient.id,
+            shoppingLists = shoppingLists,
+            measures = measures,
+            onConfirm = {
+                viewModel.addToShoppingList(it)
+                showAddShoppingListDialog = false
+            },
+            onDismiss = { showAddShoppingListDialog = false })
     }
 
     LazyRow(
@@ -264,14 +280,13 @@ fun IngredientOptionRow(
             }
         }
         item {
-            AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
-                onClick = { /*TODO*/ },
-                label = { Text("Add to Shopping list") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.AddShoppingCart, contentDescription = null
-                    )
-                })
+            AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp), onClick = {
+                showAddShoppingListDialog = true
+            }, label = { Text("Add to Shopping list") }, leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.AddShoppingCart, contentDescription = null
+                )
+            })
         }
         item {
             AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
@@ -443,14 +458,11 @@ fun DeleteConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewVariantDialog(
-    measures: List<Measure?>,
-    onConfirm: (IngredientVariantDetails) -> Unit,
-    onDismiss: () -> Unit
+    measures: List<Measure?>, onConfirm: (IngredientVariantDetails) -> Unit, onDismiss: () -> Unit
 ) {
     var variant by remember { mutableStateOf(IngredientVariantDetails()) }
 
-    AlertDialog(
-        onDismissRequest = { onDismiss() },
+    AlertDialog(onDismissRequest = { onDismiss() },
         title = { Text(text = "Add new Variant") },
         text = {
             Column {
@@ -471,16 +483,14 @@ fun NewVariantDialog(
                             .width(346.dp)
                             .padding(0.dp, 0.dp, 0.dp, 0.dp)
                     ) {
-                        OutlinedTextField(
-                            value = variant.brand,
+                        OutlinedTextField(value = variant.brand,
                             onValueChange = { newVariantBrand ->
                                 variant = variant.copy(brand = newVariantBrand)
                             },
                             label = { Text("Brand") },
                             modifier = Modifier.fillMaxWidth()
                         )
-                        OutlinedTextField(
-                            value = variant.type,
+                        OutlinedTextField(value = variant.type,
                             onValueChange = { newVariantType ->
                                 variant = variant.copy(type = newVariantType)
                             },
@@ -488,8 +498,7 @@ fun NewVariantDialog(
                             modifier = Modifier.fillMaxWidth()
                         )
                         Row {
-                            OutlinedTextField(
-                                value = variant.price,
+                            OutlinedTextField(value = variant.price,
                                 onValueChange = { newVariantPrice ->
                                     variant = variant.copy(price = newVariantPrice)
                                 },
@@ -498,29 +507,24 @@ fun NewVariantDialog(
                                     .width(140.dp)
                                     .padding(0.dp, 0.dp, 8.dp, 0.dp),
                                 keyboardOptions = KeyboardOptions.Default.copy(
-                                    imeAction = ImeAction.Done,
-                                    keyboardType = KeyboardType.Number
+                                    imeAction = ImeAction.Done, keyboardType = KeyboardType.Number
                                 )
                             )
-                            OutlinedTextField(
-                                value = variant.quantity,
+                            OutlinedTextField(value = variant.quantity,
                                 onValueChange = { newVariantQuantity ->
-                                    variant =
-                                        variant.copy(quantity = newVariantQuantity)
+                                    variant = variant.copy(quantity = newVariantQuantity)
                                 },
                                 label = { Text("Per") },
                                 modifier = Modifier
                                     .width(84.dp)
                                     .padding(0.dp, 0.dp, 8.dp, 0.dp),
                                 keyboardOptions = KeyboardOptions.Default.copy(
-                                    imeAction = ImeAction.Done,
-                                    keyboardType = KeyboardType.Number
+                                    imeAction = ImeAction.Done, keyboardType = KeyboardType.Number
                                 )
                             )
-                            ExposedDropdownMenuBox(expanded = measuresExpanded,
-                                onExpandedChange = {
-                                    measuresExpanded = !measuresExpanded
-                                }) {
+                            ExposedDropdownMenuBox(expanded = measuresExpanded, onExpandedChange = {
+                                measuresExpanded = !measuresExpanded
+                            }) {
                                 OutlinedTextField(modifier = Modifier
                                     .menuAnchor()
                                     .clickable(enabled = true) {
@@ -542,8 +546,7 @@ fun NewVariantDialog(
                                         measure?.let {
                                             DropdownMenuItem(text = { Text(measure.abbreviation) },
                                                 onClick = {
-                                                    variant =
-                                                        variant.copy(unitId = measure.id)
+                                                    variant = variant.copy(unitId = measure.id)
                                                     measuresExpanded = false
                                                 })
                                         }
@@ -564,8 +567,7 @@ fun NewVariantDialog(
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
-        }
-    )
+        })
 }
 
 @Composable
@@ -577,6 +579,156 @@ fun NewSubstituteDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
+                Text("Add")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        })
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddToShoppingListDialog(
+    ingredientId: Long,
+    shoppingLists: List<ShoppingList?>,
+    measures: List<Measure?>,
+    onConfirm: (ShoppingListItem) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var shoppingListExpanded by remember { mutableStateOf(false) }
+    var measuresExpanded by remember { mutableStateOf(false) }
+
+    var selectedShoppingListIndex by remember { mutableIntStateOf(0) }
+    var quantity by remember { mutableStateOf("") }
+    var selectedMeasureId by remember { mutableLongStateOf(-1) }
+
+    AlertDialog(onDismissRequest = { onDismiss() },
+        title = { Text(text = "Add to a Shopping List") },
+        text = {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    ExposedDropdownMenuBox(expanded = shoppingListExpanded, onExpandedChange = {
+                        shoppingListExpanded = !shoppingListExpanded
+                    }) {
+                        OutlinedTextField(modifier = Modifier
+                            .padding(
+                                0.dp, 0.dp, 8.dp, 0.dp
+                            )
+                            .fillMaxWidth()
+                            .menuAnchor()
+                            .clickable(enabled = true) {
+                                shoppingListExpanded = true
+                            },
+                            value = if (shoppingLists.isNotEmpty()) {
+                                shoppingLists[selectedShoppingListIndex]?.name ?: ""
+                            } else {
+                                ""
+                            },
+                            readOnly = true,
+                            onValueChange = { },
+                            label = { Text("") },
+                            singleLine = true,
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = shoppingListExpanded)
+                            })
+
+                        ExposedDropdownMenu(expanded = shoppingListExpanded,
+                            onDismissRequest = { shoppingListExpanded = false }) {
+                            shoppingLists.forEachIndexed { index, shoppingList ->
+                                shoppingList?.let {
+                                    DropdownMenuItem(text = { Text(shoppingList.name) }, onClick = {
+                                        selectedShoppingListIndex = index
+                                        shoppingListExpanded = false
+                                    })
+                                }
+                            }
+                        }
+                    }
+                    Column(modifier = Modifier.align(Alignment.CenterVertically)) {
+                        IconButton(modifier = Modifier
+                            .width(48.dp)
+                            .height(48.dp),
+                            onClick = { /*TODO*/ },
+                            content = {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                )
+                            })
+                    }
+                }
+                Row {
+                    OutlinedTextField(
+                        modifier = Modifier
+                            .width(64.dp)
+                            .padding(0.dp, 0.dp, 8.dp, 0.dp),
+                        value = quantity,
+                        singleLine = true,
+                        onValueChange = { newQty ->
+                            quantity = newQty
+                        },
+                        label = { Text("No") },
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            imeAction = ImeAction.Next, keyboardType = KeyboardType.Number
+                        )
+                    )
+                    ExposedDropdownMenuBox(expanded = measuresExpanded, onExpandedChange = {
+                        measuresExpanded = !measuresExpanded
+                    }) {
+                        OutlinedTextField(modifier = Modifier
+                            .padding(
+                                0.dp, 0.dp, 8.dp, 0.dp
+                            )
+                            .menuAnchor()
+                            .width(80.dp)
+                            .clickable(enabled = true) {
+                                measuresExpanded = true
+                            },
+                            value = measures.find { m -> m?.id?.toInt() == selectedMeasureId.toInt() }?.abbreviation
+                                ?: "",
+                            readOnly = true,
+                            onValueChange = { },
+                            label = { Text("") },
+                            singleLine = true,
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = measuresExpanded)
+                            })
+
+                        ExposedDropdownMenu(expanded = measuresExpanded,
+                            onDismissRequest = { measuresExpanded = false }) {
+                            measures.forEach { measure ->
+                                measure?.let {
+                                    DropdownMenuItem(text = { Text(measure.abbreviation) },
+                                        onClick = {
+                                            selectedMeasureId = measure.id
+                                            measuresExpanded = false
+                                        })
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                shoppingLists[selectedShoppingListIndex]?.id?.let {
+                    onConfirm(
+                        ShoppingListItem(
+                            0,
+                            shoppingLists[selectedShoppingListIndex]?.id ?: -1,
+                            ingredientId,
+                            quantity.toDouble(),
+                            selectedMeasureId
+                        )
+                    )
+                }
+            }) {
                 Text("Add")
             }
         },

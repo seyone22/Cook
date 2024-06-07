@@ -37,7 +37,15 @@ class CookingViewModel(
             val ingredients = ingredientRepository.getAllIngredients().first()
             val variants = ingredientVariantRepository.getAllIngredientVariants().first()
 
-            _cookingViewState.value = ViewState(recipes, images, instructions, recipeIngredients, measures, ingredients, variants)
+            _cookingViewState.value = ViewState(
+                recipes = recipes,
+                images = images,
+                instructions = instructions,
+                recipeIngredients = recipeIngredients,
+                measures = measures,
+                ingredients = ingredients,
+                variants = variants
+            )
         }
     }
 

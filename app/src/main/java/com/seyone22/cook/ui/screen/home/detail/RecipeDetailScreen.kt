@@ -22,6 +22,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.CompareArrows
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.FitScreen
@@ -39,10 +40,13 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -54,6 +58,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -81,6 +86,7 @@ import com.seyone22.cook.data.model.Instruction
 import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.model.Recipe
 import com.seyone22.cook.data.model.RecipeIngredient
+import com.seyone22.cook.data.model.ShoppingList
 import com.seyone22.cook.helper.DataHelper
 import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.helper.PriceHelper
@@ -186,16 +192,10 @@ fun RecipeDetailScreen(
                     // Handle share action
                     CoroutineScope(Dispatchers.Main).launch {
                         val zipFile = dataHelper.exportRecipe(
-                            context,
-                            recipe!!,
-                            instructions,
-                            recipeIngredients,
-                            images
+                            context, recipe!!, instructions, recipeIngredients, images
                         )
                         val uri = FileProvider.getUriForFile(
-                            context,
-                            "${context.packageName}.provider",
-                            zipFile
+                            context, "${context.packageName}.provider", zipFile
                         )
 
                         val sendIntent = Intent(Intent.ACTION_SEND).apply {
@@ -252,7 +252,10 @@ fun RecipeDetailScreen(
                             cost = cost,
                             scaleFactor = scaleFactor,
                             onScaleClick = { showScaleDialog = true },
-                            navController = navController)
+                            navController = navController,
+                            shoppingLists = homeViewState.shoppingLists,
+                            recipeIngredients = recipeIngredients
+                        )
                     }
                 }
             }
@@ -328,6 +331,8 @@ fun RecipeDetail(
     viewModel: HomeViewModel,
     navController: NavController,
     recipe: Recipe,
+    recipeIngredients: List<RecipeIngredient?>,
+    shoppingLists: List<ShoppingList?>,
     cost: Double,
     scaleFactor: Double,
     onScaleClick: () -> Unit
@@ -337,7 +342,13 @@ fun RecipeDetail(
         modifier = Modifier.padding(8.dp, 0.dp, 8.dp, 16.dp)
     ) {
         RecipeOptionRow(
-            viewModel = viewModel, recipe = recipe, context = context, onScaleClick = onScaleClick, navController = navController
+            viewModel = viewModel,
+            recipe = recipe,
+            ingredients = recipeIngredients,
+            context = context,
+            onScaleClick = onScaleClick,
+            navController = navController,
+            shoppingLists = shoppingLists
         )
         LazyRow(
             verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)
@@ -489,9 +500,7 @@ fun IngredientsList(
 
                     LaunchedEffect(key1 = quantity) {
                         price = PriceHelper.getCheapestPrice(
-                            recipeIngredient?.ingredientId,
-                            variants,
-                            quantity
+                            recipeIngredient?.ingredientId, variants, quantity
                         )
                     }
 
@@ -500,14 +509,13 @@ fun IngredientsList(
                             ?: false),
                         checked = checked.value,
                         onCheckedChange = { checked.value = !checked.value })
-                    Text(
-                        modifier = Modifier
-                            .padding(4.dp, 0.dp, 16.dp, 0.dp)
-                            .align(Alignment.CenterVertically)
-                            .width(120.dp)
-                            .clickable {
-                                navController.navigate("${IngredientDetailDestination.route}/${recipeIngredient?.ingredientId}")
-                            },
+                    Text(modifier = Modifier
+                        .padding(4.dp, 0.dp, 16.dp, 0.dp)
+                        .align(Alignment.CenterVertically)
+                        .width(120.dp)
+                        .clickable {
+                            navController.navigate("${IngredientDetailDestination.route}/${recipeIngredient?.ingredientId}")
+                        },
                         text = ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.nameEn
                             ?: "",
                         style = MaterialTheme.typography.bodyLarge,
@@ -519,8 +527,7 @@ fun IngredientsList(
                             .align(Alignment.CenterVertically),
                         text = "${
                             String.format(
-                                "%.2f",
-                                quantity
+                                "%.2f", quantity
                             )
                         } ${measures.find { m -> m?.id == recipeIngredient?.measureId }?.abbreviation}",
                         style = MaterialTheme.typography.bodyLarge,
@@ -546,8 +553,17 @@ fun RecipeOptionRow(
     navController: NavController,
     context: Context,
     recipe: Recipe,
+    ingredients: List<RecipeIngredient?>,
+    shoppingLists: List<ShoppingList?>,
     onScaleClick: () -> Unit
 ) {
+    var showAddToShoppingListDialog by remember { mutableStateOf(false) }
+    if (showAddToShoppingListDialog) {
+        AddAllToShoppingListDialog(shoppingLists = shoppingLists, onConfirm = {
+            viewModel.addAllToShoppingList(ingredients, it)
+            showAddToShoppingListDialog = false
+        }, onDismiss = { showAddToShoppingListDialog = false })
+    }
     LazyRow {
         item {
             AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp), onClick = {
@@ -572,26 +588,22 @@ fun RecipeOptionRow(
                 })
         }
         item {
-            AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
-                onClick = {
-                    navController.navigate("Cooking/${recipe.id}")
-                },
-                label = { Text("Cooking Mode") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.FitScreen, contentDescription = null
-                    )
-                })
+            AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp), onClick = {
+                navController.navigate("Cooking/${recipe.id}")
+            }, label = { Text("Cooking Mode") }, leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.FitScreen, contentDescription = null
+                )
+            })
         }
         item {
-            AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
-                onClick = { /*TODO*/ },
-                label = { Text("Add all to Shopping list") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.AddShoppingCart, contentDescription = null
-                    )
-                })
+            AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp), onClick = {
+                showAddToShoppingListDialog = true
+            }, label = { Text("Add all to Shopping list") }, leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.AddShoppingCart, contentDescription = null
+                )
+            })
         }
     }
 }
@@ -653,16 +665,13 @@ fun DeleteConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
 @Composable
 fun ScaleDialog(onConfirm: (Double) -> Unit, onDismiss: () -> Unit) {
     var scaleFactor by remember { mutableStateOf("") }
-    AlertDialog(
-        onDismissRequest = { onDismiss() },
+    AlertDialog(onDismissRequest = { onDismiss() },
         title = { Text(text = "How many people are we serving?") },
         text = {
-            TextField(
-                value = scaleFactor,
+            TextField(value = scaleFactor,
                 onValueChange = { sF -> scaleFactor = sF },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                label = { Text("People count") }
-            )
+                label = { Text("People count") })
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(scaleFactor.toDouble()) }) {
@@ -673,8 +682,93 @@ fun ScaleDialog(onConfirm: (Double) -> Unit, onDismiss: () -> Unit) {
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
-        }
-    )
+        })
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddAllToShoppingListDialog(
+    shoppingLists: List<ShoppingList?>, onConfirm: (Long) -> Unit, onDismiss: () -> Unit
+) {
+    var shoppingListExpanded by remember { mutableStateOf(false) }
+
+    var selectedShoppingListIndex by remember { mutableIntStateOf(0) }
+
+    AlertDialog(onDismissRequest = { onDismiss() },
+        title = { Text(text = "Add to a Shopping List") },
+        text = {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    ExposedDropdownMenuBox(expanded = shoppingListExpanded, onExpandedChange = {
+                        shoppingListExpanded = !shoppingListExpanded
+                    }) {
+                        OutlinedTextField(modifier = Modifier
+                            .padding(
+                                0.dp, 0.dp, 8.dp, 0.dp
+                            )
+                            .fillMaxWidth()
+                            .menuAnchor()
+                            .clickable(enabled = true) {
+                                shoppingListExpanded = true
+                            },
+                            value = if (shoppingLists.isNotEmpty()) {
+                                shoppingLists[selectedShoppingListIndex]?.name ?: ""
+                            } else {
+                                ""
+                            },
+                            readOnly = true,
+                            onValueChange = { },
+                            label = { Text("") },
+                            singleLine = true,
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = shoppingListExpanded)
+                            })
+
+                        ExposedDropdownMenu(expanded = shoppingListExpanded,
+                            onDismissRequest = { shoppingListExpanded = false }) {
+                            shoppingLists.forEachIndexed { index, shoppingList ->
+                                shoppingList?.let {
+                                    DropdownMenuItem(text = { Text(shoppingList.name) }, onClick = {
+                                        selectedShoppingListIndex = index
+                                        shoppingListExpanded = false
+                                    })
+                                }
+                            }
+                        }
+                    }
+                    Column(modifier = Modifier.align(Alignment.CenterVertically)) {
+                        IconButton(modifier = Modifier
+                            .width(48.dp)
+                            .height(48.dp),
+                            onClick = { /*TODO*/ },
+                            content = {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                )
+                            })
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                shoppingLists[selectedShoppingListIndex]?.id?.let {
+                    onConfirm(
+                        shoppingLists[selectedShoppingListIndex]?.id ?: -1,
+                    )
+                }
+            }) {
+                Text("Add")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        })
 }
 
 // TODO: Import dialog in settings, View .recipe files, before importing

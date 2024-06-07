@@ -53,7 +53,7 @@ fun IngredientsScreen(
     val ingredientsViewState by viewModel.ingredientsViewState.collectAsState()
 
     val ingredients = ingredientsViewState.ingredients
-    val images = ingredientsViewState.images
+    val images = ingredientsViewState.ingredientImages
 
     // Implement the UI for the Ingredients screen using Jetpack Compose
     LazyVerticalStaggeredGrid(modifier = modifier.padding(8.dp),

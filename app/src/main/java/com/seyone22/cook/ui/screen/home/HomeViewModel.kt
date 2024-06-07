@@ -2,13 +2,9 @@ package com.seyone22.cook.ui.screen.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.seyone22.cook.data.model.Ingredient
-import com.seyone22.cook.data.model.IngredientVariant
-import com.seyone22.cook.data.model.Instruction
-import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.model.Recipe
-import com.seyone22.cook.data.model.RecipeImage
 import com.seyone22.cook.data.model.RecipeIngredient
+import com.seyone22.cook.data.model.ShoppingListItem
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
 import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantRepository
 import com.seyone22.cook.data.repository.instruction.InstructionRepository
@@ -16,6 +12,7 @@ import com.seyone22.cook.data.repository.measure.MeasureRepository
 import com.seyone22.cook.data.repository.recipe.RecipeRepository
 import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
 import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientRepository
+import com.seyone22.cook.data.repository.shoppingList.ShoppingListRepository
 import com.seyone22.cook.ui.common.ViewState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +26,8 @@ class HomeViewModel(
     private val recipeIngredientRepository: RecipeIngredientRepository,
     private val ingredientVariantRepository: IngredientVariantRepository,
     private val measureRepository: MeasureRepository,
-    private val ingredientRepository: IngredientRepository
+    private val ingredientRepository: IngredientRepository,
+    private val shoppingListRepository: ShoppingListRepository
 ) : ViewModel() {
     private val _homeViewState = MutableStateFlow(ViewState())
     val homeViewState: StateFlow<ViewState> get() = _homeViewState
@@ -43,15 +41,17 @@ class HomeViewModel(
             val measures = measureRepository.getAllMeasures().first()
             val ingredients = ingredientRepository.getAllIngredients().first()
             val variants = ingredientVariantRepository.getAllIngredientVariants().first()
+            val shoppingLists = shoppingListRepository.getAllShoppingLists().first()
 
             _homeViewState.value = ViewState(
-                recipes,
-                images,
-                instructions,
-                recipeIngredients,
-                measures,
-                ingredients,
-                variants
+                recipes = recipes,
+                images = images,
+                instructions = instructions,
+                recipeIngredients = recipeIngredients,
+                measures = measures,
+                ingredients = ingredients,
+                variants = variants,
+                shoppingLists = shoppingLists
             )
         }
     }
@@ -67,6 +67,21 @@ class HomeViewModel(
     fun incrementMakeCounter(recipeId: Long) {
         viewModelScope.launch {
             recipeRepository.incrementTimesMade(recipeId)
+        }
+    }
+
+    fun addAllToShoppingList(ingredients: List<RecipeIngredient?>, it: Long) {
+        viewModelScope.launch {
+            ingredients.forEach { ingredient ->
+                shoppingListRepository.insertItem(
+                    ShoppingListItem(
+                        ingredientId = (ingredient?.ingredientId?.toInt() ?: 0).toLong(),
+                        quantity = ingredient?.quantity ?: 0.0,
+                        measureId = (ingredient?.measureId?.toInt() ?: 0).toLong(),
+                        shoppingListId = it
+                    )
+                )
+            }
         }
     }
 }

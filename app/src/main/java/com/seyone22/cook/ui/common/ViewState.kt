@@ -1,6 +1,7 @@
 package com.seyone22.cook.ui.common
 
 import com.seyone22.cook.data.model.Ingredient
+import com.seyone22.cook.data.model.IngredientImage
 import com.seyone22.cook.data.model.IngredientVariant
 import com.seyone22.cook.data.model.Instruction
 import com.seyone22.cook.data.model.Measure
@@ -13,6 +14,7 @@ import com.seyone22.cook.data.model.ShoppingListItem
 data class ViewState(
     val recipes: List<Recipe?> = emptyList(),
     val images: List<RecipeImage?> = emptyList(),
+    val ingredientImages: List<IngredientImage?> = emptyList(),
     val instructions: List<Instruction?> = emptyList(),
     val recipeIngredients: List<RecipeIngredient?> = emptyList(),
     val measures: List<Measure?> = emptyList(),
