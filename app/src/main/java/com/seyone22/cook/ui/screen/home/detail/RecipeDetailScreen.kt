@@ -677,7 +677,5 @@ fun ScaleDialog(onConfirm: (Double) -> Unit, onDismiss: () -> Unit) {
     )
 }
 
-// TODO: View .recipe files, before importing
-// TODO: Import dialog in settings
+// TODO: Import dialog in settings, View .recipe files, before importing
 // TODO: Cooking view, TTS and STT capability
-// TODO: Shopping list, STT and price guides
