@@ -12,6 +12,7 @@ import com.seyone22.cook.ui.screen.home.HomeViewModel
 import com.seyone22.cook.ui.screen.ingredients.IngredientsViewModel
 import com.seyone22.cook.ui.screen.more.MoreViewModel
 import com.seyone22.cook.ui.screen.search.SearchViewModel
+import com.seyone22.cook.ui.screen.shoppingList.ShoppingListViewModel
 
 object AppViewModelProvider {
     val Factory = viewModelFactory {
@@ -55,7 +56,13 @@ object AppViewModelProvider {
         }
         initializer {
             CookingViewModel(
-
+                recipeRepository = cookApplication().container.recipeRepository,
+                recipeImageRepository = cookApplication().container.recipeImageRepository,
+                instructionRepository = cookApplication().container.instructionRepository,
+                recipeIngredientRepository = cookApplication().container.recipeIngredientRepository,
+                measureRepository = cookApplication().container.measureRepository,
+                ingredientRepository = cookApplication().container.ingredientRepository,
+                ingredientVariantRepository = cookApplication().container.ingredientVariantRepository,
             )
         }
         initializer {
@@ -67,6 +74,17 @@ object AppViewModelProvider {
             SearchViewModel(
                 recipeRepository = cookApplication().container.recipeRepository,
                 recipeImageRepository = cookApplication().container.recipeImageRepository,
+            )
+        }
+        initializer {
+            ShoppingListViewModel(
+                recipeRepository = cookApplication().container.recipeRepository,
+                recipeImageRepository = cookApplication().container.recipeImageRepository,
+                instructionRepository = cookApplication().container.instructionRepository,
+                recipeIngredientRepository = cookApplication().container.recipeIngredientRepository,
+                measureRepository = cookApplication().container.measureRepository,
+                ingredientRepository = cookApplication().container.ingredientRepository,
+                ingredientVariantRepository = cookApplication().container.ingredientVariantRepository,
             )
         }
     }

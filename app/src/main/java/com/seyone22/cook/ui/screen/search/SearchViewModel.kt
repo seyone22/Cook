@@ -2,16 +2,10 @@ package com.seyone22.cook.ui.screen.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.seyone22.cook.data.model.Ingredient
-import com.seyone22.cook.data.model.IngredientVariant
-import com.seyone22.cook.data.model.Instruction
-import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.model.Recipe
 import com.seyone22.cook.data.model.RecipeImage
-import com.seyone22.cook.data.model.RecipeIngredient
 import com.seyone22.cook.data.repository.recipe.RecipeRepository
 import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
-import com.seyone22.cook.ui.screen.home.HomeViewState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first

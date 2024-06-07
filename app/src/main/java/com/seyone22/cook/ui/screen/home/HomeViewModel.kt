@@ -16,6 +16,7 @@ import com.seyone22.cook.data.repository.measure.MeasureRepository
 import com.seyone22.cook.data.repository.recipe.RecipeRepository
 import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
 import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientRepository
+import com.seyone22.cook.ui.common.ViewState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -30,8 +31,8 @@ class HomeViewModel(
     private val measureRepository: MeasureRepository,
     private val ingredientRepository: IngredientRepository
 ) : ViewModel() {
-    private val _homeViewState = MutableStateFlow(HomeViewState())
-    val homeViewState: StateFlow<HomeViewState> get() = _homeViewState
+    private val _homeViewState = MutableStateFlow(ViewState())
+    val homeViewState: StateFlow<ViewState> get() = _homeViewState
 
     fun fetchData() {
         viewModelScope.launch {
@@ -43,7 +44,15 @@ class HomeViewModel(
             val ingredients = ingredientRepository.getAllIngredients().first()
             val variants = ingredientVariantRepository.getAllIngredientVariants().first()
 
-            _homeViewState.value = HomeViewState(recipes, images, instructions, recipeIngredients, measures, ingredients, variants)
+            _homeViewState.value = ViewState(
+                recipes,
+                images,
+                instructions,
+                recipeIngredients,
+                measures,
+                ingredients,
+                variants
+            )
         }
     }
 
@@ -60,15 +69,4 @@ class HomeViewModel(
             recipeRepository.incrementTimesMade(recipeId)
         }
     }
-
 }
-
-data class HomeViewState(
-    val recipes: List<Recipe?> = emptyList(),
-    val images: List<RecipeImage?> = emptyList(),
-    val instructions: List<Instruction?> = emptyList(),
-    val recipeIngredients: List<RecipeIngredient?> = emptyList(),
-    val measures: List<Measure?> = emptyList(),
-    val ingredients: List<Ingredient?> = emptyList(),
-    val variants: List<IngredientVariant?> = emptyList()
-)

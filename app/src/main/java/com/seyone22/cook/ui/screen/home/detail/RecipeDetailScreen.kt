@@ -185,8 +185,18 @@ fun RecipeDetailScreen(
                     val dataHelper = DataHelper()
                     // Handle share action
                     CoroutineScope(Dispatchers.Main).launch {
-                        val zipFile = dataHelper.exportRecipe(context, recipe!!, instructions, recipeIngredients, images )
-                        val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", zipFile)
+                        val zipFile = dataHelper.exportRecipe(
+                            context,
+                            recipe!!,
+                            instructions,
+                            recipeIngredients,
+                            images
+                        )
+                        val uri = FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.provider",
+                            zipFile
+                        )
 
                         val sendIntent = Intent(Intent.ACTION_SEND).apply {
                             putExtra(Intent.EXTRA_STREAM, uri)
@@ -236,7 +246,13 @@ fun RecipeDetailScreen(
                 item {
                     Column(modifier = Modifier.padding(8.dp, 0.dp)) {
                         HeaderImage(bitmap = bitmap, recipe.name)
-                        RecipeDetail(viewModel, recipe, cost, scaleFactor, onScaleClick = { showScaleDialog = true })
+                        RecipeDetail(
+                            viewModel = viewModel,
+                            recipe = recipe,
+                            cost = cost,
+                            scaleFactor = scaleFactor,
+                            onScaleClick = { showScaleDialog = true },
+                            navController = navController)
                     }
                 }
             }
@@ -297,7 +313,7 @@ fun HeaderImage(bitmap: Bitmap?, title: String) {
         }
         Text(
             text = title,
-            color = if (bitmap!=null) Color.White else Color.Black,
+            color = if (bitmap != null) Color.White else Color.Black,
             style = MaterialTheme.typography.displayMedium,
             modifier = Modifier
                 .padding(16.dp, 0.dp, 16.dp, 16.dp)
@@ -308,13 +324,20 @@ fun HeaderImage(bitmap: Bitmap?, title: String) {
 }
 
 @Composable
-fun RecipeDetail(viewModel: HomeViewModel, recipe: Recipe, cost: Double, scaleFactor: Double, onScaleClick: () -> Unit) {
+fun RecipeDetail(
+    viewModel: HomeViewModel,
+    navController: NavController,
+    recipe: Recipe,
+    cost: Double,
+    scaleFactor: Double,
+    onScaleClick: () -> Unit
+) {
     val context = LocalContext.current
     Column(
         modifier = Modifier.padding(8.dp, 0.dp, 8.dp, 16.dp)
     ) {
         RecipeOptionRow(
-            viewModel = viewModel, recipe = recipe, context = context, onScaleClick = onScaleClick
+            viewModel = viewModel, recipe = recipe, context = context, onScaleClick = onScaleClick, navController = navController
         )
         LazyRow(
             verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)
@@ -454,25 +477,37 @@ fun IngredientsList(
                 Row(
                     modifier = Modifier.padding(0.dp),
                 ) {
-                    val checked = remember { mutableStateOf(ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.stocked ?: false) }
-                    val quantity : Double = ((recipeIngredient?.quantity?.div(serves))?.times(scaleFactor)) ?: 0.0
+                    val checked = remember {
+                        mutableStateOf(
+                            ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.stocked
+                                ?: false
+                        )
+                    }
+                    val quantity: Double =
+                        ((recipeIngredient?.quantity?.div(serves))?.times(scaleFactor)) ?: 0.0
                     var price by remember { mutableDoubleStateOf(0.0) }
 
                     LaunchedEffect(key1 = quantity) {
-                        price = PriceHelper.getCheapestPrice(recipeIngredient?.ingredientId, variants, quantity)
+                        price = PriceHelper.getCheapestPrice(
+                            recipeIngredient?.ingredientId,
+                            variants,
+                            quantity
+                        )
                     }
 
                     Checkbox(modifier = Modifier.height(32.dp),
-                        enabled = !(ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.stocked ?: false),
+                        enabled = !(ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.stocked
+                            ?: false),
                         checked = checked.value,
                         onCheckedChange = { checked.value = !checked.value })
-                    Text(modifier = Modifier
-                        .padding(4.dp, 0.dp, 16.dp, 0.dp)
-                        .align(Alignment.CenterVertically)
-                        .width(120.dp)
-                        .clickable {
-                            navController.navigate("${IngredientDetailDestination.route}/${recipeIngredient?.ingredientId}")
-                        },
+                    Text(
+                        modifier = Modifier
+                            .padding(4.dp, 0.dp, 16.dp, 0.dp)
+                            .align(Alignment.CenterVertically)
+                            .width(120.dp)
+                            .clickable {
+                                navController.navigate("${IngredientDetailDestination.route}/${recipeIngredient?.ingredientId}")
+                            },
                         text = ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.nameEn
                             ?: "",
                         style = MaterialTheme.typography.bodyLarge,
@@ -482,7 +517,12 @@ fun IngredientsList(
                         modifier = Modifier
                             .padding(4.dp, 0.dp, 16.dp, 0.dp)
                             .align(Alignment.CenterVertically),
-                        text = "${String.format("%.2f", quantity)} ${measures.find { m -> m?.id == recipeIngredient?.measureId }?.abbreviation}",
+                        text = "${
+                            String.format(
+                                "%.2f",
+                                quantity
+                            )
+                        } ${measures.find { m -> m?.id == recipeIngredient?.measureId }?.abbreviation}",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -501,7 +541,13 @@ fun IngredientsList(
 }
 
 @Composable
-fun RecipeOptionRow(viewModel: HomeViewModel, context: Context, recipe: Recipe, onScaleClick: () -> Unit) {
+fun RecipeOptionRow(
+    viewModel: HomeViewModel,
+    navController: NavController,
+    context: Context,
+    recipe: Recipe,
+    onScaleClick: () -> Unit
+) {
     LazyRow {
         item {
             AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp), onClick = {
@@ -527,7 +573,9 @@ fun RecipeOptionRow(viewModel: HomeViewModel, context: Context, recipe: Recipe, 
         }
         item {
             AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp),
-                onClick = { /*TODO*/ },
+                onClick = {
+                    navController.navigate("Cooking/${recipe.id}")
+                },
                 label = { Text("Cooking Mode") },
                 leadingIcon = {
                     Icon(

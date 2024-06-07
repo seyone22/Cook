@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.seyone22.cook.data.model.Ingredient
@@ -17,6 +16,8 @@ import com.seyone22.cook.data.model.MeasureType
 import com.seyone22.cook.data.model.Recipe
 import com.seyone22.cook.data.model.RecipeImage
 import com.seyone22.cook.data.model.RecipeIngredient
+import com.seyone22.cook.data.model.ShoppingList
+import com.seyone22.cook.data.model.ShoppingListItem
 import com.seyone22.cook.data.repository.ingredient.IngredientDao
 import com.seyone22.cook.data.repository.ingredientImage.IngredientImageDao
 import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantDao
@@ -26,13 +27,13 @@ import com.seyone22.cook.data.repository.measureConversion.MeasureConversionDao
 import com.seyone22.cook.data.repository.recipe.RecipeDao
 import com.seyone22.cook.data.repository.recipeImage.RecipeImageDao
 import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientDao
-import com.seyone22.cook.helper.Converters
+import com.seyone22.cook.data.repository.shoppingList.ShoppingListDao
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [Ingredient::class, IngredientVariant::class, IngredientImage::class, RecipeImage::class, Measure::class, MeasureConversion::class, Recipe::class, Instruction::class, RecipeIngredient::class],
+    entities = [Ingredient::class, IngredientVariant::class, IngredientImage::class, RecipeImage::class, Measure::class, MeasureConversion::class, Recipe::class, Instruction::class, RecipeIngredient::class, ShoppingList::class, ShoppingListItem::class],
     version = 3,
     exportSchema = true
 )
@@ -46,6 +47,7 @@ abstract class CookDatabase : RoomDatabase() {
     abstract fun recipeDao(): RecipeDao
     abstract fun instructionDao(): InstructionDao
     abstract fun recipeIngredientDao(): RecipeIngredientDao
+    abstract fun shoppingListDao(): ShoppingListDao
 
     companion object {
         @Volatile
@@ -54,12 +56,9 @@ abstract class CookDatabase : RoomDatabase() {
         fun getDatabase(context: Context, scope: CoroutineScope): CookDatabase {
             return Instance ?: synchronized(this) {
                 Room.databaseBuilder(context, CookDatabase::class.java, "cook_database")
-                    .addMigrations(MIGRATION_1_2)
-                    .addMigrations(MIGRATION_2_3)
-                    .addMigrations(MIGRATION_1_3)
-                    .fallbackToDestructiveMigration()
-                    .addCallback(CookDatabaseCallback(scope))
-                    .build().also { Instance = it }
+                    .addMigrations(MIGRATION_1_2).addMigrations(MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_3).fallbackToDestructiveMigration()
+                    .addCallback(CookDatabaseCallback(scope)).build().also { Instance = it }
             }
         }
 
@@ -84,11 +83,37 @@ abstract class CookDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE measures ADD COLUMN type VARCHAR NOT NULL DEFAULT ''")
 
                 // Add new conversions table
-                db.execSQL("CREATE TABLE conversions (" +
-                        "id INTEGER PRIMARY KEY NOT NULL," +
-                        "fromUnitId INTEGER NOT NULL," +
-                        "toUnitId INTEGER NOT NULL," +
-                        "conversionFactor REAL NOT NULL)")
+                db.execSQL(
+                    "CREATE TABLE conversions (" + "id INTEGER PRIMARY KEY NOT NULL," + "fromUnitId INTEGER NOT NULL," + "toUnitId INTEGER NOT NULL," + "conversionFactor REAL NOT NULL)"
+                )
+
+                // Create the shopping_lists table
+                db.execSQL(
+                    """
+            CREATE TABLE IF NOT EXISTS shopping_lists (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                name TEXT NOT NULL,
+                dateCreated TEXT NOT NULL,
+                dateUpdated TEXT NOT NULL,
+                completed INTEGER NOT NULL DEFAULT 0
+            )
+        """.trimIndent()
+                )
+
+                // Create the shopping_list_items table
+                db.execSQL(
+                    """
+            CREATE TABLE IF NOT EXISTS shopping_list_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                shoppingListId INTEGER NOT NULL,
+                ingredientId INTEGER NOT NULL,
+                quantity REAL NOT NULL,
+                measureId INTEGER NOT NULL,
+                checked INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (shoppingListId) REFERENCES shopping_lists(id) ON DELETE CASCADE
+            )
+        """.trimIndent()
+                )
             }
         }
         private val MIGRATION_2_3 = object : Migration(2, 3) {
@@ -97,19 +122,44 @@ abstract class CookDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE measures ADD COLUMN type VARCHAR NOT NULL DEFAULT ''")
 
                 // Add new conversions table
-                db.execSQL("CREATE TABLE conversions (" +
-                        "id INTEGER PRIMARY KEY NOT NULL," +
-                        "fromUnitId INTEGER NOT NULL," +
-                        "toUnitId INTEGER NOT NULL," +
-                        "conversionFactor REAL NOT NULL)")
+                db.execSQL(
+                    "CREATE TABLE conversions (" + "id INTEGER PRIMARY KEY NOT NULL," + "fromUnitId INTEGER NOT NULL," + "toUnitId INTEGER NOT NULL," + "conversionFactor REAL NOT NULL)"
+                )
 
+                // Create the shopping_lists table
+                db.execSQL(
+                    """
+            CREATE TABLE IF NOT EXISTS shopping_lists (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                name TEXT NOT NULL,
+                dateCreated TEXT NOT NULL,
+                dateUpdated TEXT NOT NULL,
+                completed INTEGER NOT NULL DEFAULT 0
+            )
+        """.trimIndent()
+                )
+
+                // Create the shopping_list_items table
+                db.execSQL(
+                    """
+            CREATE TABLE IF NOT EXISTS shopping_list_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                shoppingListId INTEGER NOT NULL,
+                ingredientId INTEGER NOT NULL,
+                quantity REAL NOT NULL,
+                measureId INTEGER NOT NULL,
+                checked INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (shoppingListId) REFERENCES shopping_lists(id) ON DELETE CASCADE
+            )
+        """.trimIndent()
+                )
             }
         }
     }
 
     private class CookDatabaseCallback(
         private val scope: CoroutineScope
-    ) : RoomDatabase.Callback() {
+    ) : Callback() {
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)
             // This will be executed on the background thread
@@ -127,11 +177,22 @@ abstract class CookDatabase : RoomDatabase() {
 
             val initialUnits = listOf(
                 Measure(id = 1, abbreviation = "g", name = "gram", type = MeasureType.WEIGHT.name),
-                Measure(id = 2, abbreviation = "kg", name = "kilogram", type = MeasureType.WEIGHT.name),
-                Measure(id = 3, abbreviation = "ml", name = "milliliter", type = MeasureType.VOLUME.name),
+                Measure(
+                    id = 2, abbreviation = "kg", name = "kilogram", type = MeasureType.WEIGHT.name
+                ),
+                Measure(
+                    id = 3, abbreviation = "ml", name = "milliliter", type = MeasureType.VOLUME.name
+                ),
                 Measure(id = 4, abbreviation = "l", name = "liter", type = MeasureType.VOLUME.name),
-                Measure(id = 5, abbreviation = "tsp", name = "teaspoon", type = MeasureType.VOLUME.name),
-                Measure(id = 6, abbreviation = "tbsp", name = "tablespoon", type = MeasureType.VOLUME.name),
+                Measure(
+                    id = 5, abbreviation = "tsp", name = "teaspoon", type = MeasureType.VOLUME.name
+                ),
+                Measure(
+                    id = 6,
+                    abbreviation = "tbsp",
+                    name = "tablespoon",
+                    type = MeasureType.VOLUME.name
+                ),
                 Measure(id = 7, abbreviation = "cup", name = "cup", type = MeasureType.VOLUME.name),
             )
             initialUnits.forEach {

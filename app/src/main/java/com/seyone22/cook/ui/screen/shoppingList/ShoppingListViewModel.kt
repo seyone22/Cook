@@ -1,4 +1,4 @@
-package com.seyone22.cook.ui.screen.cooking
+package com.seyone22.cook.ui.screen.shoppingList
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class CookingViewModel(
+class ShoppingListViewModel(
     private val recipeRepository: RecipeRepository,
     private val recipeImageRepository: RecipeImageRepository,
     private val instructionRepository: InstructionRepository,
@@ -24,8 +24,8 @@ class CookingViewModel(
     private val measureRepository: MeasureRepository,
     private val ingredientRepository: IngredientRepository
 ) : ViewModel() {
-    private val _cookingViewState = MutableStateFlow(ViewState())
-    val cookingViewState: StateFlow<ViewState> get() = _cookingViewState
+    private val _shoppingListViewState = MutableStateFlow(ViewState())
+    val shoppingListViewState: StateFlow<ViewState> get() = _shoppingListViewState
 
     fun fetchData() {
         viewModelScope.launch {
@@ -37,9 +37,11 @@ class CookingViewModel(
             val ingredients = ingredientRepository.getAllIngredients().first()
             val variants = ingredientVariantRepository.getAllIngredientVariants().first()
 
-            _cookingViewState.value = ViewState(recipes, images, instructions, recipeIngredients, measures, ingredients, variants)
+            _shoppingListViewState.value = ViewState(recipes, images, instructions, recipeIngredients, measures, ingredients, variants)
         }
     }
 
 
+
 }
+

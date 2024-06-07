@@ -37,6 +37,8 @@ import com.seyone22.cook.ui.screen.more.SettingsDestination
 import com.seyone22.cook.ui.screen.more.SettingsDetailScreen
 import com.seyone22.cook.ui.screen.search.SearchDestination
 import com.seyone22.cook.ui.screen.search.SearchScreen
+import com.seyone22.cook.ui.screen.shoppingList.ShoppingListDestination
+import com.seyone22.cook.ui.screen.shoppingList.ShoppingListScreen
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -133,6 +135,15 @@ fun CookNavHost(
             CookingScreen(
                 navController = navController,
                 backStackEntry = it.arguments?.getString("id") ?: "-1"
+            )
+        }
+        // Destination for the Shopping List Screen
+        composable(
+            route = ShoppingListDestination.route,
+        ) {
+            ShoppingListScreen(
+                navController = navController,
+                modifier = modifier.padding(innerPadding)
             )
         }
         // Settings Screens

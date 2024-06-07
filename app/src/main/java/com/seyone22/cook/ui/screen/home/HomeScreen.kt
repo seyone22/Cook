@@ -70,7 +70,7 @@ fun HomeScreen(
     val recipes = homeViewState.recipes
     val images = homeViewState.images
 
-    var searchActive by remember { mutableStateOf(false) }
+    val searchActive by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxSize()
     ) {

@@ -1,4 +1,4 @@
-package com.seyone22.cook.ui.screen.cooking
+package com.seyone22.cook.ui.screen.shoppingList
 
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -10,29 +10,28 @@ import com.seyone22.cook.R
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.common.CookTopBar
 import com.seyone22.cook.ui.navigation.NavigationDestination
-import com.seyone22.cook.ui.screen.shoppingList.ShoppingListDestination
 
-object CookingDestination : NavigationDestination {
-    override val route = "Cooking"
+object ShoppingListDestination : NavigationDestination {
+    override val route = "Shopping List"
     override val titleRes = R.string.app_name
-    override val routeId = 12
+    override val routeId = 7
 }
 
 @Composable
-fun CookingScreen(
-    viewModel: CookingViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    navController: NavController,
-    backStackEntry: String
+fun ShoppingListScreen(
+    modifier: androidx.compose.ui.Modifier,
+    viewModel: ShoppingListViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    navController: NavController
 ) {
     // Call the ViewModel function to fetch ingredients when the screen is first displayed
     viewModel.fetchData()
     // Observe the ingredientList StateFlow to display ingredients
-    val cookingViewState by viewModel.cookingViewState.collectAsState()
+    val shoppingListViewState by viewModel.shoppingListViewState.collectAsState()
 
     Scaffold(
         topBar = {
             CookTopBar(
-                currentActivity = CookingDestination.route,
+                currentActivity = ShoppingListDestination.route,
                 navController = navController
             )
         }
