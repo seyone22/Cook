@@ -5,13 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.model.IngredientImage
 import com.seyone22.cook.data.model.IngredientVariant
+import com.seyone22.cook.data.model.IngredientVariantDetails
 import com.seyone22.cook.data.model.Measure
+import com.seyone22.cook.data.model.toIngredientVariant
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
 import com.seyone22.cook.data.repository.ingredientImage.IngredientImageRepository
 import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantRepository
 import com.seyone22.cook.data.repository.measure.MeasureRepository
 import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientRepository
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -30,13 +31,14 @@ class IngredientsViewModel(
 
 
     // Function to fetch both ingredients and images
-    fun fetchIngredientsAndImages() {
+    fun fetchData() {
         viewModelScope.launch {
             val ingredients = ingredientRepository.getAllIngredients().first()
             val variants = ingredientVariantRepository.getAllIngredientVariants().first()
             val images = ingredientImageRepository.getAllIngredientImages().first()
             val measures = measureRepository.getAllMeasures().first()
-            _ingredientsViewState.value = IngredientsViewState(ingredients, images, variants, measures)
+            _ingredientsViewState.value =
+                IngredientsViewState(ingredients, images, variants, measures)
         }
     }
 
@@ -55,8 +57,15 @@ class IngredientsViewModel(
             ingredientRepository.updateIngredient(ingredient)
         }
     }
-}
 
+    fun addVariant(ingredientId: Long, variant: IngredientVariantDetails) {
+        viewModelScope.launch {
+            ingredientVariantRepository.insertIngredientVariant(
+                variant.toIngredientVariant().copy(ingredientId = ingredientId)
+            )
+        }
+    }
+}
 
 
 // Define a data class to hold both the list of ingredients and images

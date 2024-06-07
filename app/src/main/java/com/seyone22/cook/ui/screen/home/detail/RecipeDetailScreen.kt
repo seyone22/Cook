@@ -1,11 +1,9 @@
 package com.seyone22.cook.ui.screen.home.detail
 
-import android.content.ClipData.Item
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -145,7 +143,6 @@ fun RecipeDetailScreen(
 
     LaunchedEffect(key1 = scaleFactor) {
         cost = PriceHelper.getCostOfRecipe(recipeIngredients, variants, scaleFactor)
-        Log.d("TAG", "priceOf: ${cost}")
     }
 
     if (showDeleteConfirmationDialog) {
@@ -506,8 +503,7 @@ fun IngredientsList(
 
 @Composable
 fun RecipeOptionRow(viewModel: HomeViewModel, context: Context, recipe: Recipe, onScaleClick: () -> Unit) {
-    LazyRow(
-    ) {
+    LazyRow {
         item {
             AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp), onClick = {
                 viewModel.incrementMakeCounter(recipe.id)
@@ -633,3 +629,8 @@ fun ScaleDialog(onConfirm: (Double) -> Unit, onDismiss: () -> Unit) {
         }
     )
 }
+
+// TODO: View .recipe files, before importing
+// TODO: Import dialog in settings
+// TODO: Cooking view, TTS and STT capability
+// TODO: Shopping list, STT and price guides
