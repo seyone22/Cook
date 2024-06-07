@@ -1,12 +1,7 @@
 package com.seyone22.cook.ui.screen.search
 
-import android.util.Log
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -22,8 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.seyone22.cook.R
@@ -52,8 +46,7 @@ fun SearchScreen(
     var searchData: List<Recipe?> by remember { mutableStateOf(emptyList()) }
 
     Column {
-        SearchBar(
-            query = query,
+        SearchBar(query = query,
             onQueryChange = {
                 query = it
                 searchData = data.recipes.filter { r ->
@@ -72,24 +65,26 @@ fun SearchScreen(
             active = true,
             onActiveChange = { },
             leadingIcon = {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = null,
                     modifier = Modifier.clickable { navController.popBackStack() })
             },
             content = {
                 LazyColumn {
                     items(count = searchData.size) { entry ->
-                        Log.d("TAG", "SearchScreen: ${searchData[entry]?.name ?: ""}")
-
-                        ListItem(
-                            headlineContent = { Text(searchData[entry]?.name ?: "") },
-                            modifier = Modifier
-                                .clickable { navController.navigate("Recipe Details/${searchData[entry]?.id}") }
-                        )
+                        ListItem(headlineContent = { Text(searchData[entry]?.name ?: "") },
+                            supportingContent = {
+                                if (searchData[entry]?.description?.isNotEmpty() == true) {
+                                    Text(
+                                        text = searchData[entry]?.description ?: "",
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            },
+                            modifier = Modifier.clickable { navController.navigate("Recipe Details/${searchData[entry]?.id}") })
                     }
                 }
-            }
-        )
+            })
     }
 }
