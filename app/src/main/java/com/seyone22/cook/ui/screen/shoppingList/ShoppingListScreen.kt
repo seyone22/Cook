@@ -12,10 +12,12 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -62,6 +64,12 @@ fun ShoppingListScreen(
     // Observe the ingredientList StateFlow to display ingredients
     val shoppingListViewState by viewModel.shoppingListViewState.collectAsState()
 
+    var filterCompleted by remember { mutableStateOf(true) }
+
+    var shoppingData =
+        shoppingListViewState.shoppingLists.filter { i -> i?.completed == !filterCompleted }
+
+
     var showNewDialog by remember { mutableStateOf(false) }
     if (showNewDialog) {
         NewShoppingListDialog(onConfirm = {
@@ -91,7 +99,26 @@ fun ShoppingListScreen(
                     }
                 })
             }
-            if (shoppingListViewState.shoppingLists.isEmpty()) {
+            item {
+                Row(
+                    modifier = Modifier.padding(start = 16.dp)
+                ) {
+                    FilterChip(
+                        selected = !filterCompleted,
+                        leadingIcon = { if(!filterCompleted) Icon(imageVector = Icons.Default.Check, contentDescription = null) },
+                        onClick = {
+                            filterCompleted = !filterCompleted
+                            shoppingData = if (filterCompleted) {
+                                shoppingListViewState.shoppingLists.filter { i -> i?.completed == true }
+                            } else {
+                                shoppingListViewState.shoppingLists
+                            }
+                        },
+                        label = { Text("Completed") }
+                    )
+                }
+            }
+            if (shoppingData.isEmpty()) {
                 item {
                     Column(
                         modifier = Modifier
@@ -105,7 +132,7 @@ fun ShoppingListScreen(
                             textAlign = TextAlign.Center
                         )
                         Text(
-                            text = "Unfortunately for you, however, you are Shopping List-less. Without a plan or list, you are fated, it seems, to shop around aimlessly.",
+                            text = "Unfortunately for you, however, you are Shopping List-less. Without a plan or list, you are fated, it seems, to shop around aimlessly. To see all shopping lists, toggle the chip above.",
                             textAlign = TextAlign.Center
                         )
                     }
@@ -140,8 +167,6 @@ fun ShoppingListCard(
     }
 }
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewShoppingListDialog(
     onConfirm: (ShoppingList) -> Unit, onDismiss: () -> Unit

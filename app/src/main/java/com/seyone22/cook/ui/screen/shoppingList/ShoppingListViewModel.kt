@@ -3,6 +3,7 @@ package com.seyone22.cook.ui.screen.shoppingList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seyone22.cook.data.model.ShoppingList
+import com.seyone22.cook.data.model.ShoppingListItem
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
 import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantRepository
 import com.seyone22.cook.data.repository.instruction.InstructionRepository
@@ -34,14 +35,27 @@ class ShoppingListViewModel(
         viewModelScope.launch {
             val shoppingLists = shoppingListRepository.getAllShoppingLists().first()
             val shoppingListItems = shoppingListRepository.getAllItems().first()
+            val ingredients = ingredientRepository.getAllIngredients().first()
+            val measures = measureRepository.getAllMeasures().first()
 
-            _shoppingListViewState.value = ViewState(shoppingLists = shoppingLists, shoppingListItems = shoppingListItems)
+            _shoppingListViewState.value = ViewState(
+                shoppingLists = shoppingLists,
+                shoppingListItems = shoppingListItems,
+                ingredients = ingredients,
+                measures = measures
+            )
         }
     }
 
     fun addShoppingList(shoppingList: ShoppingList) {
         viewModelScope.launch {
             shoppingListRepository.insertList(shoppingList)
+        }
+    }
+
+    fun addToShoppingList(shoppingListItem: ShoppingListItem) {
+        viewModelScope.launch {
+            shoppingListRepository.insertItem(shoppingListItem)
         }
     }
 }

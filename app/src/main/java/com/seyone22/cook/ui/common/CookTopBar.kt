@@ -15,11 +15,13 @@ import com.seyone22.cook.ui.screen.home.HomeDestination
 import com.seyone22.cook.ui.screen.ingredients.IngredientsDestination
 import com.seyone22.cook.ui.screen.more.MoreDestination
 import com.seyone22.cook.ui.screen.shoppingList.ShoppingListDestination
+import com.seyone22.cook.ui.screen.shoppingList.detail.ShoppingListDetailDestination
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CookTopBar(
     currentActivity: String?,
+    title: String = "",
     navController: NavController,
     searchAction: () -> Unit = {}
 ) {
@@ -60,5 +62,20 @@ fun CookTopBar(
                 }
             }
         )
+    }
+
+    if (currentActivity == ShoppingListDetailDestination.route) {
+        TopAppBar(
+            title = { Text(text = title) },
+            navigationIcon = {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+            },
+            actions = {
+            })
     }
 }
