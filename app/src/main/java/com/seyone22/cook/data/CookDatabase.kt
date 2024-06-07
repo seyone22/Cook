@@ -94,7 +94,7 @@ abstract class CookDatabase : RoomDatabase() {
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 name TEXT NOT NULL,
                 dateCreated TEXT NOT NULL,
-                dateUpdated TEXT NOT NULL,
+                dateModified TEXT NOT NULL,
                 completed INTEGER NOT NULL DEFAULT 0
             )
         """.trimIndent()
@@ -133,7 +133,7 @@ abstract class CookDatabase : RoomDatabase() {
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 name TEXT NOT NULL,
                 dateCreated TEXT NOT NULL,
-                dateUpdated TEXT NOT NULL,
+                dateModified TEXT NOT NULL,
                 completed INTEGER NOT NULL DEFAULT 0
             )
         """.trimIndent()

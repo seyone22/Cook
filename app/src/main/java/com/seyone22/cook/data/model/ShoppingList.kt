@@ -8,6 +8,6 @@ data class ShoppingList(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val dateCreated: String,
-    val dateUpdated: String,
+    val dateModified: String,
     val completed: Boolean = false
 )

@@ -85,6 +85,7 @@ object AppViewModelProvider {
                 measureRepository = cookApplication().container.measureRepository,
                 ingredientRepository = cookApplication().container.ingredientRepository,
                 ingredientVariantRepository = cookApplication().container.ingredientVariantRepository,
+                shoppingListRepository = cookApplication().container.shoppingListRepository
             )
         }
     }

@@ -11,12 +11,16 @@ import com.seyone22.cook.data.repository.instruction.InstructionRepository
 import com.seyone22.cook.data.repository.instruction.OfflineInstructionRepository
 import com.seyone22.cook.data.repository.measure.MeasureRepository
 import com.seyone22.cook.data.repository.measure.OfflineMeasureRepository
+import com.seyone22.cook.data.repository.measureConversion.MeasureConversionRepository
+import com.seyone22.cook.data.repository.measureConversion.OfflineMeasureConversionRepository
 import com.seyone22.cook.data.repository.recipe.OfflineRecipeRepository
 import com.seyone22.cook.data.repository.recipe.RecipeRepository
 import com.seyone22.cook.data.repository.recipeImage.OfflineRecipeImageRepository
 import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
 import com.seyone22.cook.data.repository.recipeIngredient.OfflineRecipeIngredientRepository
 import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientRepository
+import com.seyone22.cook.data.repository.shoppingList.OfflineShoppingListRepository
+import com.seyone22.cook.data.repository.shoppingList.ShoppingListRepository
 import kotlinx.coroutines.CoroutineScope
 
 interface AppContainer {
@@ -25,9 +29,11 @@ interface AppContainer {
     val ingredientImageRepository: IngredientImageRepository
     val recipeImageRepository: RecipeImageRepository
     val measureRepository: MeasureRepository
+    val measureConversionRepository: MeasureConversionRepository
     val recipeRepository: RecipeRepository
     val instructionRepository: InstructionRepository
     val recipeIngredientRepository: RecipeIngredientRepository
+    val shoppingListRepository: ShoppingListRepository
 }
 
 /**
@@ -49,6 +55,9 @@ class AppDataContainer(private val context: Context, private val scope: Coroutin
     override val measureRepository: MeasureRepository by lazy {
         OfflineMeasureRepository(CookDatabase.getDatabase(context, scope).measureDao())
     }
+    override val measureConversionRepository: MeasureConversionRepository by lazy {
+        OfflineMeasureConversionRepository(CookDatabase.getDatabase(context, scope).measureConversionDao())
+    }
     override val recipeRepository: RecipeRepository by lazy {
         OfflineRecipeRepository(CookDatabase.getDatabase(context, scope).recipeDao())
     }
@@ -58,5 +67,7 @@ class AppDataContainer(private val context: Context, private val scope: Coroutin
     override val recipeIngredientRepository: RecipeIngredientRepository by lazy {
         OfflineRecipeIngredientRepository(CookDatabase.getDatabase(context, scope).recipeIngredientDao())
     }
-
+    override val shoppingListRepository: ShoppingListRepository by lazy {
+        OfflineShoppingListRepository(CookDatabase.getDatabase(context, scope).shoppingListDao())
+    }
 }

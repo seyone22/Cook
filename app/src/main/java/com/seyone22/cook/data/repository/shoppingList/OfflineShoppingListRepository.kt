@@ -15,4 +15,6 @@ class OfflineShoppingListRepository(private val shoppingListDao: ShoppingListDao
     override fun getShoppingListById(id: Long): Flow<ShoppingList?> = shoppingListDao.getShoppingListById(id)
     override fun getItemsForList(listId: Long): Flow<List<ShoppingListItem?>> = shoppingListDao.getItemsForList(listId)
     override fun getAllShoppingLists(): Flow<List<ShoppingList?>> = shoppingListDao.getAllShoppingLists()
+    override fun getAllItems(): Flow<List<ShoppingListItem?>> = shoppingListDao.getAllItems()
+
 }

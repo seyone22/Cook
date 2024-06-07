@@ -1,15 +1,49 @@
 package com.seyone22.cook.ui.screen.shoppingList
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.seyone22.cook.R
+import com.seyone22.cook.data.model.ShoppingList
+import com.seyone22.cook.helper.DateTimeHelper.toIsoString
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.common.CookTopBar
 import com.seyone22.cook.ui.navigation.NavigationDestination
+import com.seyone22.cook.ui.screen.shoppingList.detail.ShoppingListDetailDestination
+import java.time.LocalDateTime
 
 object ShoppingListDestination : NavigationDestination {
     override val route = "Shopping List"
@@ -28,14 +62,126 @@ fun ShoppingListScreen(
     // Observe the ingredientList StateFlow to display ingredients
     val shoppingListViewState by viewModel.shoppingListViewState.collectAsState()
 
-    Scaffold(
-        topBar = {
-            CookTopBar(
-                currentActivity = ShoppingListDestination.route,
-                navController = navController
-            )
-        }
-    ) {
-        it
+    var showNewDialog by remember { mutableStateOf(false) }
+    if (showNewDialog) {
+        NewShoppingListDialog(onConfirm = {
+            viewModel.addShoppingList(it)
+            viewModel.fetchData()
+            showNewDialog = false
+        }, onDismiss = { showNewDialog = false })
     }
+
+    Scaffold(topBar = {
+        CookTopBar(
+            currentActivity = ShoppingListDestination.route, navController = navController
+        )
+    }) {
+        LazyColumn(modifier = Modifier.padding(it)) {
+            item {
+                FilledTonalButton(modifier = Modifier.padding(start = 8.dp), onClick = {
+                    showNewDialog = true
+                }, content = {
+                    Row {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                        Text(text = "Add")
+                    }
+                })
+            }
+            if (shoppingListViewState.shoppingLists.isEmpty()) {
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp, 100.dp, 16.dp, 0.dp)
+                    ) {
+                        Text(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            text = "༼;´༎ຶ \u06DD ༎ຶ༽",
+                            fontSize = 32.sp,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = "Unfortunately for you, however, you are Shopping List-less. Without a plan or list, you are fated, it seems, to shop around aimlessly.",
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            } else {
+                shoppingListViewState.shoppingLists.forEach { item ->
+                    item {
+                        if (item != null) {
+                            ShoppingListCard(item) { id -> navController.navigate("${ShoppingListDetailDestination.route}/$id") }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ShoppingListCard(
+    item: ShoppingList, onClick: (Long) -> Unit
+) {
+    Card(modifier = Modifier
+        .fillMaxWidth()
+        .padding(8.dp, 4.dp)
+        .clickable { onClick(item.id) }) {
+        Column(modifier = Modifier.padding(8.dp, 16.dp)) {
+            Text(text = item.name)
+            Text(text = item.dateCreated)
+            Text(text = item.dateModified)
+            Text(text = item.completed.toString())
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NewShoppingListDialog(
+    onConfirm: (ShoppingList) -> Unit, onDismiss: () -> Unit
+) {
+    var shoppingList by remember {
+        mutableStateOf(
+            ShoppingList(
+                name = "",
+                dateCreated = LocalDateTime.now().toIsoString(),
+                dateModified = LocalDateTime.now().toIsoString()
+            )
+        )
+    }
+    AlertDialog(onDismissRequest = { onDismiss() },
+        title = { Text(text = "Create a Shopping List") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    modifier = Modifier.width(310.dp),
+                    value = shoppingList.name,
+                    onValueChange = { newName ->
+                        shoppingList = shoppingList.copy(name = newName)
+                    },
+                    label = { Text("Name") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text, imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(onDone = { onConfirm(shoppingList) })
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(shoppingList) }) {
+                Text("Create")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        })
 }
