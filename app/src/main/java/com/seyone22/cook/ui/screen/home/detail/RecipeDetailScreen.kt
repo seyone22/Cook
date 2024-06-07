@@ -87,7 +87,6 @@ import com.seyone22.cook.helper.PriceHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
 import com.seyone22.cook.ui.screen.home.HomeViewModel
-import com.seyone22.cook.ui.screen.ingredients.detail.DeleteConfirmationDialog
 import com.seyone22.cook.ui.screen.ingredients.detail.IngredientDetailDestination
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
