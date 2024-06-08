@@ -15,4 +15,5 @@ class OfflineInstructionRepository(private val instructionDao: InstructionDao):
     override suspend fun getInstructionById(id: Int): Flow<Instruction?> = instructionDao.getInstructionById(id)
     override suspend fun getInstructionsForRecipe(recipeId: UUID): Flow<List<Instruction?>> = instructionDao.getInstructionsForRecipe(recipeId)
     override suspend fun getAllInstructions(): Flow<List<Instruction?>> = instructionDao.getAllInstructions()
+    override suspend fun deleteInstructionsForRecipe(id: UUID) = instructionDao.deleteInstructionsForRecipe(id)
 }

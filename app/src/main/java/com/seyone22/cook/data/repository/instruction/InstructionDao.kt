@@ -30,4 +30,7 @@ interface InstructionDao {
     @Query("SELECT * FROM instructions" +
             "   ORDER BY id ASC")
     fun getAllInstructions(): Flow<List<Instruction>>
+    @Query("DELETE FROM instructions" +
+            "   WHERE recipeId = :id")
+    fun deleteInstructionsForRecipe(id: UUID)
 }

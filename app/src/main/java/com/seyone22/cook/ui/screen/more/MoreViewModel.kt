@@ -28,7 +28,8 @@ class MoreViewModel(
                 recipeRepository,
                 instructionRepository,
                 recipeIngredientRepository,
-                recipeImageRepository
+                recipeImageRepository,
+                ingredientRepository
             )
         }
     }

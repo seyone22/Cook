@@ -26,4 +26,8 @@ interface IngredientDao {
     @Query("SELECT * FROM ingredients" +
             "   ORDER BY nameEn ASC")
     fun getAllIngredients(): Flow<List<Ingredient>>
+    @Query("SELECT * FROM ingredients" +
+            "   WHERE nameEn = :nameEn" +
+            "   ORDER BY nameEn ASC")
+    fun getIngredientByName(nameEn: String): Flow<Ingredient?>
 }

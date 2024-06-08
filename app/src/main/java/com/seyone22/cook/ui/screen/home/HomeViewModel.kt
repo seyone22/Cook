@@ -60,8 +60,6 @@ class HomeViewModel(
     fun deleteRecipe(recipe: Recipe) {
         viewModelScope.launch {
             recipeRepository.deleteRecipe(recipe)
-            recipeImageRepository.deleteImagesForRecipe(recipe.id)
-            recipeIngredientRepository.deleteIngredientsForRecipe(recipe.id)
         }
     }
 

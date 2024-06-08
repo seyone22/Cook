@@ -10,4 +10,5 @@ class OfflineIngredientRepository(private val ingredientDao: IngredientDao): Ing
 
     override suspend fun getIngredientById(ingredientId: Int): Flow<Ingredient?> = ingredientDao.getIngredientById(ingredientId)
     override suspend fun getAllIngredients(): Flow<List<Ingredient?>> = ingredientDao.getAllIngredients()
+    override suspend fun getIngredientByName(nameEn: String): Flow<Ingredient?> = ingredientDao.getIngredientByName(nameEn)
 }

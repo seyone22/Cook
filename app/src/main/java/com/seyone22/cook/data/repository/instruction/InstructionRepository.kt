@@ -12,4 +12,5 @@ interface InstructionRepository {
     suspend fun getInstructionById(id: Int): Flow<Instruction?>
     suspend fun getInstructionsForRecipe(recipeId: UUID): Flow<List<Instruction?>>
     suspend fun getAllInstructions(): Flow<List<Instruction?>>
+    suspend fun deleteInstructionsForRecipe(id: UUID)
 }
