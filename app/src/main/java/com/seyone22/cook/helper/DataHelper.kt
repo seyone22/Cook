@@ -1,6 +1,8 @@
 package com.seyone22.cook.helper
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
 import com.seyone22.cook.data.model.Ingredient
@@ -18,13 +20,14 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
-class DataHelper {
+object DataHelper {
     suspend fun exportRecipe(
         context: Context,
         recipe: Recipe,
@@ -179,5 +182,11 @@ class DataHelper {
         val destinationFile = File(context.filesDir, imageFile.name)
         imageFile.copyTo(destinationFile, overwrite = true)
         return destinationFile.absolutePath
+    }
+
+    fun compressImageFile(bitmap: Bitmap, quality: Int): ByteArray {
+        val outputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+        return outputStream.toByteArray()
     }
 }

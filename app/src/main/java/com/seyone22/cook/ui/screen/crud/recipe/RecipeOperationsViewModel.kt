@@ -1,6 +1,7 @@
 package com.seyone22.cook.ui.screen.crud.recipe
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,6 +17,7 @@ import com.seyone22.cook.data.repository.measure.MeasureRepository
 import com.seyone22.cook.data.repository.recipe.RecipeRepository
 import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
 import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientRepository
+import com.seyone22.cook.helper.DataHelper.compressImageFile
 import com.seyone22.cook.helper.ImageHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.UUID
 
 class RecipeOperationsViewModel(
@@ -88,8 +91,10 @@ class RecipeOperationsViewModel(
                 val imageHelper = ImageHelper(context)
                 images?.forEach { image ->
                     val imageBitmap = imageHelper.loadImageFromUri(image)!!
+                    val compressedImageBytes = compressImageFile(imageBitmap, 60)
+
                     val imagePath = imageHelper.saveImageToInternalStorage(
-                        imageBitmap,
+                        BitmapFactory.decodeByteArray(compressedImageBytes, 0, compressedImageBytes.size),
                         "'recipe_${recipe.id}_${System.currentTimeMillis()}.jpg"
                     )
                     val recipeImage =
