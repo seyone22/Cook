@@ -2,6 +2,7 @@ package com.seyone22.cook.data.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.seyone22.cook.helper.UUIDSerializer
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import java.util.UUID
@@ -9,6 +10,7 @@ import java.util.UUID
 @Serializable
 @Entity(tableName = "recipes")
 data class Recipe(
+    @Serializable(with = UUIDSerializer::class)
     @Contextual
     @PrimaryKey val id: UUID = UUID.randomUUID(),
     val name: String,

@@ -1,5 +1,8 @@
 package com.seyone22.cook.ui.screen.home
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -38,6 +41,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberPermissionState
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Recipe
 import com.seyone22.cook.data.model.RecipeImage
@@ -54,7 +59,7 @@ object HomeDestination : NavigationDestination {
     override val routeId = 0
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun HomeScreen(
     modifier: Modifier,
@@ -74,6 +79,7 @@ fun HomeScreen(
 
     Column(modifier = modifier.fillMaxSize()
     ) {
+
         DockedSearchBar(
             modifier = Modifier
                 .fillMaxWidth()

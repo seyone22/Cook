@@ -1,9 +1,13 @@
 package com.seyone22.cook.ui.screen.more
 
+import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -36,7 +40,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberPermissionState
 import com.seyone22.cook.R
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
@@ -186,8 +194,7 @@ fun GeneralSettingsList(
     viewModel: MoreViewModel, scope: CoroutineScope = rememberCoroutineScope()
 ) {
     Column {
-        SettingsToggleListItem(
-            settingName = "Require Unlock",
+        SettingsToggleListItem(settingName = "Require Unlock",
             toggle = false,
             onToggleChange = { newValue ->
 
@@ -209,23 +216,28 @@ fun GeneralSettingsList(
 fun DataSettingsList(
     viewModel: MoreViewModel,
     scope: CoroutineScope = rememberCoroutineScope(),
-    context: Context = LocalContext.current
+    activity: Activity = LocalContext.current as Activity
 ) {
-    val activity = LocalContext.current as Activity
     val filePickerLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
             uri?.let {
                 // Handle the selected file URI here
-                viewModel.importRecipe(context, it)
+                viewModel.importRecipe(activity, it)
             }
         }
 
     Column {
-        SettingsListItem(settingName = "Import a recipe",
+        SettingsListItem(
+            settingName = "Import a recipe",
             settingSubtext = "Import from .recipe file",
             action = {
-                // Launch file picker
-                filePickerLauncher.launch("*/*")
-            })
+                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "*/*" // All file types
+                }
+                filePickerLauncher.launch(arrayOf("*/*"))
+            }
+        )
     }
 }
+

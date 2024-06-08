@@ -145,8 +145,8 @@ fun RecipeDetailScreen(
             bitmap = File(images[0]?.imagePath).takeIf { it.exists() }
                 ?.let { imageHelper.loadImageFromUri(it.toUri()) }!!
         }
-        Log.d("TAG", "RecipeDetailScreen: $recipe")
-
+    }
+    LaunchedEffect(recipe) {
         scaleFactor = recipe?.servingSize?.toDouble() ?: -1.0
     }
 
@@ -195,8 +195,15 @@ fun RecipeDetailScreen(
                     val dataHelper = DataHelper()
                     // Handle share action
                     CoroutineScope(Dispatchers.Main).launch {
+                        val recipeIngredientIds = recipeIngredients.map { it?.ingredientId } // Get a list of ingredient IDs from recipeIngredients
+
+                        val ingredientsWithMatchingIds = ingredients.filter { ingredient ->
+                            recipeIngredientIds.contains(ingredient?.id)
+                        }
+
+
                         val zipFile = dataHelper.exportRecipe(
-                            context, recipe!!, instructions, recipeIngredients, images
+                            context, recipe!!, instructions, recipeIngredients, ingredientsWithMatchingIds, images
                         )
                         val uri = FileProvider.getUriForFile(
                             context, "${context.packageName}.provider", zipFile

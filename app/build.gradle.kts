@@ -130,4 +130,7 @@ dependencies {
 
     // Biometrics
     implementation(libs.androidx.biometric.ktx)
+
+    // Permission handling with accompanist
+    implementation("com.google.accompanist:accompanist-permissions:0.35.0-alpha")
 }
