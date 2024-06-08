@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -121,6 +122,9 @@ fun RecipeDetailScreen(
     val homeViewState by viewModel.homeViewState.collectAsState()
 
     val recipe = homeViewState.recipes.find { r -> r?.id.toString() == backStackEntry }
+
+    Log.d("TAG", "RecipeDetailScreen: $recipe")
+
     val variants = homeViewState.variants
     val images = homeViewState.images.filter { i -> i?.id.toString() == backStackEntry }
     val instructions =
@@ -773,3 +777,4 @@ fun AddAllToShoppingListDialog(
 
 // TODO: Import dialog in settings, View .recipe files, before importing
 // TODO: Cooking view, TTS and STT capability
+// TODO: Ingredient Substitutes

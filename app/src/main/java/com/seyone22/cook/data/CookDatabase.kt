@@ -218,3 +218,5 @@ abstract class CookDatabase : RoomDatabase() {
         }
     }
 }
+
+// TODO: Migration for converting id from long to UUID (text)

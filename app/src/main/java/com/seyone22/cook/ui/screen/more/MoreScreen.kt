@@ -68,7 +68,7 @@ fun MoreScreen(
                 settingName = "Data Management",
                 settingSubtext = "Import and Export Data",
                 settingIcon = Icons.Outlined.ImportExport,
-                action = { navController.navigate("SettingsDetail/Data") }
+                action = { navController.navigate("Settings/Data") }
             )
             /*            SettingsListItem(
                             settingName = "Privacy and Security",

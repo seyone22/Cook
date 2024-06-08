@@ -59,6 +59,7 @@ import com.seyone22.cook.data.model.toRecipeIngredient
 import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
+import java.util.UUID
 
 object AddRecipeDestination : NavigationDestination {
     override val route = "Add Recipe"
@@ -87,14 +88,14 @@ fun AddRecipeScreen(
     val instructions = remember {
         mutableStateListOf(
             Instruction(
-                description = "", stepNumber = 1, recipeId = 0
+                description = "", stepNumber = 1, recipeId = UUID.randomUUID()
             )
         )
     }
     val recipeIngredients = remember {
         mutableStateListOf(
             RecipeIngredientDetails(
-                ingredientId = -1, measureId = -1, quantity = "", recipeId = -1
+                ingredientId = -1, measureId = -1, quantity = "", recipeId = UUID.randomUUID()
             )
         )
     }
@@ -408,7 +409,7 @@ fun AddRecipeScreen(
                     TextButton(onClick = {
                         recipeIngredients.add(
                             RecipeIngredientDetails(
-                                ingredientId = -1, measureId = -1, quantity = "", recipeId = -1
+                                ingredientId = -1, measureId = -1, quantity = "", recipeId = UUID.randomUUID()
                             )
                         )
                     }) {
@@ -457,7 +458,7 @@ fun AddRecipeScreen(
                     TextButton(onClick = {
                         instructions.add(
                             Instruction(
-                                description = "", stepNumber = instructions.size + 1, recipeId = 0
+                                description = "", stepNumber = instructions.size + 1, recipeId = UUID.randomUUID()
                             )
                         )
                     }) {

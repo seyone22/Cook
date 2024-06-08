@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 class HomeViewModel(
     private val recipeRepository: RecipeRepository,
@@ -59,12 +60,12 @@ class HomeViewModel(
     fun deleteRecipe(recipe: Recipe) {
         viewModelScope.launch {
             recipeRepository.deleteRecipe(recipe)
-            recipeImageRepository.deleteImagesForRecipe(recipe.id.toInt())
-            recipeIngredientRepository.deleteIngredientsForRecipe(recipe.id.toInt())
+            recipeImageRepository.deleteImagesForRecipe(recipe.id)
+            recipeIngredientRepository.deleteIngredientsForRecipe(recipe.id)
         }
     }
 
-    fun incrementMakeCounter(recipeId: Long) {
+    fun incrementMakeCounter(recipeId: UUID) {
         viewModelScope.launch {
             recipeRepository.incrementTimesMade(recipeId)
         }

@@ -2,13 +2,16 @@ package com.seyone22.cook.data.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
+import java.util.UUID
 
 @Serializable
 @Entity(tableName = "recipe_ingredients")
 data class RecipeIngredient(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val recipeId: Long,
+    @Contextual
+    val recipeId: UUID,
     val ingredientId: Long,
     val quantity: Double,
     val measureId: Long
@@ -16,7 +19,7 @@ data class RecipeIngredient(
 
 data class RecipeIngredientDetails(
     val id: Long = 0,
-    val recipeId: Long,
+    val recipeId: UUID,
     val ingredientId: Long,
     val quantity: String,
     val measureId: Long

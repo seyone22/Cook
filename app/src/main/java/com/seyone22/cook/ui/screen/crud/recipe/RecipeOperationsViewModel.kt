@@ -1,6 +1,5 @@
 package com.seyone22.cook.ui.screen.crud.recipe
 
-import android.accounts.Account
 import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
@@ -24,6 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class RecipeOperationsViewModel(
     private val recipeRepository: RecipeRepository,
@@ -36,14 +36,14 @@ class RecipeOperationsViewModel(
     private val _addRecipeViewState = MutableStateFlow(AddRecipeViewState())
     val addRecipeViewState: StateFlow<AddRecipeViewState> get() = _addRecipeViewState
 
-    fun fetchData(id: Long = -1) {
+    fun fetchData(id: UUID = UUID.randomUUID()) {
         viewModelScope.launch {
             val measures = measureRepository.getAllMeasures().first()
             val ingredients = ingredientRepository.getAllIngredients().first()
             val recipe = recipeRepository.getRecipeById(id).first()
-            val images = recipeImageRepository.getImagesForRecipe(id.toInt()).first()
-            val instructions = instructionRepository.getInstructionsForRecipe(id.toInt()).first()
-            val recipeIngredients = recipeIngredientRepository.getRecipeIngredientsForRecipe(id.toInt()).first()
+            val images = recipeImageRepository.getImagesForRecipe(id).first()
+            val instructions = instructionRepository.getInstructionsForRecipe(id).first()
+            val recipeIngredients = recipeIngredientRepository.getRecipeIngredientsForRecipe(id).first()
             _addRecipeViewState.value = AddRecipeViewState(measures, ingredients, recipe, images, instructions, recipeIngredients)
         }
     }
@@ -58,11 +58,11 @@ class RecipeOperationsViewModel(
         viewModelScope.launch {
             try {
                 // Insert the recipe into the database
-                val recipeId = recipeRepository.insertRecipe(recipe)
+                recipeRepository.insertRecipe(recipe)
 
                 // Update the recipeId for each instruction and insert them into the database
                 val updatedInstructions = instructions.map { instruction ->
-                    instruction.copy(recipeId = recipeId)
+                    instruction.copy(recipeId = recipe.id)
                 }
                 updatedInstructions.forEach { instruction ->
                     instructionRepository.insertInstruction(instruction)
@@ -70,7 +70,7 @@ class RecipeOperationsViewModel(
 
                 // Update the recipeId for each recipeIngredient and insert them into the database
                 val updatedRecipeIngredients = recipeIngredients.map { recipeIngredient ->
-                    recipeIngredient.copy(recipeId = recipeId)
+                    recipeIngredient.copy(recipeId = recipe.id)
                 }
                 updatedRecipeIngredients.forEach { recipeIngredient ->
                     recipeIngredientRepository.insertRecipeIngredient(recipeIngredient)
@@ -82,10 +82,10 @@ class RecipeOperationsViewModel(
                     val imageBitmap = imageHelper.loadImageFromUri(image)!!
                     val imagePath = imageHelper.saveImageToInternalStorage(
                         imageBitmap,
-                        "'recipe_${recipeId}_${System.currentTimeMillis()}.jpg"
+                        "'recipe_${recipe.id}_${System.currentTimeMillis()}.jpg"
                     )
                     val recipeImage =
-                        RecipeImage(recipeId = recipeId, imagePath = imagePath ?: "NULL")
+                        RecipeImage(recipeId = recipe.id, imagePath = imagePath ?: "NULL")
                     recipeImageRepository.insertRecipeImage(recipeImage)
                 }
             } catch (e: Exception) {
@@ -112,12 +112,12 @@ class RecipeOperationsViewModel(
 
                     // Fetch current data for modification
                     val currentInstructions =
-                        instructionRepository.getInstructionsForRecipe(recipe.id.toInt()).first()
+                        instructionRepository.getInstructionsForRecipe(recipe.id).first()
                     val currentRecipeIngredients =
-                        recipeIngredientRepository.getRecipeIngredientsForRecipe(recipe.id.toInt())
+                        recipeIngredientRepository.getRecipeIngredientsForRecipe(recipe.id)
                             .first()
                     val currentImages =
-                        recipeImageRepository.getImagesForRecipe(recipe.id.toInt()).first()
+                        recipeImageRepository.getImagesForRecipe(recipe.id).first()
 
                     // Determine whether to add, update, or delete instructions
                     val instructionsToAdd =

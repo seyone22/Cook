@@ -69,7 +69,11 @@ object AppViewModelProvider {
         }
         initializer {
             MoreViewModel(
-
+                recipeRepository = cookApplication().container.recipeRepository,
+                recipeImageRepository = cookApplication().container.recipeImageRepository,
+                instructionRepository = cookApplication().container.instructionRepository,
+                recipeIngredientRepository = cookApplication().container.recipeIngredientRepository,
+                ingredientRepository = cookApplication().container.ingredientRepository,
             )
         }
         initializer {

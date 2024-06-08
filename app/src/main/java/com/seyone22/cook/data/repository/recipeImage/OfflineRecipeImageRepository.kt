@@ -2,6 +2,7 @@ package com.seyone22.cook.data.repository.recipeImage
 
 import com.seyone22.cook.data.model.RecipeImage
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 class OfflineRecipeImageRepository(private val recipeImageDao: RecipeImageDao):
     RecipeImageRepository {
@@ -10,7 +11,7 @@ class OfflineRecipeImageRepository(private val recipeImageDao: RecipeImageDao):
     override suspend fun updateRecipeImage(recipeImage: RecipeImage) = recipeImageDao.update(recipeImage)
 
     override suspend fun getImageById(id: Int): Flow<RecipeImage?> = recipeImageDao.getImageById(id)
-    override suspend fun getImagesForRecipe(recipeId: Int): Flow<List<RecipeImage?>> = recipeImageDao.getImagesForRecipe(recipeId)
+    override suspend fun getImagesForRecipe(recipeId: UUID): Flow<List<RecipeImage?>> = recipeImageDao.getImagesForRecipe(recipeId)
     override suspend fun getAllRecipeImages(): Flow<List<RecipeImage?>> = recipeImageDao.getAllRecipeImages()
-    override suspend fun deleteImagesForRecipe(recipeId: Int) = recipeImageDao.deleteImagesForRecipe(recipeId)
+    override suspend fun deleteImagesForRecipe(recipeId: UUID) = recipeImageDao.deleteImagesForRecipe(recipeId)
 }

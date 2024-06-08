@@ -19,8 +19,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Tag
@@ -56,7 +54,6 @@ import androidx.navigation.NavController
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Instruction
 import com.seyone22.cook.data.model.RecipeImage
-import com.seyone22.cook.data.model.RecipeIngredient
 import com.seyone22.cook.data.model.RecipeIngredientDetails
 import com.seyone22.cook.data.model.toRecipe
 import com.seyone22.cook.data.model.toRecipeDetails
@@ -65,6 +62,7 @@ import com.seyone22.cook.data.model.toRecipeIngredientDetails
 import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
+import java.util.UUID
 
 object EditRecipeDestination : NavigationDestination {
     override val route = "Edit Recipe"
@@ -75,7 +73,7 @@ object EditRecipeDestination : NavigationDestination {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditRecipeScreen(
-    recipeId: Long,
+    recipeId: UUID,
     viewModel: RecipeOperationsViewModel = viewModel(factory = AppViewModelProvider.Factory),
     navController: NavController,
 ) {
@@ -432,7 +430,7 @@ fun EditRecipeScreen(
 
                     TextButton(onClick = {
                         recipeIngredients = recipeIngredients + RecipeIngredientDetails(
-                            ingredientId = -1, measureId = -1, quantity = "", recipeId = -1
+                            ingredientId = -1, measureId = -1, quantity = "", recipeId = UUID.randomUUID()
                         )
                     }) {
                         Icon(imageVector = Icons.Filled.Add, contentDescription = null)
@@ -489,7 +487,7 @@ fun EditRecipeScreen(
                                 Instruction(
                                     description = "",
                                     stepNumber = instructions.size + 1,
-                                    recipeId = 0
+                                    recipeId = UUID.randomUUID()
                                 )
                     }) {
                         Icon(imageVector = Icons.Filled.Add, contentDescription = null)

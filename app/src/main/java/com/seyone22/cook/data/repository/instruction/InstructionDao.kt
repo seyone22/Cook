@@ -8,6 +8,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.seyone22.cook.data.model.Instruction
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 @Dao
 interface InstructionDao {
@@ -25,7 +26,7 @@ interface InstructionDao {
     @Query("SELECT * FROM instructions" +
             "   WHERE recipeId = :recipeId" +
             "   ORDER BY id ASC")
-    fun getInstructionsForRecipe(recipeId: Int): Flow<List<Instruction>>
+    fun getInstructionsForRecipe(recipeId: UUID): Flow<List<Instruction>>
     @Query("SELECT * FROM instructions" +
             "   ORDER BY id ASC")
     fun getAllInstructions(): Flow<List<Instruction>>

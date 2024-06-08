@@ -43,8 +43,17 @@ fun CookTopBar(
 
     if (currentActivity == CookingDestination.route) {
         CenterAlignedTopAppBar(
-            title = { Text(text = "Cooking Mode") },
+            title = { Text(text = "") },
             actions = {
+
+            },
+            navigationIcon = {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
             }
         )
     }

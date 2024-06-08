@@ -8,6 +8,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.seyone22.cook.data.model.RecipeImage
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 @Dao
 interface RecipeImageDao {
@@ -25,11 +26,11 @@ interface RecipeImageDao {
     @Query("SELECT * FROM recipe_images" +
             "   WHERE recipeId = :recipeId" +
             "   ORDER BY id ASC")
-    fun getImagesForRecipe(recipeId: Int): Flow<List<RecipeImage>>
+    fun getImagesForRecipe(recipeId: UUID): Flow<List<RecipeImage>>
 
     @Query("SELECT * FROM recipe_images" +
             "   ORDER BY id ASC")
     fun getAllRecipeImages(): Flow<List<RecipeImage>>
     @Query("DELETE FROM recipe_images WHERE recipeId = :recipeId")
-    suspend fun deleteImagesForRecipe(recipeId: Int)
+    suspend fun deleteImagesForRecipe(recipeId: UUID)
 }

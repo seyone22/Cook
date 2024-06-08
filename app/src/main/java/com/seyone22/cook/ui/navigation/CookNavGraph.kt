@@ -41,6 +41,7 @@ import com.seyone22.cook.ui.screen.shoppingList.ShoppingListDestination
 import com.seyone22.cook.ui.screen.shoppingList.ShoppingListScreen
 import com.seyone22.cook.ui.screen.shoppingList.detail.ShoppingListDetailDestination
 import com.seyone22.cook.ui.screen.shoppingList.detail.ShoppingListDetailScreen
+import java.util.UUID
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -105,7 +106,7 @@ fun CookNavHost(
         ) {
             EditRecipeScreen(
                 navController = navController,
-                recipeId = (it.arguments?.getString("id") ?: "-1").toLong()
+                recipeId = (UUID.fromString(it.arguments?.getString("id") ?: "-1"))
             )
         }
 

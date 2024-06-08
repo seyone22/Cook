@@ -8,6 +8,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.seyone22.cook.data.model.RecipeIngredient
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 @Dao
 interface RecipeIngredientDao {
@@ -25,12 +26,12 @@ interface RecipeIngredientDao {
     @Query("SELECT * FROM recipe_ingredients" +
             "   WHERE recipeId = :recipeId" +
             "   ORDER BY id ASC")
-    fun getRecipeIngredientsForRecipe(recipeId: Int): Flow<List<RecipeIngredient>>
+    fun getRecipeIngredientsForRecipe(recipeId: UUID): Flow<List<RecipeIngredient>>
     @Query("SELECT * FROM recipe_ingredients" +
             "   ORDER BY id ASC")
     fun getAllRecipeIngredients(): Flow<List<RecipeIngredient>>
     @Query("DELETE FROM recipe_ingredients WHERE recipeId = :recipeId")
-    suspend fun deleteIngredientsForRecipe(recipeId: Int)
+    suspend fun deleteIngredientsForRecipe(recipeId: UUID)
     // Query to check if ingredient is used by any recipes
     @Query("SELECT COUNT(*) FROM recipe_ingredients WHERE ingredientId = :ingredientId")
     suspend fun ingredientIsUsed(ingredientId: Int): Int

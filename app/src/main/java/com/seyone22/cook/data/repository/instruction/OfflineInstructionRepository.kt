@@ -4,6 +4,7 @@ import com.seyone22.cook.data.model.Instruction
 import com.seyone22.cook.data.repository.instruction.InstructionDao
 import com.seyone22.cook.data.repository.instruction.InstructionRepository
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 class OfflineInstructionRepository(private val instructionDao: InstructionDao):
     InstructionRepository {
@@ -12,6 +13,6 @@ class OfflineInstructionRepository(private val instructionDao: InstructionDao):
     override suspend fun updateInstruction(instruction: Instruction) = instructionDao.update(instruction)
 
     override suspend fun getInstructionById(id: Int): Flow<Instruction?> = instructionDao.getInstructionById(id)
-    override suspend fun getInstructionsForRecipe(recipeId: Int): Flow<List<Instruction?>> = instructionDao.getInstructionsForRecipe(recipeId)
+    override suspend fun getInstructionsForRecipe(recipeId: UUID): Flow<List<Instruction?>> = instructionDao.getInstructionsForRecipe(recipeId)
     override suspend fun getAllInstructions(): Flow<List<Instruction?>> = instructionDao.getAllInstructions()
 }
