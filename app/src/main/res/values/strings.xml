@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Cook</string>
-    <string name="app_version">3.0.0-beta1</string>
+    <string name="app_version">3.0.0-beta2</string>
     <string name="release_date">08/06/2024 </string>
     <string name="release_time">16:22</string>
     <string name="db_version">v3</string>

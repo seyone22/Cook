@@ -51,6 +51,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Instruction
 import com.seyone22.cook.data.model.Recipe
@@ -160,32 +161,11 @@ fun AddRecipeScreen(
                         ) {
                             item {
                                 photos.forEach { uri ->
-                                    val bitmap = imageHelper.loadImageFromUri(uri)
-                                    bitmap?.let {
-                                        Row(
-                                            modifier = Modifier
-                                                .padding(4.dp)
-                                                .size(100.dp)
-                                                .align(Alignment.CenterHorizontally)
-                                        ) {
-                                            IconButton(onClick = { photos = photos - uri },
-                                                modifier = Modifier
-                                                    .align(Alignment.Top)
-                                                    .size(24.dp),
-                                                content = {
-                                                    Icon(
-                                                        imageVector = Icons.Default.Close,
-                                                        contentDescription = null
-                                                    )
-                                                })
-                                            Image(
-                                                bitmap = it.asImageBitmap(),
-                                                contentDescription = null,
-                                                modifier = Modifier.size(100.dp)
-                                            )
-
-                                        }
-                                    }
+                                    AsyncImage(
+                                        model = uri,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(100.dp)
+                                    )
                                 }
                             }
                         }

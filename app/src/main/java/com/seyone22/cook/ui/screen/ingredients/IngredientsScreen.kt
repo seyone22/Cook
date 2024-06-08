@@ -1,6 +1,5 @@
 package com.seyone22.cook.ui.screen.ingredients
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
@@ -18,21 +17,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.model.IngredientImage
-import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
 import com.seyone22.cook.ui.screen.ingredients.detail.IngredientDetailDestination
-import java.io.File
 
 object IngredientsDestination : NavigationDestination {
     override val route = "Ingredients"
@@ -69,23 +64,18 @@ fun IngredientsScreen(
 
 @Composable
 fun IngredientItem(modifier: Modifier, ingredient: Ingredient, image: IngredientImage?) {
-    val imageHelper = ImageHelper(LocalContext.current)
     Card(modifier = modifier.padding(4.dp)) {
         Column(modifier = Modifier.fillMaxSize()) {
             if (image != null) {
-                val bitmap = File(image.imagePath).takeIf { it.exists() }
-                    ?.let { imageHelper.loadImageFromUri(it.toUri()) }
-                bitmap?.let {
-                    Image(
-                        bitmap = it.asImageBitmap(),
-                        contentScale = ContentScale.Crop,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(1f) // Maintain aspect ratio
-                            .clip(RoundedCornerShape(12.dp))
-                    )
-                }
+                AsyncImage(
+                    model = image.imagePath,
+                    contentScale = ContentScale.Crop,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f) // Maintain aspect ratio
+                        .clip(RoundedCornerShape(12.dp))
+                )
             }
             Text(
                 text = ingredient.nameEn,

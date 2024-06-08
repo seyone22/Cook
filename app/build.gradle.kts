@@ -15,7 +15,7 @@ android {
         minSdk = 30
         targetSdk = 34
         versionCode = 3
-        versionName = "Cook v3.0.0-beta1"
+        versionName = "Cook v3.0.0-beta2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -133,4 +133,6 @@ dependencies {
 
     // Permission handling with accompanist
     implementation("com.google.accompanist:accompanist-permissions:0.35.0-alpha")
+
+    implementation("io.coil-kt:coil-compose:2.6.0")
 }

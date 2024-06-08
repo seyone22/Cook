@@ -1,7 +1,6 @@
 package com.seyone22.cook.ui.screen.ingredients.detail
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -43,7 +42,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -56,7 +54,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -65,9 +62,9 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.model.IngredientVariant
@@ -75,13 +72,11 @@ import com.seyone22.cook.data.model.IngredientVariantDetails
 import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.model.ShoppingList
 import com.seyone22.cook.data.model.ShoppingListItem
-import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
 import com.seyone22.cook.ui.screen.ingredients.IngredientsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.io.File
 
 object IngredientDetailDestination : NavigationDestination {
     override val route = "Ingredient Details"
@@ -112,17 +107,7 @@ fun IngredientDetailScreen(
         ingredientsViewState.variants.filter { i -> i?.ingredientId.toString() == backStackEntry }
     val measures = ingredientsViewState.measures
 
-    val imageHelper = ImageHelper(LocalContext.current)
-
-    var bitmap: Bitmap? by remember { mutableStateOf(null) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-
-    LaunchedEffect(images) {
-        if (images.isNotEmpty()) {
-            bitmap = File(images[0]?.imagePath).takeIf { it.exists() }
-                ?.let { imageHelper.loadImageFromUri(it.toUri()) }
-        }
-    }
 
     if (showDeleteDialog) {
         DeleteConfirmationDialog(onConfirm = {
@@ -146,8 +131,7 @@ fun IngredientDetailScreen(
     }
 
     Scaffold(topBar = {
-        TopAppBar(
-            modifier = Modifier.padding(0.dp),
+        TopAppBar(modifier = Modifier.padding(0.dp),
             title = { Text(text = ingredient?.nameEn ?: "") },
             navigationIcon = {
                 Icon(
@@ -199,7 +183,9 @@ fun IngredientDetailScreen(
             if (ingredient != null) {
                 item {
                     Column(modifier = Modifier.padding(8.dp, 0.dp)) {
-                        HeaderImage(bitmap = bitmap)
+                        if (images.isNotEmpty()) {
+                            HeaderImage(uri = images.first()?.imagePath)
+                        }
                         IngredientOptionRow(
                             viewModel,
                             ingredientsViewState.shoppingLists,
@@ -254,8 +240,7 @@ fun IngredientOptionRow(
             onDismiss = { showAddShoppingListDialog = false })
     }
 
-    LazyRow(
-    ) {
+    LazyRow {
         if (x) {
             item {
                 AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp), onClick = {
@@ -337,11 +322,11 @@ fun IngredientDetails(ingredient: Ingredient) {
 }
 
 @Composable
-fun HeaderImage(bitmap: Bitmap?) {
+fun HeaderImage(uri: String?) {
 
-    if (bitmap != null) {
-        Image(
-            bitmap = bitmap.asImageBitmap(),
+    if (uri != null) {
+        AsyncImage(
+            model = uri,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
@@ -484,16 +469,14 @@ fun NewVariantDialog(
                             .width(346.dp)
                             .padding(0.dp, 0.dp, 0.dp, 0.dp)
                     ) {
-                        OutlinedTextField(
-                            value = variant.brand,
+                        OutlinedTextField(value = variant.brand,
                             onValueChange = { newVariantBrand ->
                                 variant = variant.copy(brand = newVariantBrand)
                             },
                             label = { Text("Brand") },
                             modifier = Modifier.fillMaxWidth()
                         )
-                        OutlinedTextField(
-                            value = variant.type,
+                        OutlinedTextField(value = variant.type,
                             onValueChange = { newVariantType ->
                                 variant = variant.copy(type = newVariantType)
                             },
@@ -501,8 +484,7 @@ fun NewVariantDialog(
                             modifier = Modifier.fillMaxWidth()
                         )
                         Row {
-                            OutlinedTextField(
-                                value = variant.price,
+                            OutlinedTextField(value = variant.price,
                                 onValueChange = { newVariantPrice ->
                                     variant = variant.copy(price = newVariantPrice)
                                 },
@@ -514,8 +496,7 @@ fun NewVariantDialog(
                                     imeAction = ImeAction.Done, keyboardType = KeyboardType.Number
                                 )
                             )
-                            OutlinedTextField(
-                                value = variant.quantity,
+                            OutlinedTextField(value = variant.quantity,
                                 onValueChange = { newVariantQuantity ->
                                     variant = variant.copy(quantity = newVariantQuantity)
                                 },

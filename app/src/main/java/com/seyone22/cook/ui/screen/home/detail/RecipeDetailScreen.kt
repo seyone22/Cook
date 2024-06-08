@@ -79,6 +79,7 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.model.IngredientVariant
@@ -139,12 +140,6 @@ fun RecipeDetailScreen(
     var showDeleteConfirmationDialog by remember { mutableStateOf(false) }
     var showScaleDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(images) {
-        if (images.isNotEmpty()) {
-            bitmap = File(images[0]?.imagePath).takeIf { it.exists() }
-                ?.let { imageHelper.loadImageFromUri(it.toUri()) }!!
-        }
-    }
     LaunchedEffect(recipe) {
         scaleFactor = recipe?.servingSize?.toDouble() ?: -1.0
     }
@@ -261,7 +256,9 @@ fun RecipeDetailScreen(
             if (recipe != null) {
                 item {
                     Column(modifier = Modifier.padding(8.dp, 0.dp)) {
-                        HeaderImage(bitmap = bitmap, recipe.name)
+                        if (images.isNotEmpty()) {
+                            HeaderImage(uri = images.first()?.imagePath, recipe.name)
+                        }
                         RecipeDetail(
                             viewModel = viewModel,
                             recipe = recipe,
@@ -302,15 +299,15 @@ fun RecipeDetailScreen(
 }
 
 @Composable
-fun HeaderImage(bitmap: Bitmap?, title: String) {
+fun HeaderImage(uri: String?, title: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(240.dp)
     ) {
-        if (bitmap != null) {
-            Image(
-                bitmap = bitmap.asImageBitmap(),
+        if (uri != null) {
+            AsyncImage(
+                model = uri,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -332,7 +329,7 @@ fun HeaderImage(bitmap: Bitmap?, title: String) {
         }
         Text(
             text = title,
-            color = if (bitmap != null) Color.White else Color.Black,
+            color = if (uri != null) Color.White else Color.Black,
             style = MaterialTheme.typography.displayMedium,
             modifier = Modifier
                 .padding(16.dp, 0.dp, 16.dp, 16.dp)

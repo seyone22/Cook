@@ -1,6 +1,5 @@
 package com.seyone22.cook.ui.screen.home
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -26,23 +25,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import coil.compose.AsyncImage
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Recipe
 import com.seyone22.cook.data.model.RecipeImage
-import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
 import com.seyone22.cook.ui.screen.home.detail.RecipeDetailDestination
 import com.seyone22.cook.ui.screen.search.SearchDestination
-import java.io.File
 
 object HomeDestination : NavigationDestination {
     override val route = "Recipes"
@@ -50,7 +44,7 @@ object HomeDestination : NavigationDestination {
     override val routeId = 0
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     modifier: Modifier,
@@ -107,7 +101,6 @@ fun HomeScreen(
 
 @Composable
 fun RecipeItem(modifier: Modifier, recipe: Recipe, image: RecipeImage?) {
-    val imageHelper = ImageHelper(LocalContext.current)
     Card(
         modifier = modifier
             .padding(8.dp)
@@ -115,19 +108,15 @@ fun RecipeItem(modifier: Modifier, recipe: Recipe, image: RecipeImage?) {
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             if (image != null) {
-                val bitmap = File(image.imagePath).takeIf { it.exists() }
-                    ?.let { imageHelper.loadImageFromUri(it.toUri()) }
-                bitmap?.let {
-                    Image(
-                        bitmap = it.asImageBitmap(),
-                        contentScale = ContentScale.Crop,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(216.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                    )
-                }
+                AsyncImage(
+                    model = image.imagePath,
+                    contentScale = ContentScale.Crop,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(216.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                )
             }
             Text(
                 text = recipe.name,
