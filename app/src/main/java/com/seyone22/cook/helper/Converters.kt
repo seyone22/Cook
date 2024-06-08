@@ -8,6 +8,7 @@ class Converters {
     fun fromMeasureType(value: MeasureType): String {
         return value.name
     }
+
     @TypeConverter
     fun toMeasureType(value: String): MeasureType {
         return enumValueOf<MeasureType>(value)

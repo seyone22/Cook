@@ -137,7 +137,9 @@ fun EditRecipeScreen(
                             recipe!!.toRecipe(),
                             images,
                             instructions.map { i -> i.copy(recipeId = recipeId) },
-                            recipeIngredients.map { i -> i.copy(recipeId = recipeId).toRecipeIngredient() },
+                            recipeIngredients.map { i ->
+                                i.copy(recipeId = recipeId).toRecipeIngredient()
+                            },
                             context
                         )
                         navController.popBackStack()
@@ -217,7 +219,9 @@ fun EditRecipeScreen(
                             )
                         }
                         OutlinedTextField(
-                            modifier = Modifier.width(230.dp).padding(end = 8.dp),
+                            modifier = Modifier
+                                .width(230.dp)
+                                .padding(end = 8.dp),
                             value = recipe?.name ?: "",
                             onValueChange = { recipe = recipe?.copy(name = it) },
                             label = { Text("Name") },
@@ -243,7 +247,9 @@ fun EditRecipeScreen(
                                 value = recipe?.prepTime.toString(),
                                 onValueChange = { recipe = recipe?.copy(prepTime = it) },
                                 label = { Text("Prep") },
-                                modifier = Modifier.width(107.dp).padding(0.dp, 0.dp, 8.dp, 0.dp),
+                                modifier = Modifier
+                                    .width(107.dp)
+                                    .padding(0.dp, 0.dp, 8.dp, 0.dp),
                                 keyboardOptions = KeyboardOptions.Default.copy(
                                     imeAction = ImeAction.Next, keyboardType = KeyboardType.Number
                                 )
@@ -252,7 +258,9 @@ fun EditRecipeScreen(
                                 value = recipe?.cookTime.toString(),
                                 onValueChange = { recipe = recipe?.copy(cookTime = it) },
                                 label = { Text("Cook") },
-                                modifier = Modifier.width(107.dp).padding(0.dp, 0.dp, 8.dp, 0.dp),
+                                modifier = Modifier
+                                    .width(107.dp)
+                                    .padding(0.dp, 0.dp, 8.dp, 0.dp),
                                 keyboardOptions = KeyboardOptions.Default.copy(
                                     imeAction = ImeAction.Next, keyboardType = KeyboardType.Number
                                 )
@@ -347,7 +355,9 @@ fun EditRecipeScreen(
                                         }
                                     }
                                     OutlinedTextField(
-                                        modifier = Modifier.width(64.dp).padding(0.dp, 0.dp, 8.dp, 0.dp),
+                                        modifier = Modifier
+                                            .width(64.dp)
+                                            .padding(0.dp, 0.dp, 8.dp, 0.dp),
                                         value = recipeIngredient.quantity.toString(),
                                         singleLine = true,
                                         onValueChange = { newQty ->
@@ -430,7 +440,10 @@ fun EditRecipeScreen(
 
                     TextButton(onClick = {
                         recipeIngredients = recipeIngredients + RecipeIngredientDetails(
-                            ingredientId = -1, measureId = -1, quantity = "", recipeId = UUID.randomUUID()
+                            ingredientId = -1,
+                            measureId = -1,
+                            quantity = "",
+                            recipeId = UUID.randomUUID()
                         )
                     }) {
                         Icon(imageVector = Icons.Filled.Add, contentDescription = null)

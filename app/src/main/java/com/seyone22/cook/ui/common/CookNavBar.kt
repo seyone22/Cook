@@ -16,7 +16,11 @@ import com.seyone22.cook.ui.screen.more.MoreDestination
 
 val destinations = listOf(
     BottomNavigationDestination(HomeDestination, Icons.Default.Fastfood, Icons.Filled.Fastfood),
-    BottomNavigationDestination(IngredientsDestination, Icons.Default.ShoppingBasket, Icons.Filled.ShoppingBasket),
+    BottomNavigationDestination(
+        IngredientsDestination,
+        Icons.Default.ShoppingBasket,
+        Icons.Filled.ShoppingBasket
+    ),
     BottomNavigationDestination(MoreDestination, Icons.Default.MoreHoriz, Icons.Filled.MoreHoriz),
 )
 

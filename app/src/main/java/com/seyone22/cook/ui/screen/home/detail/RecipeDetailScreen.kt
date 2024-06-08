@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -195,7 +194,8 @@ fun RecipeDetailScreen(
                     val dataHelper = DataHelper()
                     // Handle share action
                     CoroutineScope(Dispatchers.Main).launch {
-                        val recipeIngredientIds = recipeIngredients.map { it?.ingredientId } // Get a list of ingredient IDs from recipeIngredients
+                        val recipeIngredientIds =
+                            recipeIngredients.map { it?.ingredientId } // Get a list of ingredient IDs from recipeIngredients
 
                         val ingredientsWithMatchingIds = ingredients.filter { ingredient ->
                             recipeIngredientIds.contains(ingredient?.id)
@@ -203,7 +203,12 @@ fun RecipeDetailScreen(
 
 
                         val zipFile = dataHelper.exportRecipe(
-                            context, recipe!!, instructions, recipeIngredients, ingredientsWithMatchingIds, images
+                            context,
+                            recipe!!,
+                            instructions,
+                            recipeIngredients,
+                            ingredientsWithMatchingIds,
+                            images
                         )
                         val uri = FileProvider.getUriForFile(
                             context, "${context.packageName}.provider", zipFile
@@ -520,13 +525,14 @@ fun IngredientsList(
                             ?: false),
                         checked = checked.value,
                         onCheckedChange = { checked.value = !checked.value })
-                    Text(modifier = Modifier
-                        .padding(4.dp, 0.dp, 16.dp, 0.dp)
-                        .align(Alignment.CenterVertically)
-                        .width(120.dp)
-                        .clickable {
-                            navController.navigate("${IngredientDetailDestination.route}/${recipeIngredient?.ingredientId}")
-                        },
+                    Text(
+                        modifier = Modifier
+                            .padding(4.dp, 0.dp, 16.dp, 0.dp)
+                            .align(Alignment.CenterVertically)
+                            .width(120.dp)
+                            .clickable {
+                                navController.navigate("${IngredientDetailDestination.route}/${recipeIngredient?.ingredientId}")
+                            },
                         text = ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.nameEn
                             ?: "",
                         style = MaterialTheme.typography.bodyLarge,

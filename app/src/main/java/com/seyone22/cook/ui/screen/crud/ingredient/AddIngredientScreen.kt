@@ -223,13 +223,15 @@ fun AddIngredientScreen(
                                 .width(346.dp)
                                 .padding(36.dp, 0.dp, 0.dp, 0.dp)
                         ) {
-                            OutlinedTextField(value = ingredient.nameSi,
+                            OutlinedTextField(
+                                value = ingredient.nameSi,
                                 onValueChange = { ingredient = ingredient.copy(nameSi = it) },
                                 label = { Text("Name (Sinhala)") },
                                 modifier = Modifier.fillMaxWidth(),
                                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
                             )
-                            OutlinedTextField(value = ingredient.nameTa,
+                            OutlinedTextField(
+                                value = ingredient.nameTa,
                                 onValueChange = { ingredient = ingredient.copy(nameTa = it) },
                                 label = { Text("Name (Tamil)") },
                                 modifier = Modifier.fillMaxWidth(),
@@ -244,7 +246,8 @@ fun AddIngredientScreen(
                             .width(346.dp)
                             .padding(36.dp, 0.dp, 0.dp, 0.dp)
                     ) {
-                        OutlinedTextField(value = ingredient.description,
+                        OutlinedTextField(
+                            value = ingredient.description,
                             onValueChange = { ingredient = ingredient.copy(description = it) },
                             label = { Text("Description") },
                             modifier = Modifier.fillMaxWidth(),

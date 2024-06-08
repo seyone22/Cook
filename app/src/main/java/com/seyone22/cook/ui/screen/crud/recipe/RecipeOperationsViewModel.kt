@@ -43,8 +43,16 @@ class RecipeOperationsViewModel(
             val recipe = recipeRepository.getRecipeById(id).first()
             val images = recipeImageRepository.getImagesForRecipe(id).first()
             val instructions = instructionRepository.getInstructionsForRecipe(id).first()
-            val recipeIngredients = recipeIngredientRepository.getRecipeIngredientsForRecipe(id).first()
-            _addRecipeViewState.value = AddRecipeViewState(measures, ingredients, recipe, images, instructions, recipeIngredients)
+            val recipeIngredients =
+                recipeIngredientRepository.getRecipeIngredientsForRecipe(id).first()
+            _addRecipeViewState.value = AddRecipeViewState(
+                measures,
+                ingredients,
+                recipe,
+                images,
+                instructions,
+                recipeIngredients
+            )
         }
     }
 
@@ -167,7 +175,8 @@ class RecipeOperationsViewModel(
 
                     // Operate on Images
                     imagesToAdd.forEach { image ->
-                        val imageBitmap = imageHelper.loadImageFromUri(Uri.parse(image!!.imagePath))!!
+                        val imageBitmap =
+                            imageHelper.loadImageFromUri(Uri.parse(image!!.imagePath))!!
                         val imagePath = imageHelper.saveImageToInternalStorage(
                             imageBitmap,
                             "'recipe_${recipe.id}_${System.currentTimeMillis()}.jpg"

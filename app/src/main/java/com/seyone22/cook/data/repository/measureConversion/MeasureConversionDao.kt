@@ -12,14 +12,17 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MeasureConversionDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insert(measureConversion: MeasureConversion) : Long
+    suspend fun insert(measureConversion: MeasureConversion): Long
+
     @Update
     suspend fun update(measureConversion: MeasureConversion)
+
     @Delete
     suspend fun delete(measureConversion: MeasureConversion)
 
     @Query("SELECT * FROM conversions")
     fun getAll(): Flow<List<MeasureConversion>>
+
     @Query("SELECT * FROM conversions WHERE id = :id")
     suspend fun getById(id: Long): MeasureConversion?
 

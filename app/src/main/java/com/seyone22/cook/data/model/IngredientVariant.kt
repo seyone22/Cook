@@ -37,13 +37,14 @@ fun IngredientVariantDetails.toIngredientVariant(): IngredientVariant = Ingredie
     unitId = unitId
 )
 
-fun IngredientVariant.toIngredientVariantDetails(): IngredientVariantDetails = IngredientVariantDetails(
-    id = id,
-    ingredientId = ingredientId,
-    variantName = variantName,
-    brand = brand ?: "",
-    type = type ?: "",
-    price = price?.toString() ?: "",
-    quantity = quantity.toString(),
-    unitId = unitId
-)
+fun IngredientVariant.toIngredientVariantDetails(): IngredientVariantDetails =
+    IngredientVariantDetails(
+        id = id,
+        ingredientId = ingredientId,
+        variantName = variantName,
+        brand = brand ?: "",
+        type = type ?: "",
+        price = price?.toString() ?: "",
+        quantity = quantity.toString(),
+        unitId = unitId
+    )

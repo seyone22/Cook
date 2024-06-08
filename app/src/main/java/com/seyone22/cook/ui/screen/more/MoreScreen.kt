@@ -8,7 +8,6 @@ import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.ImportExport
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.ShoppingBag
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem

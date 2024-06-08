@@ -3,10 +3,7 @@ package com.seyone22.cook.ui.screen.ingredients
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seyone22.cook.data.model.Ingredient
-import com.seyone22.cook.data.model.IngredientImage
-import com.seyone22.cook.data.model.IngredientVariant
 import com.seyone22.cook.data.model.IngredientVariantDetails
-import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.model.ShoppingListItem
 import com.seyone22.cook.data.model.toIngredientVariant
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
@@ -68,6 +65,7 @@ class IngredientsViewModel(
             ingredientRepository.updateIngredient(ingredient)
         }
     }
+
     fun addVariant(ingredientId: Long, variant: IngredientVariantDetails) {
         viewModelScope.launch {
             ingredientVariantRepository.insertIngredientVariant(
@@ -75,6 +73,7 @@ class IngredientsViewModel(
             )
         }
     }
+
     fun addToShoppingList(it: ShoppingListItem) {
         viewModelScope.launch {
             shoppingListRepository.insertItem(it)

@@ -25,6 +25,7 @@ class MeasureHelper(private val context: Context) {
                     }
                 }
             }
+
             MeasureType.VOLUME -> {
                 val base = measuresRepository.getMeasureByName("liter").first()
 

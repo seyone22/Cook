@@ -146,7 +146,8 @@ fun IngredientDetailScreen(
     }
 
     Scaffold(topBar = {
-        TopAppBar(modifier = Modifier.padding(0.dp),
+        TopAppBar(
+            modifier = Modifier.padding(0.dp),
             title = { Text(text = ingredient?.nameEn ?: "") },
             navigationIcon = {
                 Icon(
@@ -483,14 +484,16 @@ fun NewVariantDialog(
                             .width(346.dp)
                             .padding(0.dp, 0.dp, 0.dp, 0.dp)
                     ) {
-                        OutlinedTextField(value = variant.brand,
+                        OutlinedTextField(
+                            value = variant.brand,
                             onValueChange = { newVariantBrand ->
                                 variant = variant.copy(brand = newVariantBrand)
                             },
                             label = { Text("Brand") },
                             modifier = Modifier.fillMaxWidth()
                         )
-                        OutlinedTextField(value = variant.type,
+                        OutlinedTextField(
+                            value = variant.type,
                             onValueChange = { newVariantType ->
                                 variant = variant.copy(type = newVariantType)
                             },
@@ -498,7 +501,8 @@ fun NewVariantDialog(
                             modifier = Modifier.fillMaxWidth()
                         )
                         Row {
-                            OutlinedTextField(value = variant.price,
+                            OutlinedTextField(
+                                value = variant.price,
                                 onValueChange = { newVariantPrice ->
                                     variant = variant.copy(price = newVariantPrice)
                                 },
@@ -510,7 +514,8 @@ fun NewVariantDialog(
                                     imeAction = ImeAction.Done, keyboardType = KeyboardType.Number
                                 )
                             )
-                            OutlinedTextField(value = variant.quantity,
+                            OutlinedTextField(
+                                value = variant.quantity,
                                 onValueChange = { newVariantQuantity ->
                                     variant = variant.copy(quantity = newVariantQuantity)
                                 },

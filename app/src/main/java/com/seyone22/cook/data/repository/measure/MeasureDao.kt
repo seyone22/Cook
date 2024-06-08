@@ -12,22 +12,31 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MeasureDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insert(measure: Measure) : Long
+    suspend fun insert(measure: Measure): Long
+
     @Update
     suspend fun update(measure: Measure)
+
     @Delete
     suspend fun delete(measure: Measure)
 
-    @Query("SELECT * FROM measures" +
-            "   WHERE id = :measureId" +
-            "   ORDER BY abbreviation ASC")
+    @Query(
+        "SELECT * FROM measures" +
+                "   WHERE id = :measureId" +
+                "   ORDER BY abbreviation ASC"
+    )
     fun getMeasureById(measureId: Int): Flow<Measure>
 
-    @Query("SELECT * FROM measures" +
-            "   ORDER BY abbreviation ASC")
+    @Query(
+        "SELECT * FROM measures" +
+                "   ORDER BY abbreviation ASC"
+    )
     fun getAllMeasures(): Flow<List<Measure>>
-    @Query("SELECT * FROM measures" +
-            "   WHERE name = :name" +
-            "   ORDER BY name ASC")
+
+    @Query(
+        "SELECT * FROM measures" +
+                "   WHERE name = :name" +
+                "   ORDER BY name ASC"
+    )
     fun getMeasureByName(name: String): Flow<Measure>
 }

@@ -56,7 +56,6 @@ import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.model.IngredientDetails
 import com.seyone22.cook.data.model.IngredientImage
-import com.seyone22.cook.data.model.IngredientVariant
 import com.seyone22.cook.data.model.IngredientVariantDetails
 import com.seyone22.cook.data.model.toIngredientVariant
 import com.seyone22.cook.data.model.toIngredientVariantDetails
@@ -118,7 +117,8 @@ fun EditIngredientScreen(
         contract = ActivityResultContracts.PickMultipleVisualMedia(),
     ) { uris: List<Uri> ->
         uris.forEach { uri ->
-            photos = photos + IngredientImage(imagePath = uri.toString(), ingredientId = ingredientId)
+            photos =
+                photos + IngredientImage(imagePath = uri.toString(), ingredientId = ingredientId)
         }
     }
     val imageHelper = ImageHelper(context)
@@ -148,7 +148,9 @@ fun EditIngredientScreen(
                                     nameSi = nameSi,
                                     nameTa = nameTa,
                                 ),
-                                variants.map { i -> i.copy(ingredientId = ingredientId).toIngredientVariant() },
+                                variants.map { i ->
+                                    i.copy(ingredientId = ingredientId).toIngredientVariant()
+                                },
                                 photos,
                                 context
                             )
@@ -173,7 +175,8 @@ fun EditIngredientScreen(
                         ) {
                             item {
                                 photos.forEach { photo ->
-                                    val bitmap = imageHelper.loadImageFromUri(Uri.parse(photo.imagePath))
+                                    val bitmap =
+                                        imageHelper.loadImageFromUri(Uri.parse(photo.imagePath))
                                     bitmap?.let {
                                         Row(
                                             modifier = Modifier
@@ -445,13 +448,14 @@ fun EditIngredientScreen(
                                                     DropdownMenuItem(
                                                         text = { Text(measure.abbreviation) },
                                                         onClick = {
-                                                            variants = variants.mapIndexed { i, variant ->
-                                                                if (i == index) {
-                                                                    variant.copy(unitId = measure.id)
-                                                                } else {
-                                                                    variant
+                                                            variants =
+                                                                variants.mapIndexed { i, variant ->
+                                                                    if (i == index) {
+                                                                        variant.copy(unitId = measure.id)
+                                                                    } else {
+                                                                        variant
+                                                                    }
                                                                 }
-                                                            }
                                                             measuresExpanded = false
                                                         }
                                                     )

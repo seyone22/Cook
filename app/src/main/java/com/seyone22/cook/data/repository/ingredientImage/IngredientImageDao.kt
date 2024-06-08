@@ -13,20 +13,30 @@ import kotlinx.coroutines.flow.Flow
 interface IngredientImageDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(ingredientImage: IngredientImage)
+
     @Update
     suspend fun update(ingredientImage: IngredientImage)
+
     @Delete
     suspend fun delete(ingredientImage: IngredientImage)
 
-    @Query("SELECT * FROM ingredient_images" +
-            "   WHERE id = :id" +
-            "   ORDER BY id ASC")
+    @Query(
+        "SELECT * FROM ingredient_images" +
+                "   WHERE id = :id" +
+                "   ORDER BY id ASC"
+    )
     fun getImageById(id: Int): Flow<IngredientImage>
-    @Query("SELECT * FROM ingredient_images" +
-            "   WHERE ingredientId = :ingredientId" +
-            "   ORDER BY id ASC")
+
+    @Query(
+        "SELECT * FROM ingredient_images" +
+                "   WHERE ingredientId = :ingredientId" +
+                "   ORDER BY id ASC"
+    )
     fun getImagesForIngredient(ingredientId: Int): Flow<List<IngredientImage>>
-    @Query("SELECT * FROM ingredient_images" +
-            "   ORDER BY id ASC")
+
+    @Query(
+        "SELECT * FROM ingredient_images" +
+                "   ORDER BY id ASC"
+    )
     fun getAllIngredientImages(): Flow<List<IngredientImage>>
 }

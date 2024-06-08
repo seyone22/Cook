@@ -409,7 +409,10 @@ fun AddRecipeScreen(
                     TextButton(onClick = {
                         recipeIngredients.add(
                             RecipeIngredientDetails(
-                                ingredientId = -1, measureId = -1, quantity = "", recipeId = UUID.randomUUID()
+                                ingredientId = -1,
+                                measureId = -1,
+                                quantity = "",
+                                recipeId = UUID.randomUUID()
                             )
                         )
                     }) {
@@ -458,7 +461,9 @@ fun AddRecipeScreen(
                     TextButton(onClick = {
                         instructions.add(
                             Instruction(
-                                description = "", stepNumber = instructions.size + 1, recipeId = UUID.randomUUID()
+                                description = "",
+                                stepNumber = instructions.size + 1,
+                                recipeId = UUID.randomUUID()
                             )
                         )
                     }) {

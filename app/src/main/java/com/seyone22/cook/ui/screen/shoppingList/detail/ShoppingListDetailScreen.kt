@@ -68,11 +68,12 @@ fun ShoppingListDetailScreen(
 
     var showNewDialog by remember { mutableStateOf(false) }
     if (showNewDialog) {
-        NewShoppingListItemDialog(onConfirm = {
-            viewModel.addToShoppingList(it.copy(shoppingListId = backStackEntry.toLong()))
-            viewModel.fetchData()
-            showNewDialog = false
-        },
+        NewShoppingListItemDialog(
+            onConfirm = {
+                viewModel.addToShoppingList(it.copy(shoppingListId = backStackEntry.toLong()))
+                viewModel.fetchData()
+                showNewDialog = false
+            },
             onDismiss = { showNewDialog = false },
             ingredients = data.ingredients,
             measures = data.measures
@@ -124,13 +125,14 @@ fun ShoppingItemList(
             enabled = !(ingredients.find { i -> i?.id == item?.ingredientId }?.stocked ?: false),
             checked = checked.value,
             onCheckedChange = { checked.value = !checked.value })
-        Text(modifier = Modifier
-            .padding(4.dp, 0.dp, 16.dp, 0.dp)
-            .align(Alignment.CenterVertically)
-            .width(120.dp)
-            .clickable {
-                navController.navigate("${IngredientDetailDestination.route}/${item?.ingredientId}")
-            },
+        Text(
+            modifier = Modifier
+                .padding(4.dp, 0.dp, 16.dp, 0.dp)
+                .align(Alignment.CenterVertically)
+                .width(120.dp)
+                .clickable {
+                    navController.navigate("${IngredientDetailDestination.route}/${item?.ingredientId}")
+                },
             text = ingredients.find { i -> i?.id == item?.ingredientId }?.nameEn ?: "",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant

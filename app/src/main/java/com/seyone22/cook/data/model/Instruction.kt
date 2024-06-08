@@ -9,13 +9,15 @@ import kotlinx.serialization.Serializable
 import java.util.UUID
 
 @Serializable
-@Entity(tableName = "instructions",
+@Entity(
+    tableName = "instructions",
     foreignKeys = [ForeignKey(
         entity = Recipe::class,
         parentColumns = ["id"],
         childColumns = ["recipeId"],
         onDelete = ForeignKey.CASCADE
-    )])
+    )]
+)
 data class Instruction(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     @Contextual

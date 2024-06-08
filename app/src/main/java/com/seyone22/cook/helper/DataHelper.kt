@@ -113,7 +113,8 @@ class DataHelper {
             recipeRepository.insertRecipe(recipe)
             instructions.forEach { instructionRepository.insertInstruction(it) }
             ingredients.forEach { ingredient ->
-                val existingIngredient = ingredientRepository.getIngredientByName(ingredient.nameEn).firstOrNull()
+                val existingIngredient =
+                    ingredientRepository.getIngredientByName(ingredient.nameEn).firstOrNull()
 
                 if (existingIngredient == null) {
                     // Ingredient with similar name does not exist, proceed with insertion
@@ -124,7 +125,10 @@ class DataHelper {
                     }
                 } else {
                     // Ingredient with similar name already exists, handle accordingly
-                    Log.d("IngredientValidation", "Ingredient '${ingredient.nameEn}' already exists")
+                    Log.d(
+                        "IngredientValidation",
+                        "Ingredient '${ingredient.nameEn}' already exists"
+                    )
                     recipeIngredients.find { ri -> ri.ingredientId == ingredient.id }?.let { ri ->
                         recipeIngredientRepository.insertRecipeIngredient(ri.copy(ingredientId = existingIngredient.id))
                     }

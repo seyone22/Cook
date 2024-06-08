@@ -10,7 +10,6 @@ import com.seyone22.cook.R
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.common.CookTopBar
 import com.seyone22.cook.ui.navigation.NavigationDestination
-import com.seyone22.cook.ui.screen.shoppingList.ShoppingListDestination
 
 object CookingDestination : NavigationDestination {
     override val route = "Cooking"
