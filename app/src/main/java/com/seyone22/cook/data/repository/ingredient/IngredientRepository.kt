@@ -10,4 +10,5 @@ interface IngredientRepository {
 
     suspend fun getIngredientById(ingredientId: Int): Flow<Ingredient?>
     suspend fun getAllIngredients(): Flow<List<Ingredient?>>
+    suspend fun getIngredientByName(nameEn: String): Flow<Ingredient?>
 }

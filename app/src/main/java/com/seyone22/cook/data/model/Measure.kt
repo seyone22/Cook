@@ -7,5 +7,15 @@ import androidx.room.PrimaryKey
 data class Measure(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
-    val abbreviation: String
+    val abbreviation: String,
+    val type: String
 )
+
+enum class MeasureType {
+    WEIGHT,
+    VOLUME,
+    COUNT,
+    LENGTH,
+    TEMPERATURE,
+    TIME
+}

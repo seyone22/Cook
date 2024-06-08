@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -48,13 +47,13 @@ fun IngredientsScreen(
     navController: NavController
 ) {
     // Call the ViewModel function to fetch ingredients when the screen is first displayed
-    viewModel.fetchIngredientsAndImages()
+    viewModel.fetchData()
 
     // Observe the ingredientList StateFlow to display ingredients
     val ingredientsViewState by viewModel.ingredientsViewState.collectAsState()
 
     val ingredients = ingredientsViewState.ingredients
-    val images = ingredientsViewState.images
+    val images = ingredientsViewState.ingredientImages
 
     // Implement the UI for the Ingredients screen using Jetpack Compose
     LazyVerticalStaggeredGrid(modifier = modifier.padding(8.dp),

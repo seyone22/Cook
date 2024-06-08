@@ -39,7 +39,8 @@ class ImageHelper(private val context: Context) {
     // Function to retrieve bitmap image from URI
     fun loadImageFromUri(uri: Uri): Bitmap? {
         return try {
-            val inputStream: InputStream? = context.contentResolver.openInputStream(if(uri.isAbsolute) uri else Uri.parse("file://${uri.toString()}"))
+            val inputStream: InputStream? =
+                context.contentResolver.openInputStream(if (uri.isAbsolute) uri else Uri.parse("file://${uri.toString()}"))
             BitmapFactory.decodeStream(inputStream)
         } catch (e: FileNotFoundException) {
             Log.e("ImageHelper", "Error loading image from URI", e)

@@ -2,33 +2,36 @@ package com.seyone22.cook.ui.screen.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.seyone22.cook.data.model.Ingredient
-import com.seyone22.cook.data.model.Instruction
-import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.model.Recipe
-import com.seyone22.cook.data.model.RecipeImage
 import com.seyone22.cook.data.model.RecipeIngredient
+import com.seyone22.cook.data.model.ShoppingListItem
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
+import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantRepository
 import com.seyone22.cook.data.repository.instruction.InstructionRepository
 import com.seyone22.cook.data.repository.measure.MeasureRepository
 import com.seyone22.cook.data.repository.recipe.RecipeRepository
 import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
 import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientRepository
+import com.seyone22.cook.data.repository.shoppingList.ShoppingListRepository
+import com.seyone22.cook.ui.common.ViewState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 class HomeViewModel(
     private val recipeRepository: RecipeRepository,
     private val recipeImageRepository: RecipeImageRepository,
     private val instructionRepository: InstructionRepository,
     private val recipeIngredientRepository: RecipeIngredientRepository,
+    private val ingredientVariantRepository: IngredientVariantRepository,
     private val measureRepository: MeasureRepository,
-    private val ingredientRepository: IngredientRepository
+    private val ingredientRepository: IngredientRepository,
+    private val shoppingListRepository: ShoppingListRepository
 ) : ViewModel() {
-    private val _homeViewState = MutableStateFlow(HomeViewState())
-    val homeViewState: StateFlow<HomeViewState> get() = _homeViewState
+    private val _homeViewState = MutableStateFlow(ViewState())
+    val homeViewState: StateFlow<ViewState> get() = _homeViewState
 
     fun fetchData() {
         viewModelScope.launch {
@@ -38,26 +41,46 @@ class HomeViewModel(
             val recipeIngredients = recipeIngredientRepository.getAllRecipeIngredients().first()
             val measures = measureRepository.getAllMeasures().first()
             val ingredients = ingredientRepository.getAllIngredients().first()
+            val variants = ingredientVariantRepository.getAllIngredientVariants().first()
+            val shoppingLists = shoppingListRepository.getAllShoppingLists().first()
 
-            _homeViewState.value = HomeViewState(recipes, images, instructions, recipeIngredients, measures, ingredients)
+            _homeViewState.value = ViewState(
+                recipes = recipes,
+                images = images,
+                instructions = instructions,
+                recipeIngredients = recipeIngredients,
+                measures = measures,
+                ingredients = ingredients,
+                variants = variants,
+                shoppingLists = shoppingLists
+            )
         }
     }
 
     fun deleteRecipe(recipe: Recipe) {
         viewModelScope.launch {
             recipeRepository.deleteRecipe(recipe)
-            recipeImageRepository.deleteImagesForRecipe(recipe.id.toInt())
-            recipeIngredientRepository.deleteIngredientsForRecipe(recipe.id.toInt())
         }
     }
 
-}
+    fun incrementMakeCounter(recipeId: UUID) {
+        viewModelScope.launch {
+            recipeRepository.incrementTimesMade(recipeId)
+        }
+    }
 
-data class HomeViewState(
-    val recipes: List<Recipe?> = emptyList(),
-    val images: List<RecipeImage?> = emptyList(),
-    val instructions: List<Instruction?> = emptyList(),
-    val recipeIngredients: List<RecipeIngredient?> = emptyList(),
-    val measures: List<Measure?> = emptyList(),
-    val ingredients: List<Ingredient?> = emptyList()
-)
+    fun addAllToShoppingList(ingredients: List<RecipeIngredient?>, it: Long) {
+        viewModelScope.launch {
+            ingredients.forEach { ingredient ->
+                shoppingListRepository.insertItem(
+                    ShoppingListItem(
+                        ingredientId = (ingredient?.ingredientId?.toInt() ?: 0).toLong(),
+                        quantity = ingredient?.quantity ?: 0.0,
+                        measureId = (ingredient?.measureId?.toInt() ?: 0).toLong(),
+                        shoppingListId = it
+                    )
+                )
+            }
+        }
+    }
+}

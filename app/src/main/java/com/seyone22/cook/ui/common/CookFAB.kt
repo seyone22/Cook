@@ -10,11 +10,11 @@ import com.seyone22.cook.ui.screen.crud.ingredient.AddIngredientDestination
 import com.seyone22.cook.ui.screen.crud.recipe.AddRecipeDestination
 import com.seyone22.cook.ui.screen.home.HomeDestination
 import com.seyone22.cook.ui.screen.ingredients.IngredientsDestination
+import com.seyone22.cook.ui.screen.shoppingList.detail.ShoppingListDetailDestination
 
 @Composable
 fun CookFAB(
-    currentActivity: String?,
-    navigateToScreen: (String) -> Unit,
+    currentActivity: String?, navigateToScreen: (String) -> Unit = {}, action: () -> Unit = {}
 ) {
     if ((currentActivity == HomeDestination.route) or (currentActivity == IngredientsDestination.route)) {
         ExtendedFloatingActionButton(text = { Text(text = "New $currentActivity") }, icon = {
@@ -33,5 +33,14 @@ fun CookFAB(
                 }
             }
         })
+    }
+
+    if (currentActivity == ShoppingListDetailDestination.route) {
+        ExtendedFloatingActionButton(text = { Text(text = "Add Item") }, icon = {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = null,
+            )
+        }, onClick = action)
     }
 }

@@ -3,6 +3,7 @@ package com.seyone22.cook.data.model
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import java.util.UUID
 
 @Entity(
     tableName = "recipe_images",
@@ -15,6 +16,6 @@ import androidx.room.PrimaryKey
 )
 data class RecipeImage(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val recipeId: Long,
+    val recipeId: UUID,
     val imagePath: String
 )

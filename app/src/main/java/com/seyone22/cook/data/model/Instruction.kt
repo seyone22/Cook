@@ -1,12 +1,28 @@
 package com.seyone22.cook.data.model
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import com.seyone22.cook.helper.UUIDSerializer
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
+import java.util.UUID
 
-@Entity(tableName = "instructions")
+@Serializable
+@Entity(
+    tableName = "instructions",
+    foreignKeys = [ForeignKey(
+        entity = Recipe::class,
+        parentColumns = ["id"],
+        childColumns = ["recipeId"],
+        onDelete = ForeignKey.CASCADE
+    )]
+)
 data class Instruction(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val recipeId: Long,
+    @Contextual
+    @Serializable(with = UUIDSerializer::class)
+    val recipeId: UUID,
     val stepNumber: Int,
     val description: String
 )
