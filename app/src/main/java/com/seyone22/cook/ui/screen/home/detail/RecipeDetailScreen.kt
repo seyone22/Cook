@@ -788,6 +788,6 @@ fun AddAllToShoppingListDialog(
         })
 }
 
-// TODO: Import dialog in settings, View .recipe files, before importing
+// TODO: View .recipe files, before importing
 // TODO: Cooking view, TTS and STT capability
 // TODO: Ingredient Substitutes
