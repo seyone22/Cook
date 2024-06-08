@@ -99,6 +99,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
+import java.util.UUID
 
 object RecipeDetailDestination : NavigationDestination {
     override val route = "Recipe Details"
@@ -122,11 +123,8 @@ fun RecipeDetailScreen(
     val homeViewState by viewModel.homeViewState.collectAsState()
 
     val recipe = homeViewState.recipes.find { r -> r?.id.toString() == backStackEntry }
-
-    Log.d("TAG", "RecipeDetailScreen: $recipe")
-
     val variants = homeViewState.variants
-    val images = homeViewState.images.filter { i -> i?.id.toString() == backStackEntry }
+    val images = homeViewState.images.filter { i -> i?.recipeId == UUID.fromString(backStackEntry) }
     val instructions =
         homeViewState.instructions.filter { i -> i?.recipeId.toString() == backStackEntry }
     val recipeIngredients =
@@ -147,6 +145,8 @@ fun RecipeDetailScreen(
             bitmap = File(images[0]?.imagePath).takeIf { it.exists() }
                 ?.let { imageHelper.loadImageFromUri(it.toUri()) }!!
         }
+        Log.d("TAG", "RecipeDetailScreen: $recipe")
+
         scaleFactor = recipe?.servingSize?.toDouble() ?: -1.0
     }
 
