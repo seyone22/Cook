@@ -4,7 +4,9 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -41,6 +43,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.carousel.HorizontalUncontainedCarousel
+import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -67,6 +71,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Ingredient
+import com.seyone22.cook.data.model.IngredientImage
 import com.seyone22.cook.data.model.IngredientVariant
 import com.seyone22.cook.data.model.IngredientVariantDetails
 import com.seyone22.cook.data.model.Measure
@@ -184,7 +189,7 @@ fun IngredientDetailScreen(
                 item {
                     Column(modifier = Modifier.padding(8.dp, 0.dp)) {
                         if (images.isNotEmpty()) {
-                            HeaderImage(uri = images.first()?.imagePath)
+                            HeaderImage(images = images)
                         }
                         IngredientOptionRow(
                             viewModel,
@@ -321,30 +326,46 @@ fun IngredientDetails(ingredient: Ingredient) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HeaderImage(uri: String?) {
-
-    if (uri != null) {
-        AsyncImage(
-            model = uri,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(240.dp)
-                .clip(RoundedCornerShape(12.dp))
-        )
-    } else {
-        val image: Painter = painterResource(id = R.drawable.placeholder)
-        Image(
-            painter = image,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(240.dp)
-                .clip(RoundedCornerShape(12.dp))
-        )
+fun HeaderImage(images: List<IngredientImage?>) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(240.dp)
+    ) {
+        if (images.isEmpty()) {
+            val image: Painter = painterResource(id = R.drawable.placeholder)
+            Image(
+                painter = image,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(240.dp)
+                    .clip(RoundedCornerShape(12.dp))
+            )
+        } else {
+            HorizontalUncontainedCarousel(
+                state = rememberCarouselState { images.size },
+                itemWidth = if(images.size > 1) 320.dp else 400.dp,
+                itemSpacing = 8.dp,
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(221.dp),
+            ) { i ->
+                AsyncImage(
+                    model = images[i]?.imagePath,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(240.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                )
+            }
+        }
     }
 }
 

@@ -196,6 +196,7 @@ class IngredientOperationsViewModel(
                     }
 
                     Log.d("TAG", "updateIngredient: Completed successfully")
+                    fetchData(ingredient.id)
                 }
             } catch (e: CancellationException) {
                 Log.e("TAG", "updateIngredient: Job was cancelled", e)

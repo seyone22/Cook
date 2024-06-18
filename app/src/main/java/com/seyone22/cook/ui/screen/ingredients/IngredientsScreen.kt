@@ -3,6 +3,7 @@ package com.seyone22.cook.ui.screen.ingredients
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -65,13 +66,13 @@ fun IngredientsScreen(
 @Composable
 fun IngredientItem(modifier: Modifier, ingredient: Ingredient, image: IngredientImage?) {
     Card(modifier = modifier.padding(4.dp)) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column {
             if (image != null) {
                 AsyncImage(
                     model = image.imagePath,
                     contentScale = ContentScale.Crop,
                     contentDescription = null,
-                    modifier = Modifier
+                    modifier = modifier
                         .fillMaxWidth()
                         .aspectRatio(1f) // Maintain aspect ratio
                         .clip(RoundedCornerShape(12.dp))
@@ -81,7 +82,7 @@ fun IngredientItem(modifier: Modifier, ingredient: Ingredient, image: Ingredient
                 text = ingredient.nameEn,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(8.dp),
+                modifier = modifier.padding(8.dp),
             )
         }
     }
