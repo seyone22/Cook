@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -111,7 +112,8 @@ fun AboutList(context: Context) {
         Image(
             painter = painterResource(id = R.drawable.ic_launcher_foreground), // Replace with your XML drawable resource ID
             contentDescription = null, // Provide content description if needed
-            modifier = Modifier.size(360.dp)
+            modifier = Modifier.size(360.dp),
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
         )
     }
     HorizontalDivider()
