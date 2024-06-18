@@ -1,6 +1,7 @@
 package com.seyone22.cook.ui.screen.crud.recipe
 
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -87,18 +88,10 @@ fun AddRecipeScreen(
     var reference by remember { mutableStateOf("") }
     var photos by remember { mutableStateOf(listOf<Uri>()) }
     val instructions = remember {
-        mutableStateListOf(
-            Instruction(
-                description = "", stepNumber = 1, recipeId = UUID.randomUUID()
-            )
-        )
+        mutableStateListOf<Instruction>()
     }
     val recipeIngredients = remember {
-        mutableStateListOf(
-            RecipeIngredientDetails(
-                ingredientId = -1, measureId = -1, quantity = "", recipeId = UUID.randomUUID()
-            )
-        )
+        mutableStateListOf<RecipeIngredientDetails>()
     }
     // Launcher for selecting images
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -127,6 +120,7 @@ fun AddRecipeScreen(
                 Button(modifier = Modifier.padding(24.dp, 0.dp, 16.dp, 0.dp),
                     content = { Text("Save") },
                     onClick = {
+                        Log.d("TAG", "AddRecipeScreen: $photos")
                         viewModel.saveRecipe(
                             Recipe(
                                 name = name,

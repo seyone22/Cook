@@ -3,6 +3,7 @@ package com.seyone22.cook.ui.screen.crud.recipe
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seyone22.cook.data.model.Ingredient
@@ -90,6 +91,9 @@ class RecipeOperationsViewModel(
                 // Save the images
                 val imageHelper = ImageHelper(context)
                 images?.forEach { image ->
+                    Log.d("TAG", "saveRecipe: $image")
+
+
                     val imageBitmap = imageHelper.loadImageFromUri(image)!!
                     val compressedImageBytes = compressImageFile(imageBitmap, 60)
 
@@ -99,6 +103,7 @@ class RecipeOperationsViewModel(
                     )
                     val recipeImage =
                         RecipeImage(recipeId = recipe.id, imagePath = imagePath ?: "NULL")
+
                     recipeImageRepository.insertRecipeImage(recipeImage)
                 }
             } catch (e: Exception) {

@@ -20,9 +20,8 @@ class MoreViewModel(
     private val ingredientRepository: IngredientRepository,
 ) : ViewModel() {
     fun importRecipe(context: Context, it: Uri) {
-        val dataHelper = DataHelper()
         viewModelScope.launch {
-            dataHelper.importRecipe(
+            DataHelper.importRecipe(
                 context,
                 it,
                 recipeRepository,

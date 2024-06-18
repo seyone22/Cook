@@ -186,7 +186,6 @@ fun RecipeDetailScreen(
             actions = @Composable {
                 // Share button
                 IconButton(onClick = {
-                    val dataHelper = DataHelper()
                     // Handle share action
                     CoroutineScope(Dispatchers.Main).launch {
                         val recipeIngredientIds =
@@ -197,7 +196,7 @@ fun RecipeDetailScreen(
                         }
 
 
-                        val zipFile = dataHelper.exportRecipe(
+                        val zipFile = DataHelper.exportRecipe(
                             context,
                             recipe!!,
                             instructions,
