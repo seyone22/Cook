@@ -2,6 +2,8 @@ package com.seyone22.cook.ui.screen.more
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
@@ -21,15 +23,22 @@ class MoreViewModel(
 ) : ViewModel() {
     fun importRecipe(context: Context, it: Uri) {
         viewModelScope.launch {
-            DataHelper.importRecipe(
-                context,
-                it,
-                recipeRepository,
-                instructionRepository,
-                recipeIngredientRepository,
-                recipeImageRepository,
-                ingredientRepository
-            )
+            try {
+                DataHelper.importRecipe(
+                    context,
+                    it,
+                    recipeRepository,
+                    instructionRepository,
+                    recipeIngredientRepository,
+                    recipeImageRepository,
+                    ingredientRepository
+                )
+                Toast.makeText(context, "Successfully imported recipe!", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                //Handle the exception here
+                Toast.makeText(context, "Unable to import: ${e.message}", Toast.LENGTH_SHORT).show()
+                Log.e("ImportError", "Error importing recipe: ", e)
+            }
         }
     }
 }

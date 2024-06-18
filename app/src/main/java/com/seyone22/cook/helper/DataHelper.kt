@@ -2,7 +2,6 @@ package com.seyone22.cook.helper
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
 import com.seyone22.cook.data.model.Ingredient
@@ -113,6 +112,10 @@ object DataHelper {
             val ingredients = Json.decodeFromString<List<Ingredient>>(ingredientsJson)
 
             // Insert data to db
+            if(recipeRepository.getRecipeById(recipe.id).firstOrNull() != null) {
+                throw Exception("Recipe with id ${recipe.id} already exists")
+            }
+
             recipeRepository.insertRecipe(recipe)
             instructions.forEach { instructionRepository.insertInstruction(it) }
             ingredients.forEach { ingredient ->

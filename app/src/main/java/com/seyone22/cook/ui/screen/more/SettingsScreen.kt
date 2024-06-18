@@ -208,6 +208,7 @@ fun GeneralSettingsList(
 fun DataSettingsList(
     viewModel: MoreViewModel,
     scope: CoroutineScope = rememberCoroutineScope(),
+    context: Context = LocalContext.current,
     activity: Activity = LocalContext.current as Activity
 ) {
     val filePickerLauncher =
@@ -228,8 +229,7 @@ fun DataSettingsList(
                     type = "*/*" // All file types
                 }
                 filePickerLauncher.launch(arrayOf("*/*"))
-            }
-        )
+            })
     }
 }
 
