@@ -1,5 +1,6 @@
 package com.seyone22.cook.ui.screen.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seyone22.cook.data.model.Recipe
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.UUID
+import kotlin.math.log
 
 class HomeViewModel(
     private val recipeRepository: RecipeRepository,
@@ -34,6 +36,8 @@ class HomeViewModel(
     val homeViewState: StateFlow<ViewState> get() = _homeViewState
 
     fun fetchData() {
+        Log.d("TAG", "fetchData: ")
+
         viewModelScope.launch {
             val recipes = recipeRepository.getAllRecipes().first()
             val images = recipeImageRepository.getAllRecipeImages().first()

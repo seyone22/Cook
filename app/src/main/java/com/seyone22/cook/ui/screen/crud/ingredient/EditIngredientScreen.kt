@@ -42,6 +42,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,6 +63,7 @@ import com.seyone22.cook.data.model.toIngredientVariantDetails
 import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
+import kotlinx.coroutines.launch
 
 object EditIngredientDestination : NavigationDestination {
     override val route = "Edit Ingredient"
@@ -77,6 +79,7 @@ fun EditIngredientScreen(
     navController: NavController,
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     // Fetch existing ingredient data based on the provided ingredientId
     LaunchedEffect(ingredientId) {
@@ -140,21 +143,26 @@ fun EditIngredientScreen(
                     Button(modifier = Modifier.padding(24.dp, 0.dp, 16.dp, 0.dp),
                         content = { Text("Save") },
                         onClick = {
-                            viewModel.updateIngredient(
-                                Ingredient(
-                                    id = ingredientId,
-                                    description = description,
-                                    nameEn = nameEn,
-                                    nameSi = nameSi,
-                                    nameTa = nameTa,
-                                ),
-                                variants.map { i ->
-                                    i.copy(ingredientId = ingredientId).toIngredientVariant()
-                                },
-                                photos,
-                                context
-                            )
-                            navController.popBackStack()
+                            coroutineScope.launch {
+                                val success = viewModel.updateIngredient(
+                                    Ingredient(
+                                        id = ingredientId,
+                                        description = description,
+                                        nameEn = nameEn,
+                                        nameSi = nameSi,
+                                        nameTa = nameTa,
+                                    ),
+                                    variants.map { i ->
+                                        i.copy(ingredientId = ingredientId).toIngredientVariant()
+                                    },
+                                    photos,
+                                    context
+                                )
+
+                                if (success) {
+                                    navController.popBackStack()
+                                }
+                            }
                         })
                 }
             )

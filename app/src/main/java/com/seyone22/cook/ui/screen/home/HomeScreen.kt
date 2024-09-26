@@ -10,19 +10,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
-import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -34,9 +33,9 @@ import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Recipe
 import com.seyone22.cook.data.model.RecipeImage
 import com.seyone22.cook.ui.AppViewModelProvider
+import com.seyone22.cook.ui.common.CookTopBar
 import com.seyone22.cook.ui.navigation.NavigationDestination
 import com.seyone22.cook.ui.screen.home.detail.RecipeDetailDestination
-import com.seyone22.cook.ui.screen.search.SearchDestination
 
 object HomeDestination : NavigationDestination {
     override val route = "Recipes"
@@ -49,10 +48,13 @@ object HomeDestination : NavigationDestination {
 fun HomeScreen(
     modifier: Modifier,
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    navController: NavController
+    navController: NavController,
+    setOverlayStatus: (Boolean) -> Unit = {},
 ) {
     // Call the ViewModel function to fetch ingredients when the screen is first displayed
-    viewModel.fetchData()
+    LaunchedEffect(Unit) {
+        viewModel.fetchData()
+    }
 
     // Observe the ingredientList StateFlow to display ingredients
     val homeViewState by viewModel.homeViewState.collectAsState()
@@ -60,42 +62,29 @@ fun HomeScreen(
     val recipes = homeViewState.recipes
     val images = homeViewState.images
 
-    val searchActive by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier.fillMaxSize()
-    ) {
-
-        DockedSearchBar(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp, 0.dp),
-            query = "",
-            placeholder = { Text(text = "Search for recipes") },
-            onQueryChange = { },
-            onSearch = { },
-            active = searchActive,
-            onActiveChange = { navController.navigate(SearchDestination.route) },
-            leadingIcon = {
-                Icon(imageVector = Icons.Default.Search, contentDescription = null)
-            },
-            content = {
-
-            }
+    Scaffold(topBar = {
+        CookTopBar(
+            navController = navController, currentActivity = "search", recipeList = recipes, setOverlayStatus = setOverlayStatus
         )
-        LazyVerticalStaggeredGrid(modifier = Modifier
-            .padding(8.dp)
-            .fillMaxHeight(),
-            columns = StaggeredGridCells.Adaptive(minSize = 240.dp),
-            content = {
-                items(count = recipes.size, itemContent = {
-                    RecipeItem(recipe = recipes[it]!!,
-                        image = images.find { img -> img!!.recipeId == recipes[it]!!.id },
-                        modifier = Modifier
-                            .clickable { navController.navigate("${RecipeDetailDestination.route}/${recipes[it]?.id}") }
-                    )
+    }) {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(it)
+        ) {
+            LazyVerticalStaggeredGrid(modifier = Modifier
+                .padding(8.dp)
+                .fillMaxHeight(),
+                columns = StaggeredGridCells.Adaptive(minSize = 240.dp),
+                content = {
+                    items(count = recipes.size, itemContent = {
+                        RecipeItem(recipe = recipes[it]!!,
+                            image = images.find { img -> img!!.recipeId == recipes[it]!!.id },
+                            modifier = Modifier.clickable { navController.navigate("${RecipeDetailDestination.route}/${recipes[it]?.id}") })
+                    })
                 })
-            })
+        }
     }
 }
 

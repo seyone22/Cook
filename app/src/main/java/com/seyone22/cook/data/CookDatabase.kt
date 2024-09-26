@@ -1,6 +1,7 @@
 package com.seyone22.cook.data
 
 import android.content.Context
+import android.util.Log
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -31,6 +32,7 @@ import com.seyone22.cook.data.repository.shoppingList.ShoppingListDao
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.concurrent.Executors
 
 @Database(
     entities = [Ingredient::class, IngredientVariant::class, IngredientImage::class, RecipeImage::class, Measure::class, MeasureConversion::class, Recipe::class, Instruction::class, RecipeIngredient::class, ShoppingList::class, ShoppingListItem::class],
@@ -56,9 +58,13 @@ abstract class CookDatabase : RoomDatabase() {
         fun getDatabase(context: Context, scope: CoroutineScope): CookDatabase {
             return Instance ?: synchronized(this) {
                 Room.databaseBuilder(context, CookDatabase::class.java, "cook_database")
+                    .setQueryCallback({ sqlQuery, bindArgs ->
+                        Log.d("SQL Query", "SQL: $sqlQuery, Args: $bindArgs ")
+                    }, Executors.newSingleThreadExecutor())
                     .addMigrations(MIGRATION_1_2).addMigrations(MIGRATION_2_3)
                     .addMigrations(MIGRATION_1_3).fallbackToDestructiveMigration()
-                    .addCallback(CookDatabaseCallback(scope)).build().also { Instance = it }
+                    .addCallback(CookDatabaseCallback(scope))
+                    .build().also { Instance = it }
             }
         }
 

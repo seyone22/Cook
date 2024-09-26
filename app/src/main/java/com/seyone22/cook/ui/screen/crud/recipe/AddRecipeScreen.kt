@@ -31,6 +31,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -103,6 +104,8 @@ fun AddRecipeScreen(
     }
     val imageHelper = ImageHelper(context)
 
+    var ingredientFilter by remember { mutableStateOf("") }
+    val filteredIngredients = data.ingredients.filter { (it?.nameEn ?: "").contains(ingredientFilter, true) }
 
     Scaffold(topBar = {
         TopAppBar(modifier = Modifier.padding(0.dp),
@@ -282,31 +285,39 @@ fun AddRecipeScreen(
                                                 0.dp, 0.dp, 8.dp, 0.dp
                                             )
                                             .width(156.dp)
-                                            .menuAnchor()
+                                            .menuAnchor(MenuAnchorType.PrimaryEditable, true)
                                             .clickable(enabled = true) {
                                                 ingredientExpanded = true
                                             },
-                                            value = data.ingredients.find { m -> m?.id?.toInt() == recipeIngredient.ingredientId.toInt() }?.nameEn
-                                                ?: "",
-                                            readOnly = true,
-                                            onValueChange = { },
+                                            value = ingredientFilter,
+                                            onValueChange = { ingredientFilter = it },
                                             label = { Text("") },
                                             singleLine = true,
                                             trailingIcon = {
                                                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = ingredientExpanded)
                                             })
 
-                                        ExposedDropdownMenu(expanded = ingredientExpanded,
-                                            onDismissRequest = { ingredientExpanded = false }) {
-                                            data.ingredients.forEach { ingredient ->
-                                                ingredient?.let {
-                                                    DropdownMenuItem(text = { Text(ingredient.nameEn) },
-                                                        onClick = {
-                                                            recipeIngredients[index] =
-                                                                recipeIngredient.copy(ingredientId = ingredient.id)
-                                                            ingredientExpanded = false
-                                                        })
+                                        ExposedDropdownMenu(
+                                            expanded = ingredientExpanded,
+                                            onDismissRequest = { }
+                                        ) {
+                                            if (filteredIngredients.isNotEmpty()) {
+                                                filteredIngredients.forEach { ingredient ->
+                                                    ingredient?.let {
+                                                        DropdownMenuItem(text = { Text(ingredient.nameEn) },
+                                                            onClick = {
+                                                                ingredientFilter = ingredient.nameEn
+                                                                recipeIngredients[index] =
+                                                                    recipeIngredient.copy(ingredientId = ingredient.id)
+                                                                ingredientExpanded = false
+                                                            })
+                                                    }
                                                 }
+                                            } else {
+                                                DropdownMenuItem(text = { Text("Add $ingredientFilter to database") },
+                                                    onClick = {
+
+                                                    })
                                             }
                                         }
                                     }

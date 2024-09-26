@@ -7,7 +7,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -25,15 +26,17 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.CompareArrows
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddShoppingCart
+import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.FitScreen
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.PriceCheck
-import androidx.compose.material.icons.filled.RiceBowl
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ThumbUpOffAlt
-import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.outlined.RiceBowl
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
@@ -46,9 +49,11 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -96,6 +101,7 @@ import com.seyone22.cook.helper.PriceHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
 import com.seyone22.cook.ui.screen.home.HomeViewModel
+import com.seyone22.cook.ui.screen.ingredients.detail.DeleteConfirmationDialog
 import com.seyone22.cook.ui.screen.ingredients.detail.IngredientDetailDestination
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -251,14 +257,13 @@ fun RecipeDetailScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(it)
+                .padding(it),
         ) {
             if (recipe != null) {
                 item {
+                    HeaderImage(images = images, recipe.name)
+
                     Column(modifier = Modifier.padding(8.dp, 0.dp)) {
-                        if (images.isNotEmpty()) {
-                            HeaderImage(images = images, recipe.name)
-                        }
                         RecipeDetail(
                             viewModel = viewModel,
                             recipe = recipe,
@@ -274,7 +279,10 @@ fun RecipeDetailScreen(
             }
             if (ingredients.isNotEmpty()) {
                 item {
-                    Column(modifier = Modifier.padding(8.dp, 0.dp)) {
+                    Column(
+                        modifier = Modifier.padding(16.dp, 0.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         IngredientsList(
                             navController = navController,
                             list = recipeIngredients,
@@ -289,7 +297,7 @@ fun RecipeDetailScreen(
             }
             if (instructions.isNotEmpty()) {
                 item {
-                    Column(modifier = Modifier.padding(8.dp, 0.dp)) {
+                    Column(modifier = Modifier.padding(16.dp, 0.dp)) {
                         InstructionList(list = instructions)
                     }
                 }
@@ -301,42 +309,39 @@ fun RecipeDetailScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HeaderImage(images: List<RecipeImage?>, title: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(240.dp)
-    ) {
-        if (images.isEmpty()) {
-            val image: Painter = painterResource(id = R.drawable.placeholder)
-            Image(
-                painter = image,
+
+    if (images.isEmpty()) {
+        val image: Painter = painterResource(id = R.drawable.placeholder)
+        Image(
+            painter = image,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(240.dp)
+                .clip(RoundedCornerShape(12.dp))
+        )
+    } else {
+        HorizontalUncontainedCarousel(
+            state = rememberCarouselState { images.size },
+            itemWidth = if (images.size > 1) 320.dp else 400.dp,
+            itemSpacing = 8.dp,
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(221.dp)
+                .padding(start = 8.dp),
+        ) { i ->
+            AsyncImage(
+                model = images[i]?.imagePath,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(240.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .maskClip(MaterialTheme.shapes.extraLarge)
+                    .padding(start = 8.dp)
             )
-        } else {
-            HorizontalUncontainedCarousel(
-                state = rememberCarouselState { images.size },
-                itemWidth = if(images.size > 1) 320.dp else 400.dp,
-                itemSpacing = 8.dp,
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(221.dp),
-            ) { i ->
-                AsyncImage(
-                    model = images[i]?.imagePath,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(240.dp)
-                        .clip(RoundedCornerShape(24.dp))
-                )
-            }
         }
     }
 }
@@ -356,6 +361,7 @@ fun RecipeDetail(
     Column(
         modifier = Modifier.padding(8.dp, 0.dp, 8.dp, 16.dp)
     ) {
+        // Options
         RecipeOptionRow(
             viewModel = viewModel,
             recipe = recipe,
@@ -365,80 +371,10 @@ fun RecipeDetail(
             navController = navController,
             shoppingLists = shoppingLists
         )
-        LazyRow(
-            verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)
-        ) {
-            item {
-                Row {
-                    Icon(
-                        imageVector = Icons.Default.Timer,
-                        contentDescription = null,
-                        modifier = Modifier.height(20.dp)
-                    )
-                    Text(
-                        text = "Cook ${recipe.cookTime}min",
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.padding(start = 4.dp, end = 8.dp)
-                    )
-                }
-            }
-            item {
-                Row {
-                    Icon(
-                        imageVector = Icons.Default.Timer,
-                        contentDescription = null,
-                        modifier = Modifier.height(20.dp)
-                    )
-                    Text(
-                        text = "Prep ${recipe.prepTime}min",
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.padding(start = 4.dp, end = 8.dp)
-                    )
-                }
-            }
-            item {
-                Row {
-                    Icon(
-                        imageVector = Icons.Default.RiceBowl,
-                        contentDescription = null,
-                        modifier = Modifier.height(20.dp)
-                    )
-                    Text(
-                        text = "Serves ${scaleFactor.toInt()}",
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.padding(start = 4.dp, end = 8.dp)
-                    )
-                }
-            }
-            item {
-                Row {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = null,
-                        modifier = Modifier.height(20.dp)
-                    )
-                    Text(
-                        text = "${recipe.timesMade} times",
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.padding(start = 4.dp, end = 8.dp)
-                    )
-                }
-            }
-            item {
-                Row {
-                    Icon(
-                        imageVector = Icons.Default.PriceCheck,
-                        contentDescription = null,
-                        modifier = Modifier.height(20.dp)
-                    )
-                    Text(
-                        text = "Rs. $cost",
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.padding(start = 4.dp)
-                    )
-                }
-            }
-        }
+
+        // Recipe Stats
+        RecipeStats(recipe = recipe, cost = cost, scaleFactor = scaleFactor)
+
         if (!recipe.description.isNullOrEmpty()) {
             Text(
                 modifier = Modifier.padding(0.dp, 8.dp),
@@ -476,6 +412,72 @@ fun RecipeDetail(
 }
 
 @Composable
+fun RecipeStats(
+    recipe: Recipe,
+    scaleFactor: Double,
+    cost: Double
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                imageVector = Icons.Outlined.Timer,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = "${(recipe.cookTime + recipe.prepTime)} min",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(start = 4.dp, end = 8.dp)
+            )
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                imageVector = Icons.Outlined.RiceBowl,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = "Serves ${scaleFactor.toInt()}",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(start = 4.dp, end = 8.dp)
+            )
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = "${recipe.timesMade} times",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(start = 4.dp, end = 8.dp)
+            )
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                imageVector = Icons.Default.PriceCheck,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = "Rs. $cost",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(start = 4.dp)
+            )
+        }
+    }
+}
+
+@Composable
 fun IngredientsList(
     navController: NavController,
     list: List<RecipeIngredient?>,
@@ -485,24 +487,37 @@ fun IngredientsList(
     scaleFactor: Double,
     serves: Int
 ) {
-    OutlinedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(0.dp, 0.dp, 0.dp, 8.dp),
+    var qtySelected by remember { mutableStateOf(true) }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            modifier = Modifier.padding(8.dp),
+            text = "Ingredients",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        IconButton(onClick = { qtySelected = !qtySelected }) {
+            Icon(
+                imageVector = Icons.Default.AttachMoney,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = if(!qtySelected) MaterialTheme.colorScheme.primary else Color.Gray
+            )
+        }
+    }
+
+    Card(
+        modifier = Modifier.padding(0.dp, 0.dp, 0.dp, 8.dp).width(340.dp),
     ) {
         Column(
-            modifier = Modifier.padding(16.dp, 0.dp, 16.dp, 16.dp)
+            modifier = Modifier.padding(16.dp, 16.dp)
         ) {
-            Text(
-                modifier = Modifier.padding(8.dp),
-                text = "Ingredients",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
             list.forEach { recipeIngredient ->
-                Row(
-                    modifier = Modifier.padding(0.dp),
-                ) {
+                Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                     val checked = remember {
                         mutableStateOf(
                             ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.stocked
@@ -519,43 +534,49 @@ fun IngredientsList(
                         )
                     }
 
-                    Checkbox(modifier = Modifier.height(32.dp),
-                        enabled = !(ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.stocked
-                            ?: false),
-                        checked = checked.value,
-                        onCheckedChange = { checked.value = !checked.value })
-                    Text(modifier = Modifier
-                        .padding(4.dp, 0.dp, 16.dp, 0.dp)
-                        .align(Alignment.CenterVertically)
-                        .width(120.dp)
-                        .clickable {
-                            navController.navigate("${IngredientDetailDestination.route}/${recipeIngredient?.ingredientId}")
-                        },
-                        text = ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.nameEn
-                            ?: "",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        modifier = Modifier
-                            .padding(4.dp, 0.dp, 16.dp, 0.dp)
-                            .align(Alignment.CenterVertically),
-                        text = "${
-                            String.format(
-                                "%.2f", quantity
-                            )
-                        } ${measures.find { m -> m?.id == recipeIngredient?.measureId }?.abbreviation}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        modifier = Modifier
-                            .padding(4.dp, 0.dp, 16.dp, 0.dp)
-                            .align(Alignment.CenterVertically),
-                        text = "Rs.${String.format("%.2f", price)}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                    Row {
+                        Checkbox(modifier = Modifier.height(32.dp),
+                            enabled = !(ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.stocked
+                                ?: false),
+                            checked = checked.value,
+                            onCheckedChange = { checked.value = !checked.value })
+                        Text(modifier = Modifier
+                            .padding(0.dp, 0.dp, 16.dp, 0.dp)
+                            .align(Alignment.CenterVertically)
+                            .width(120.dp)
+                            .clickable {
+                                navController.navigate("${IngredientDetailDestination.route}/${recipeIngredient?.ingredientId}")
+                            },
+                            text = ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.nameEn
+                                ?: "",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    if (qtySelected) {
+                        Text(
+                            modifier = Modifier
+                                .padding(4.dp, 0.dp, 16.dp, 0.dp)
+                                .align(Alignment.CenterVertically),
+                            text = "${
+                                String.format(
+                                    "%.2f", quantity
+                                )
+                            }" + "${measures.find { m -> m?.id == recipeIngredient?.measureId }?.abbreviation}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    } else {
+                        Text(
+                            modifier = Modifier
+                                .padding(4.dp, 0.dp, 16.dp, 0.dp)
+                                .align(Alignment.CenterVertically),
+                            text = "Rs.${String.format("%.2f", price)}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
             }
         }
@@ -626,18 +647,19 @@ fun RecipeOptionRow(
 
 @Composable
 fun InstructionList(list: List<Instruction?>) {
+    Text(
+        modifier = Modifier.padding(8.dp),
+        text = "Instructions",
+        style = MaterialTheme.typography.titleLarge,
+        color = MaterialTheme.colorScheme.primary
+    )
+
     Card(
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
-            modifier = Modifier.padding(16.dp, 0.dp)
+            modifier = Modifier.padding(16.dp, 16.dp)
         ) {
-            Text(
-                modifier = Modifier.padding(8.dp),
-                text = "Instructions",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
             list.forEach { instruction ->
                 Row(
                     modifier = Modifier.padding(0.dp, 0.dp, 0.dp, 16.dp),

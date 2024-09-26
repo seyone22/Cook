@@ -1,5 +1,6 @@
 package com.seyone22.cook.ui.screen.shoppingList
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,13 +12,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -41,6 +40,7 @@ import com.seyone22.cook.R
 import com.seyone22.cook.data.model.ShoppingList
 import com.seyone22.cook.helper.DateTimeHelper.toIsoString
 import com.seyone22.cook.ui.AppViewModelProvider
+import com.seyone22.cook.ui.common.CookFAB
 import com.seyone22.cook.ui.common.CookTopBar
 import com.seyone22.cook.ui.navigation.NavigationDestination
 import com.seyone22.cook.ui.screen.shoppingList.detail.ShoppingListDetailDestination
@@ -82,44 +82,27 @@ fun ShoppingListScreen(
         CookTopBar(
             currentActivity = ShoppingListDestination.route, navController = navController
         )
-    }) {
+    }, floatingActionButton = { CookFAB(currentActivity = "newlist", action = {
+        showNewDialog = true
+        Log.d("TAG", "ShoppingListScreen: $showNewDialog")
+    }) }) {
         LazyColumn(modifier = Modifier.padding(it)) {
-            item {
-                FilledTonalButton(modifier = Modifier.padding(start = 8.dp), onClick = {
-                    showNewDialog = true
-                }, content = {
-                    Row {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = null,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(text = "Add")
-                    }
-                })
-            }
             item {
                 Row(
                     modifier = Modifier.padding(start = 16.dp)
                 ) {
-                    FilterChip(
-                        selected = !filterCompleted,
-                        leadingIcon = {
-                            if (!filterCompleted) Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = null
-                            )
-                        },
-                        onClick = {
-                            filterCompleted = !filterCompleted
-                            shoppingData = if (filterCompleted) {
-                                shoppingListViewState.shoppingLists.filter { i -> i?.completed == true }
-                            } else {
-                                shoppingListViewState.shoppingLists
-                            }
-                        },
-                        label = { Text("Completed") }
-                    )
+                    FilterChip(selected = !filterCompleted, leadingIcon = {
+                        if (!filterCompleted) Icon(
+                            imageVector = Icons.Default.Check, contentDescription = null
+                        )
+                    }, onClick = {
+                        filterCompleted = !filterCompleted
+                        shoppingData = if (filterCompleted) {
+                            shoppingListViewState.shoppingLists.filter { i -> i?.completed == true }
+                        } else {
+                            shoppingListViewState.shoppingLists
+                        }
+                    }, label = { Text("Completed") })
                 }
             }
             if (shoppingData.isEmpty()) {
@@ -158,17 +141,21 @@ fun ShoppingListScreen(
 fun ShoppingListCard(
     item: ShoppingList, onClick: (Long) -> Unit
 ) {
-    Card(modifier = Modifier
+    ListItem(modifier = Modifier
         .fillMaxWidth()
         .padding(8.dp, 4.dp)
-        .clickable { onClick(item.id) }) {
-        Column(modifier = Modifier.padding(8.dp, 16.dp)) {
-            Text(text = item.name)
-            Text(text = item.dateCreated)
-            Text(text = item.dateModified)
-            Text(text = item.completed.toString())
-        }
-    }
+        .clickable { onClick(item.id) },
+        headlineContent = { Text(text = item.name) },
+        leadingContent = {
+            if (item.completed) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+            } else {
+            }
+        })
 }
 
 @Composable

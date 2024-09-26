@@ -1,6 +1,7 @@
 package com.seyone22.cook
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -25,7 +26,6 @@ import com.seyone22.cook.ui.navigation.CookNavHost
 import com.seyone22.cook.ui.screen.search.SearchDestination
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CookApp(
     navController: NavHostController = rememberNavController(),
@@ -36,6 +36,8 @@ fun CookApp(
     var isSelected by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+
+    var overlayShown by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -51,18 +53,23 @@ fun CookApp(
             CookNavBar(
                 currentActivity = navBackStackEntry?.destination?.route,
                 navigateToScreen = { screen -> navController.navigate(screen) },
+                visible = !overlayShown
             )
         },
         floatingActionButton = {
             CookFAB(
                 currentActivity = navBackStackEntry?.destination?.route,
                 navigateToScreen = { screen -> navController.navigate(screen) },
+                visible = !overlayShown
             )
         }
     ) { innerPadding ->
         CookNavHost(
             navController = navController,
-            innerPadding = innerPadding
+            innerPadding = innerPadding,
+            setOverlayStatus = {
+                Log.d("TAG", "CookApp: $it")
+                overlayShown = it },
         )
     }
 

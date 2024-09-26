@@ -1,6 +1,7 @@
 package com.seyone22.cook.ui.screen.crud.recipe
 
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -41,6 +42,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,6 +65,7 @@ import com.seyone22.cook.data.model.toRecipeIngredientDetails
 import com.seyone22.cook.helper.ImageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
+import kotlinx.coroutines.launch
 import java.util.UUID
 
 object EditRecipeDestination : NavigationDestination {
@@ -79,6 +82,7 @@ fun EditRecipeScreen(
     navController: NavController,
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     // Fetch existing recipe data based on the provided recipeId
     LaunchedEffect(recipeId) {
@@ -134,16 +138,23 @@ fun EditRecipeScreen(
                 Button(modifier = Modifier.padding(24.dp, 0.dp, 16.dp, 0.dp),
                     content = { Text("Save") },
                     onClick = {
-                        viewModel.updateRecipe(
-                            recipe!!.toRecipe(),
-                            images,
-                            instructions.map { i -> i.copy(recipeId = recipeId) },
-                            recipeIngredients.map { i ->
-                                i.copy(recipeId = recipeId).toRecipeIngredient()
-                            },
-                            context
-                        )
-                        navController.popBackStack()
+                        coroutineScope.launch {
+                            val success = viewModel.updateRecipe(
+                                recipe!!.toRecipe(),
+                                images,
+                                instructions.map { i -> i.copy(recipeId = recipeId) },
+                                recipeIngredients.map { i ->
+                                    i.copy(recipeId = recipeId).toRecipeIngredient()
+                                },
+                                context
+                            )
+
+                            Log.d("TAG", "EditRecipeScreen: $success")
+                            if (success) {
+                                navController.popBackStack()
+                            }
+
+                        }
                     })
             })
     }) { paddingValues ->

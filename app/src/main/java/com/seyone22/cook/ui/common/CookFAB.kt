@@ -14,33 +14,46 @@ import com.seyone22.cook.ui.screen.shoppingList.detail.ShoppingListDetailDestina
 
 @Composable
 fun CookFAB(
-    currentActivity: String?, navigateToScreen: (String) -> Unit = {}, action: () -> Unit = {}
+    currentActivity: String?, navigateToScreen: (String) -> Unit = {}, action: () -> Unit = {},
+    visible: Boolean = true
 ) {
-    if ((currentActivity == HomeDestination.route) or (currentActivity == IngredientsDestination.route)) {
-        ExtendedFloatingActionButton(text = { Text(text = "New $currentActivity") }, icon = {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = null,
-            )
-        }, onClick = {
-            when (currentActivity) {
-                IngredientsDestination.route -> {
-                    navigateToScreen(AddIngredientDestination.route)
-                }
+    if (visible) {
 
-                HomeDestination.route -> {
-                    navigateToScreen(AddRecipeDestination.route)
-                }
-            }
-        })
-    }
+        if ((currentActivity == HomeDestination.route) or (currentActivity == IngredientsDestination.route)) {
+            ExtendedFloatingActionButton(text = { Text(text = "New $currentActivity") }, icon = {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                )
+            }, onClick = {
+                when (currentActivity) {
+                    IngredientsDestination.route -> {
+                        navigateToScreen(AddIngredientDestination.route)
+                    }
 
-    if (currentActivity == ShoppingListDetailDestination.route) {
-        ExtendedFloatingActionButton(text = { Text(text = "Add Item") }, icon = {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = null,
-            )
-        }, onClick = action)
+                    HomeDestination.route -> {
+                        navigateToScreen(AddRecipeDestination.route)
+                    }
+                }
+            })
+        }
+
+        if (currentActivity == ShoppingListDetailDestination.route) {
+            ExtendedFloatingActionButton(text = { Text(text = "Add Item") }, icon = {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                )
+            }, onClick = action)
+        }
+
+        if (currentActivity == "newlist") {
+            ExtendedFloatingActionButton(text = { Text(text = "New List") }, icon = {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                )
+            }, onClick = action)
+        }
     }
 }

@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
+import kotlin.math.log
 
 class RecipeOperationsViewModel(
     private val recipeRepository: RecipeRepository,
@@ -99,7 +100,7 @@ class RecipeOperationsViewModel(
 
                     val imagePath = imageHelper.saveImageToInternalStorage(
                         BitmapFactory.decodeByteArray(compressedImageBytes, 0, compressedImageBytes.size),
-                        "'recipe_${recipe.id}_${System.currentTimeMillis()}.jpg"
+                        "recipe_${recipe.id}_${System.currentTimeMillis()}.jpg"
                     )
                     val recipeImage =
                         RecipeImage(recipeId = recipe.id, imagePath = imagePath ?: "NULL")
@@ -113,14 +114,13 @@ class RecipeOperationsViewModel(
         }
     }
 
-    fun updateRecipe(
+    suspend fun updateRecipe(
         recipe: Recipe,
         images: List<RecipeImage?>,
         instructions: List<Instruction?>,
         recipeIngredients: List<RecipeIngredient?>,
         context: Context
-    ) {
-        viewModelScope.launch {
+    ): Boolean {
             try {
                 withContext(Dispatchers.IO) {
                     val imageHelper = ImageHelper(context)
@@ -132,36 +132,18 @@ class RecipeOperationsViewModel(
                     val currentInstructions =
                         instructionRepository.getInstructionsForRecipe(recipe.id).first()
                     val currentRecipeIngredients =
-                        recipeIngredientRepository.getRecipeIngredientsForRecipe(recipe.id)
-                            .first()
+                        recipeIngredientRepository.getRecipeIngredientsForRecipe(recipe.id).first()
                     val currentImages =
                         recipeImageRepository.getImagesForRecipe(recipe.id).first()
 
-                    // Determine whether to add, update, or delete instructions
+                    // Instructions operations (Add/Update/Delete)
                     val instructionsToAdd =
-                        instructions.filter { it != null && currentInstructions.find { i -> i!!.id == it.id } == null }
+                        instructions.filter { it != null && currentInstructions.find { i -> i!!.id == it!!.id } == null }
                     val instructionsToUpdate =
-                        instructions.filter { it != null && currentInstructions.find { i -> i!!.id == it.id } != null }
+                        instructions.filter { it != null && currentInstructions.find { i -> i!!.id == it!!.id } != null }
                     val instructionsToDelete =
-                        currentInstructions.filter { it != null && instructions.find { i -> i!!.id == it.id } == null }
+                        currentInstructions.filter { it != null && instructions.find { i -> i!!.id == it!!.id } == null }
 
-                    // Determine whether to add, update, or delete recipe ingredients
-                    val recipeIngredientsToAdd =
-                        recipeIngredients.filter { it != null && currentRecipeIngredients.find { i -> i!!.id == it.id } == null }
-                    val recipeIngredientsToUpdate =
-                        recipeIngredients.filter { it != null && currentRecipeIngredients.find { i -> i!!.id == it.id } != null }
-                    val recipeIngredientsToDelete =
-                        currentRecipeIngredients.filter { it != null && recipeIngredients.find { i -> i!!.id == it.id } == null }
-
-                    // Determine whether to add, update, or delete images
-                    val imagesToAdd =
-                        images.filter { it != null && currentImages.find { i -> i!!.id == it.id } == null }
-                    val imagesToUpdate =
-                        images.filter { it != null && currentImages.find { i -> i!!.id == it.id } != null }
-                    val imagesToDelete =
-                        currentImages.filter { it != null && images.find { i -> i!!.id == it.id } == null }
-
-                    // Operate on Instructions
                     instructionsToAdd.forEach { instruction ->
                         instructionRepository.insertInstruction(instruction!!)
                     }
@@ -172,7 +154,14 @@ class RecipeOperationsViewModel(
                         instructionRepository.deleteInstruction(instruction!!)
                     }
 
-                    // Operate on Recipe Ingredients
+                    // Recipe Ingredients operations (Add/Update/Delete)
+                    val recipeIngredientsToAdd =
+                        recipeIngredients.filter { it != null && currentRecipeIngredients.find { i -> i!!.id == it!!.id } == null }
+                    val recipeIngredientsToUpdate =
+                        recipeIngredients.filter { it != null && currentRecipeIngredients.find { i -> i!!.id == it!!.id } != null }
+                    val recipeIngredientsToDelete =
+                        currentRecipeIngredients.filter { it != null && recipeIngredients.find { i -> i!!.id == it!!.id } == null }
+
                     recipeIngredientsToAdd.forEach { recipeIngredient ->
                         recipeIngredientRepository.insertRecipeIngredient(recipeIngredient!!)
                     }
@@ -183,28 +172,46 @@ class RecipeOperationsViewModel(
                         recipeIngredientRepository.deleteRecipeIngredient(recipeIngredient!!)
                     }
 
-                    // Operate on Images
-                    imagesToAdd.forEach { image ->
-                        val imageBitmap =
-                            imageHelper.loadImageFromUri(Uri.parse(image!!.imagePath))!!
-                        val imagePath = imageHelper.saveImageToInternalStorage(
-                            imageBitmap,
-                            "'recipe_${recipe.id}_${System.currentTimeMillis()}.jpg"
-                        )
-                        val recipeImage =
-                            RecipeImage(recipeId = recipe.id, imagePath = imagePath ?: "NULL")
-                        recipeImageRepository.insertRecipeImage(recipeImage)
-                    }
+                    // Images operations (Add/Update/Delete)
+                    val imagesToAdd =
+                        images.filter { it != null && currentImages.find { i -> i!!.id == it!!.id } == null }
+                    val imagesToDelete =
+                        currentImages.filter { it != null && images.find { i -> i!!.id == it!!.id } == null }
+
                     imagesToDelete.forEach { image ->
                         recipeImageRepository.deleteRecipeImage(image!!)
                         imageHelper.deleteImageFromInternalStorage(Uri.parse(image.imagePath))
                     }
+
+                    imagesToAdd.forEach { image ->
+                        Log.d("TAG", "$image")
+
+                        // Ensure image path is not null
+                        image?.let {
+                            val imageBitmap = imageHelper.loadImageFromUri(Uri.parse(it.imagePath))
+                                ?: return@forEach
+                            val imagePath = imageHelper.saveImageToInternalStorage(
+                                imageBitmap,
+                                "recipe_${recipe.id}_${System.currentTimeMillis()}.jpg"
+                            )
+
+                            imagePath?.let { path ->
+                                val recipeImage =
+                                    RecipeImage(recipeId = recipe.id, imagePath = path)
+                                Log.d("TAG", "updateRecipe: $recipeImage")
+
+                                recipeImageRepository.insertRecipeImage(recipeImage)
+                            } ?: run {
+                                Log.e("TAG", "Failed to save image to internal storage.")
+                            }
+                        }
+                    }
                 }
+                return true
             } catch (e: Exception) {
-                // Handle any errors that might occur during the database operations
                 e.printStackTrace()
+                return false
             }
-        }
     }
 }
 

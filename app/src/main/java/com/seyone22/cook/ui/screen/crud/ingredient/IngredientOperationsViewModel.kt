@@ -85,13 +85,12 @@ class IngredientOperationsViewModel(
         }
     }
 
-    fun updateIngredient(
+    suspend fun updateIngredient(
         ingredient: Ingredient,
         newVariants: List<IngredientVariant?>,
         newImages: List<IngredientImage?>,
         context: Context
-    ) {
-        viewModelScope.launch {
+    ) : Boolean {
             try {
                 withContext(Dispatchers.IO) {
                     Log.d("TAG", "updateIngredient: Start")
@@ -198,15 +197,16 @@ class IngredientOperationsViewModel(
                     Log.d("TAG", "updateIngredient: Completed successfully")
                     fetchData(ingredient.id)
                 }
+                return true
             } catch (e: CancellationException) {
                 Log.e("TAG", "updateIngredient: Job was cancelled", e)
+                return false
             } catch (e: Exception) {
                 e.printStackTrace()
                 Log.e("TAG", "updateIngredient: Error occurred", e)
+                return false
             }
         }
-    }
-
 }
 
 // Define a data class to hold the list of measures

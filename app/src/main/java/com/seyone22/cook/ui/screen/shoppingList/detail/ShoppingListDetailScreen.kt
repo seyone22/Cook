@@ -1,7 +1,9 @@
 package com.seyone22.cook.ui.screen.shoppingList.detail
 
 import android.content.Context
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
@@ -15,7 +17,9 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -26,7 +30,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
@@ -53,7 +56,6 @@ object ShoppingListDetailDestination : NavigationDestination {
     override val routeId = 21
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShoppingListDetailScreen(
     viewModel: ShoppingListViewModel = viewModel(factory = AppViewModelProvider.Factory),
@@ -68,12 +70,11 @@ fun ShoppingListDetailScreen(
 
     var showNewDialog by remember { mutableStateOf(false) }
     if (showNewDialog) {
-        NewShoppingListItemDialog(
-            onConfirm = {
-                viewModel.addToShoppingList(it.copy(shoppingListId = backStackEntry.toLong()))
-                viewModel.fetchData()
-                showNewDialog = false
-            },
+        NewShoppingListItemDialog(onConfirm = {
+            viewModel.addToShoppingList(it.copy(shoppingListId = backStackEntry.toLong()))
+            viewModel.fetchData()
+            showNewDialog = false
+        },
             onDismiss = { showNewDialog = false },
             ingredients = data.ingredients,
             measures = data.measures
@@ -87,7 +88,8 @@ fun ShoppingListDetailScreen(
             title = data.shoppingLists.find { it?.id == backStackEntry.toLong() }?.name ?: ""
         )
     }, floatingActionButton = {
-        CookFAB(currentActivity = ShoppingListDetailDestination.route,
+        CookFAB(
+            currentActivity = ShoppingListDetailDestination.route,
             action = { showNewDialog = true })
     }) {
         LazyColumn(modifier = Modifier.padding(it)) {
@@ -97,7 +99,8 @@ fun ShoppingListDetailScreen(
                         item = item,
                         ingredients = data.ingredients,
                         measures = data.measures,
-                        navController = navController
+                        navController = navController,
+                        viewModel = viewModel
                     )
                 }
             }
@@ -105,49 +108,48 @@ fun ShoppingListDetailScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ShoppingItemList(
     item: ShoppingListItem?,
     ingredients: List<Ingredient?>,
     measures: List<Measure?>,
-    navController: NavController
+    navController: NavController,
+    viewModel: ShoppingListViewModel
 ) {
-    Row(
-        modifier = Modifier.padding(0.dp),
-    ) {
-        val checked = remember {
-            mutableStateOf(
-                ingredients.find { i -> i?.id == item?.ingredientId }?.stocked ?: false
-            )
-        }
+    var checked by remember { mutableStateOf(item?.checked ?: false) }
 
+    ListItem(modifier = Modifier
+        .padding(0.dp)
+        .combinedClickable(enabled = true, onLongClick = {}, onClick = {
+            navController.navigate("${IngredientDetailDestination.route}/${item?.ingredientId}")
+        }), leadingContent = {
         Checkbox(modifier = Modifier.height(32.dp),
             enabled = !(ingredients.find { i -> i?.id == item?.ingredientId }?.stocked ?: false),
-            checked = checked.value,
-            onCheckedChange = { checked.value = !checked.value })
+            checked = checked,
+            onCheckedChange = {
+                checked = !checked
+                viewModel.changePurchaseStatus(item!!)
+            })
+    }, headlineContent = {
         Text(
             modifier = Modifier
                 .padding(4.dp, 0.dp, 16.dp, 0.dp)
-                .align(Alignment.CenterVertically)
-                .width(120.dp)
-                .clickable {
-                    navController.navigate("${IngredientDetailDestination.route}/${item?.ingredientId}")
-                },
+                .width(120.dp),
             text = ingredients.find { i -> i?.id == item?.ingredientId }?.nameEn ?: "",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }, trailingContent = {
         Text(
-            modifier = Modifier
-                .padding(4.dp, 0.dp, 16.dp, 0.dp)
-                .align(Alignment.CenterVertically),
+            modifier = Modifier.padding(4.dp, 0.dp, 16.dp, 0.dp),
             text = "${
                 String.format("%.2f", item?.quantity)
             } ${measures.find { m -> m?.id == item?.measureId }?.abbreviation}",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
-    }
+    })
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -174,7 +176,7 @@ fun NewShoppingListItemDialog(
                         OutlinedTextField(modifier = Modifier
                             .padding(0.dp, 0.dp, 8.dp, 0.dp)
                             .width(156.dp)
-                            .menuAnchor()
+                            .menuAnchor(MenuAnchorType.PrimaryEditable, true)
                             .clickable(enabled = true) {
                                 ingredientExpanded = true
                             },
@@ -220,7 +222,7 @@ fun NewShoppingListItemDialog(
                         onExpandedChange = { measuresExpanded = !measuresExpanded }) {
                         OutlinedTextField(modifier = Modifier
                             .padding(0.dp, 0.dp, 8.dp, 0.dp)
-                            .menuAnchor()
+                            .menuAnchor(MenuAnchorType.PrimaryEditable, true)
                             .width(80.dp)
                             .clickable(enabled = true) {
                                 measuresExpanded = true

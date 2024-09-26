@@ -58,5 +58,17 @@ class ShoppingListViewModel(
             shoppingListRepository.insertItem(shoppingListItem)
         }
     }
+
+    fun removeFromShoppingList(shoppingListItem: ShoppingListItem) {
+        viewModelScope.launch {
+            shoppingListRepository.deleteItem(shoppingListItem)
+        }
+    }
+
+    fun changePurchaseStatus(shoppingListItem: ShoppingListItem) {
+        viewModelScope.launch {
+            shoppingListRepository.updateItem(shoppingListItem.copy(checked = !shoppingListItem.checked))
+        }
+    }
 }
 

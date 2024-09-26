@@ -48,7 +48,8 @@ import java.util.UUID
 fun CookNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    innerPadding: PaddingValues
+    innerPadding: PaddingValues,
+    setOverlayStatus: (Boolean) -> Unit = {},
 ) {
     NavHost(
         navController = navController,
@@ -65,6 +66,7 @@ fun CookNavHost(
             HomeScreen(
                 modifier = modifier.padding(innerPadding),
                 navController = navController,
+                setOverlayStatus = setOverlayStatus
             )
         }
         composable(route = IngredientsDestination.route) {

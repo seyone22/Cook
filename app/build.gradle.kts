@@ -132,7 +132,7 @@ dependencies {
     implementation(libs.androidx.biometric.ktx)
 
     // Permission handling with accompanist
-    implementation("com.google.accompanist:accompanist-permissions:0.35.0-alpha")
+    implementation(libs.accompanist.permissions)
 
-    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation(libs.coil.compose)
 }
