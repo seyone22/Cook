@@ -746,7 +746,7 @@ fun AddAllToShoppingListDialog(
                                 0.dp, 0.dp, 8.dp, 0.dp
                             )
                             .fillMaxWidth()
-                            .menuAnchor()
+                            .menuAnchor(type, enabled)
                             .clickable(enabled = true) {
                                 shoppingListExpanded = true
                             },

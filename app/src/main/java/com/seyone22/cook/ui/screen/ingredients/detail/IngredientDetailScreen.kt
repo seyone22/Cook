@@ -533,7 +533,7 @@ fun NewVariantDialog(
                                 measuresExpanded = !measuresExpanded
                             }) {
                                 OutlinedTextField(modifier = Modifier
-                                    .menuAnchor()
+                                    .menuAnchor(type, enabled)
                                     .clickable(enabled = true) {
                                         measuresExpanded = true
                                     },
@@ -627,7 +627,7 @@ fun AddToShoppingListDialog(
                                 0.dp, 0.dp, 8.dp, 0.dp
                             )
                             .fillMaxWidth()
-                            .menuAnchor()
+                            .menuAnchor(type, enabled)
                             .clickable(enabled = true) {
                                 shoppingListExpanded = true
                             },
@@ -691,7 +691,7 @@ fun AddToShoppingListDialog(
                             .padding(
                                 0.dp, 0.dp, 8.dp, 0.dp
                             )
-                            .menuAnchor()
+                            .menuAnchor(type, enabled)
                             .width(80.dp)
                             .clickable(enabled = true) {
                                 measuresExpanded = true

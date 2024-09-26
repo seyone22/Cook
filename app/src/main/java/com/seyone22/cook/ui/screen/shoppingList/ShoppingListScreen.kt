@@ -54,7 +54,7 @@ object ShoppingListDestination : NavigationDestination {
 
 @Composable
 fun ShoppingListScreen(
-    modifier: androidx.compose.ui.Modifier,
+    modifier: Modifier,
     viewModel: ShoppingListViewModel = viewModel(factory = AppViewModelProvider.Factory),
     navController: NavController
 ) {

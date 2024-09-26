@@ -349,7 +349,7 @@ fun AddIngredientScreen(
                                             measuresExpanded = !measuresExpanded
                                         }) {
                                         OutlinedTextField(modifier = Modifier
-                                            .menuAnchor()
+                                            .menuAnchor(type, enabled)
                                             .clickable(enabled = true) {
                                                 measuresExpanded = true
                                             },

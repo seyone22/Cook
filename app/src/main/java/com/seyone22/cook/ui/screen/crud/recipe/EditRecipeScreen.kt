@@ -219,7 +219,7 @@ fun EditRecipeScreen(
                         )
                         OutlinedTextField(
                             modifier = Modifier.width(80.dp),
-                            value = recipe?.timesMade.toString() ?: "",
+                            value = recipe?.timesMade.toString(),
                             onValueChange = { recipe = recipe?.copy(timesMade = it) },
                             label = { Text("Count") },
                             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
@@ -232,7 +232,7 @@ fun EditRecipeScreen(
                             .width(346.dp)
                             .padding(36.dp, 0.dp, 0.dp, 0.dp)
                     ) {
-                        Row() {
+                        Row {
                             OutlinedTextField(
                                 value = recipe?.prepTime.toString(),
                                 onValueChange = { recipe = recipe?.copy(prepTime = it) },
@@ -308,7 +308,7 @@ fun EditRecipeScreen(
                                         OutlinedTextField(modifier = Modifier
                                             .padding(0.dp, 0.dp, 8.dp, 0.dp)
                                             .width(156.dp)
-                                            .menuAnchor()
+                                            .menuAnchor(type, enabled)
                                             .clickable(enabled = true) {
                                                 ingredientExpanded = true
                                             },
@@ -372,7 +372,7 @@ fun EditRecipeScreen(
                                         }) {
                                         OutlinedTextField(modifier = Modifier
                                             .padding(0.dp, 0.dp, 8.dp, 0.dp)
-                                            .menuAnchor()
+                                            .menuAnchor(type, enabled)
                                             .width(80.dp)
                                             .clickable(enabled = true) {
                                                 measuresExpanded = true

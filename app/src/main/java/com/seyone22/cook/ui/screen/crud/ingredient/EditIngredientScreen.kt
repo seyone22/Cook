@@ -356,7 +356,7 @@ fun EditIngredientScreen(
                                     .padding(36.dp, 0.dp, 0.dp, 0.dp)
                             ) {
                                 OutlinedTextField(
-                                    value = variant.brand ?: "",
+                                    value = variant.brand,
                                     onValueChange = { newVariantBrand ->
                                         variants = variants.mapIndexed { i, variant ->
                                             if (i == index) {
@@ -370,7 +370,7 @@ fun EditIngredientScreen(
                                     modifier = Modifier.fillMaxWidth()
                                 )
                                 OutlinedTextField(
-                                    value = variant.type ?: "",
+                                    value = variant.type,
                                     onValueChange = { newVariantType ->
                                         variants = variants.mapIndexed { i, variant ->
                                             if (i == index) {
@@ -430,7 +430,7 @@ fun EditIngredientScreen(
                                     ) {
                                         OutlinedTextField(
                                             modifier = Modifier
-                                                .menuAnchor()
+                                                .menuAnchor(type, enabled)
                                                 .clickable(enabled = true) {
                                                     measuresExpanded = true
                                                 },

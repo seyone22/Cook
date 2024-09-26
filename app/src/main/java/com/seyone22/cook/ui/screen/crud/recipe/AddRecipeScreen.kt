@@ -207,7 +207,7 @@ fun AddRecipeScreen(
                             .width(346.dp)
                             .padding(36.dp, 0.dp, 0.dp, 0.dp)
                     ) {
-                        Row() {
+                        Row {
                             OutlinedTextField(
                                 value = prepTime,
                                 onValueChange = { prepTime = it },
@@ -345,7 +345,7 @@ fun AddRecipeScreen(
                                             .padding(
                                                 0.dp, 0.dp, 8.dp, 0.dp
                                             )
-                                            .menuAnchor()
+                                            .menuAnchor(type, enabled)
                                             .width(80.dp)
                                             .clickable(enabled = true) {
                                                 measuresExpanded = true

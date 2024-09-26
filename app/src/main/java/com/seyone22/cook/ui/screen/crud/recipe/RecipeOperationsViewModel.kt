@@ -138,11 +138,11 @@ class RecipeOperationsViewModel(
 
                     // Instructions operations (Add/Update/Delete)
                     val instructionsToAdd =
-                        instructions.filter { it != null && currentInstructions.find { i -> i!!.id == it!!.id } == null }
+                        instructions.filter { it != null && currentInstructions.find { i -> i!!.id == it.id } == null }
                     val instructionsToUpdate =
-                        instructions.filter { it != null && currentInstructions.find { i -> i!!.id == it!!.id } != null }
+                        instructions.filter { it != null && currentInstructions.find { i -> i!!.id == it.id } != null }
                     val instructionsToDelete =
-                        currentInstructions.filter { it != null && instructions.find { i -> i!!.id == it!!.id } == null }
+                        currentInstructions.filter { it != null && instructions.find { i -> i!!.id == it.id } == null }
 
                     instructionsToAdd.forEach { instruction ->
                         instructionRepository.insertInstruction(instruction!!)
@@ -156,11 +156,11 @@ class RecipeOperationsViewModel(
 
                     // Recipe Ingredients operations (Add/Update/Delete)
                     val recipeIngredientsToAdd =
-                        recipeIngredients.filter { it != null && currentRecipeIngredients.find { i -> i!!.id == it!!.id } == null }
+                        recipeIngredients.filter { it != null && currentRecipeIngredients.find { i -> i!!.id == it.id } == null }
                     val recipeIngredientsToUpdate =
-                        recipeIngredients.filter { it != null && currentRecipeIngredients.find { i -> i!!.id == it!!.id } != null }
+                        recipeIngredients.filter { it != null && currentRecipeIngredients.find { i -> i!!.id == it.id } != null }
                     val recipeIngredientsToDelete =
-                        currentRecipeIngredients.filter { it != null && recipeIngredients.find { i -> i!!.id == it!!.id } == null }
+                        currentRecipeIngredients.filter { it != null && recipeIngredients.find { i -> i!!.id == it.id } == null }
 
                     recipeIngredientsToAdd.forEach { recipeIngredient ->
                         recipeIngredientRepository.insertRecipeIngredient(recipeIngredient!!)
@@ -174,9 +174,9 @@ class RecipeOperationsViewModel(
 
                     // Images operations (Add/Update/Delete)
                     val imagesToAdd =
-                        images.filter { it != null && currentImages.find { i -> i!!.id == it!!.id } == null }
+                        images.filter { it != null && currentImages.find { i -> i!!.id == it.id } == null }
                     val imagesToDelete =
-                        currentImages.filter { it != null && images.find { i -> i!!.id == it!!.id } == null }
+                        currentImages.filter { it != null && images.find { i -> i!!.id == it.id } == null }
 
                     imagesToDelete.forEach { image ->
                         recipeImageRepository.deleteRecipeImage(image!!)

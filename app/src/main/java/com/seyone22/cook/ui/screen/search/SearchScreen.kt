@@ -2,6 +2,7 @@ package com.seyone22.cook.ui.screen.search
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -9,6 +10,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -46,30 +48,49 @@ fun SearchScreen(
     var searchData: List<Recipe?> by remember { mutableStateOf(emptyList()) }
 
     Column {
-        SearchBar(query = query,
-            onQueryChange = {
-                query = it
-                searchData = data.recipes.filter { r ->
-                    r?.name?.contains(query, ignoreCase = true) == true
-                }
-                if (query.isEmpty()) {
-                    searchData = listOf()
-                }
+        val onActiveChange = { }
+        val colors1 = SearchBarDefaults.colors()
+        SearchBar(
+            inputField = {
+                SearchBarDefaults.InputField(
+                    query = query,
+                    onQueryChange = {
+                        query = it
+                        searchData = data.recipes.filter { r ->
+                            r?.name?.contains(query, ignoreCase = true) == true
+                        }
+                        if (query.isEmpty()) {
+                            searchData = listOf()
+                        }
+                    },
+                    onSearch = {
+                        searchData = data.recipes.filter { r ->
+                            r?.name?.contains(query, ignoreCase = true) == true
+                        }
+                    },
+                    expanded = true,
+                    onExpandedChange = onActiveChange,
+                    enabled = true,
+                    placeholder = { Text(text = "Search for recipes") },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                            modifier = Modifier.clickable { navController.popBackStack() })
+                    },
+                    trailingIcon = null,
+                    colors = colors1.inputFieldColors,
+                    interactionSource = null,
+                )
             },
-            onSearch = {
-                searchData = data.recipes.filter { r ->
-                    r?.name?.contains(query, ignoreCase = true) == true
-                }
-            },
-            placeholder = { Text(text = "Search for recipes") },
-            active = true,
-            onActiveChange = { },
-            leadingIcon = {
-                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = null,
-                    modifier = Modifier.clickable { navController.popBackStack() })
-            },
-            content = {
+            expanded = true,
+            onExpandedChange = onActiveChange,
+            modifier = Modifier,
+            shape = SearchBarDefaults.inputFieldShape,
+            colors = colors1,
+            tonalElevation = SearchBarDefaults.TonalElevation,
+            shadowElevation = SearchBarDefaults.ShadowElevation,
+            windowInsets = SearchBarDefaults.windowInsets,
+            content = fun ColumnScope.() {
                 LazyColumn {
                     items(count = searchData.size) { entry ->
                         ListItem(headlineContent = { Text(searchData[entry]?.name ?: "") },
@@ -85,6 +106,7 @@ fun SearchScreen(
                             modifier = Modifier.clickable { navController.navigate("Recipe Details/${searchData[entry]?.id}") })
                     }
                 }
-            })
+            },
+        )
     }
 }
