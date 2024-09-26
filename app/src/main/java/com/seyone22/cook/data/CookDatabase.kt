@@ -58,9 +58,6 @@ abstract class CookDatabase : RoomDatabase() {
         fun getDatabase(context: Context, scope: CoroutineScope): CookDatabase {
             return Instance ?: synchronized(this) {
                 Room.databaseBuilder(context, CookDatabase::class.java, "cook_database")
-                    .setQueryCallback({ sqlQuery, bindArgs ->
-                        Log.d("SQL Query", "SQL: $sqlQuery, Args: $bindArgs ")
-                    }, Executors.newSingleThreadExecutor())
                     .addMigrations(MIGRATION_1_2).addMigrations(MIGRATION_2_3)
                     .addMigrations(MIGRATION_1_3).fallbackToDestructiveMigration()
                     .addCallback(CookDatabaseCallback(scope))

@@ -69,7 +69,7 @@ fun SearchScreen(
                         }
                     },
                     expanded = true,
-                    onExpandedChange = onActiveChange,
+                    onExpandedChange = { onActiveChange },
                     enabled = true,
                     placeholder = { Text(text = "Search for recipes") },
                     leadingIcon = {
@@ -83,14 +83,14 @@ fun SearchScreen(
                 )
             },
             expanded = true,
-            onExpandedChange = onActiveChange,
+            onExpandedChange = { onActiveChange },
             modifier = Modifier,
             shape = SearchBarDefaults.inputFieldShape,
             colors = colors1,
             tonalElevation = SearchBarDefaults.TonalElevation,
             shadowElevation = SearchBarDefaults.ShadowElevation,
             windowInsets = SearchBarDefaults.windowInsets,
-            content = fun ColumnScope.() {
+            content =  {
                 LazyColumn {
                     items(count = searchData.size) { entry ->
                         ListItem(headlineContent = { Text(searchData[entry]?.name ?: "") },
