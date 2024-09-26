@@ -31,6 +31,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -308,7 +309,7 @@ fun EditRecipeScreen(
                                         OutlinedTextField(modifier = Modifier
                                             .padding(0.dp, 0.dp, 8.dp, 0.dp)
                                             .width(156.dp)
-                                            .menuAnchor(type, enabled)
+                                            .menuAnchor(MenuAnchorType.PrimaryEditable, true)
                                             .clickable(enabled = true) {
                                                 ingredientExpanded = true
                                             },
@@ -372,7 +373,7 @@ fun EditRecipeScreen(
                                         }) {
                                         OutlinedTextField(modifier = Modifier
                                             .padding(0.dp, 0.dp, 8.dp, 0.dp)
-                                            .menuAnchor(type, enabled)
+                                            .menuAnchor(MenuAnchorType.PrimaryEditable, true)
                                             .width(80.dp)
                                             .clickable(enabled = true) {
                                                 measuresExpanded = true

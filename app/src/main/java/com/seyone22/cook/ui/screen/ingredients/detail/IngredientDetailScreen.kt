@@ -36,6 +36,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -533,7 +534,7 @@ fun NewVariantDialog(
                                 measuresExpanded = !measuresExpanded
                             }) {
                                 OutlinedTextField(modifier = Modifier
-                                    .menuAnchor(type, enabled)
+                                    .menuAnchor(MenuAnchorType.PrimaryEditable, true)
                                     .clickable(enabled = true) {
                                         measuresExpanded = true
                                     },
@@ -627,7 +628,7 @@ fun AddToShoppingListDialog(
                                 0.dp, 0.dp, 8.dp, 0.dp
                             )
                             .fillMaxWidth()
-                            .menuAnchor(type, enabled)
+                            .menuAnchor(MenuAnchorType.PrimaryEditable, true)
                             .clickable(enabled = true) {
                                 shoppingListExpanded = true
                             },
@@ -691,7 +692,7 @@ fun AddToShoppingListDialog(
                             .padding(
                                 0.dp, 0.dp, 8.dp, 0.dp
                             )
-                            .menuAnchor(type, enabled)
+                            .menuAnchor(MenuAnchorType.PrimaryEditable, true)
                             .width(80.dp)
                             .clickable(enabled = true) {
                                 measuresExpanded = true

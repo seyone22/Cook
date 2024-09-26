@@ -345,7 +345,7 @@ fun AddRecipeScreen(
                                             .padding(
                                                 0.dp, 0.dp, 8.dp, 0.dp
                                             )
-                                            .menuAnchor(type, enabled)
+                                            .menuAnchor(MenuAnchorType.PrimaryEditable, true)
                                             .width(80.dp)
                                             .clickable(enabled = true) {
                                                 measuresExpanded = true
