@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -13,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -40,6 +42,7 @@ import androidx.navigation.NavController
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.model.Measure
+import com.seyone22.cook.data.model.ShoppingList
 import com.seyone22.cook.data.model.ShoppingListItem
 import com.seyone22.cook.data.model.ShoppingListItemDetails
 import com.seyone22.cook.data.model.toShoppingList
@@ -69,6 +72,9 @@ fun ShoppingListDetailScreen(
     val items = data.shoppingListItems.filter { it?.shoppingListId == backStackEntry.toLong() }
 
     var showNewDialog by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var showDeleteConfirmationDialog by remember { mutableStateOf(false) }
+
     if (showNewDialog) {
         NewShoppingListItemDialog(onConfirm = {
             viewModel.addToShoppingList(it.copy(shoppingListId = backStackEntry.toLong()))
@@ -81,11 +87,46 @@ fun ShoppingListDetailScreen(
         )
     }
 
+    if (showRenameDialog) {
+        RenameDialog(onConfirm = { renamedShoppingList ->
+            viewModel.renameShoppingList(renamedShoppingList)
+            viewModel.fetchData()
+            showRenameDialog = false
+        },
+            onDismiss = { showRenameDialog = false },
+            shoppingList = data.shoppingLists.find { it -> it?.id == backStackEntry.toLong() } ?: ShoppingList()
+        )
+    }
+
+    if (showDeleteConfirmationDialog) {
+        DeleteConfirmationDialog(onConfirm = {
+            viewModel.deleteShoppingList(data.shoppingLists.find { it -> it?.id == backStackEntry.toLong() } ?: ShoppingList())
+            showDeleteConfirmationDialog = false
+            navController.popBackStack()
+        },
+            onDismiss = { showDeleteConfirmationDialog = false }
+        )
+    }
+
     Scaffold(topBar = {
         CookTopBar(
             currentActivity = ShoppingListDetailDestination.route,
             navController = navController,
-            title = data.shoppingLists.find { it?.id == backStackEntry.toLong() }?.name ?: ""
+            title = data.shoppingLists.find { it?.id == backStackEntry.toLong() }?.name ?: "",
+            activityType = { activity ->
+                when(activity) {
+                    "delete" -> {
+                        showDeleteConfirmationDialog = true
+                    }
+                    "rename" -> {
+                        showRenameDialog = true
+                    }
+                    "complete" -> {
+                        viewModel.completeShoppingList(data.shoppingLists.find { it -> it?.id == backStackEntry.toLong() } ?: ShoppingList())
+                        navController.popBackStack()
+                    }
+                }
+            }
         )
     }, floatingActionButton = {
         CookFAB(
@@ -257,6 +298,72 @@ fun NewShoppingListItemDialog(
         confirmButton = {
             TextButton(onClick = { onConfirm(shoppingListItemDetails.toShoppingList()) }) {
                 Text("Create")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        })
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RenameDialog(
+    shoppingList: ShoppingList,
+    onConfirm: (ShoppingList) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var newName by remember { mutableStateOf(shoppingList.name) }
+
+    AlertDialog(onDismissRequest = { onDismiss() },
+        title = { Text(text = "Rename Shopping List") },
+        text = {
+            Column {
+                    OutlinedTextField(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp, 16.dp),
+                        value = newName,
+                        singleLine = true,
+                        onValueChange = { n -> newName = n },
+                        label = { Text("Name") },
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            imeAction = ImeAction.Next, keyboardType = KeyboardType.Text
+                        )
+                    )
+                }
+            }
+        ,
+        confirmButton = {
+            TextButton(onClick = { onConfirm(shoppingList.copy(name = newName)) }) {
+                Text("Rename")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        })
+}
+
+@Composable
+fun DeleteConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    var ingredientExpanded by remember { mutableStateOf(false) }
+    var measuresExpanded by remember { mutableStateOf(false) }
+
+    var shoppingListItemDetails by remember { mutableStateOf(ShoppingListItemDetails()) }
+
+    AlertDialog(onDismissRequest = { onDismiss() },
+        title = { Text(text = "Are you sure you want to delete?") },
+        text = {
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm() }) {
+                Text("Delete")
             }
         },
         dismissButton = {

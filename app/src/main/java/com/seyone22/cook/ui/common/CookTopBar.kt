@@ -12,9 +12,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.VideoCameraBack
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,6 +52,7 @@ fun CookTopBar(
     navController: NavController,
     recipeList: List<Recipe?> = listOf(),
     setOverlayStatus: (Boolean) -> Unit = {},
+    activityType: (String) -> Unit = {},
     context: Context = LocalContext.current
 ) {
     if (currentActivity == "search") {
@@ -87,7 +90,8 @@ fun CookTopBar(
                                 setOverlayStatus(false)
                             }) {
                                 Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back"
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Back"
                                 )
                             }
                         } else {
@@ -151,17 +155,19 @@ fun CookTopBar(
                     }
                     if (query.isNotBlank()) {
                         item {
-                            ListItem(
-                                headlineContent = { Text(text = "Search the web for $query") },
-                                modifier = Modifier.clickable { launchBrowser(context, query+" recipe") },
+                            ListItem(headlineContent = { Text(text = "Search the web for $query") },
+                                modifier = Modifier.clickable {
+                                    launchBrowser(
+                                        context, query + " recipe"
+                                    )
+                                },
                                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                                 leadingContent = {
                                     Icon(
                                         imageVector = Icons.Default.Search,
                                         contentDescription = "Web Search"
                                     )
-                                }
-                            )
+                                })
                         }
                     }
                 }
@@ -203,10 +209,25 @@ fun CookTopBar(
         TopAppBar(title = { Text(text = title) }, navigationIcon = {
             IconButton(onClick = { navController.popBackStack() }) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back"
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back"
                 )
             }
-        }, actions = {})
+        }, actions = {
+            var showMenu by remember { mutableStateOf(false) }
+
+            IconButton(onClick = { showMenu = !showMenu }) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert, contentDescription = "More"
+                )
+            }
+
+            DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = !showMenu }) {
+                DropdownMenuItem(text = { Text(text = "Delete") }, onClick = { activityType("delete") })
+                DropdownMenuItem(text = { Text(text = "Rename") }, onClick = { activityType("rename") })
+                DropdownMenuItem(text = { Text(text = "Mark Complete") }, onClick = { activityType("complete") })
+            }
+        })
     }
 }
 
@@ -218,7 +239,8 @@ fun launchBrowser(context: Context, query: String) {
     if (intent.resolveActivity(context.packageManager) != null) {
         context.startActivity(intent)
     } else {
-        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.duckduckgo.com/?q=$query&ia=web"))
+        val browserIntent =
+            Intent(Intent.ACTION_VIEW, Uri.parse("https://www.duckduckgo.com/?q=$query&ia=web"))
         context.startActivity(browserIntent)
     }
 

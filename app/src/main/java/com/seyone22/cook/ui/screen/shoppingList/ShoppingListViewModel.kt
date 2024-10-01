@@ -59,9 +59,27 @@ class ShoppingListViewModel(
         }
     }
 
+    fun completeShoppingList(shoppingList: ShoppingList) {
+        viewModelScope.launch {
+            shoppingListRepository.updateList(shoppingList.copy(completed = true))
+        }
+    }
+
+    fun renameShoppingList(shoppingList: ShoppingList) {
+        viewModelScope.launch {
+            shoppingListRepository.updateList(shoppingList)
+        }
+    }
+
     fun removeFromShoppingList(shoppingListItem: ShoppingListItem) {
         viewModelScope.launch {
             shoppingListRepository.deleteItem(shoppingListItem)
+        }
+    }
+
+    fun deleteShoppingList(shoppingList: ShoppingList) {
+        viewModelScope.launch {
+            shoppingListRepository.deleteList(shoppingList)
         }
     }
 
