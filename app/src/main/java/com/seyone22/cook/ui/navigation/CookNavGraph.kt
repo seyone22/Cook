@@ -82,6 +82,15 @@ fun CookNavHost(
                 navController = navController
             )
         }
+
+        composable(route = "${AddIngredientDestination.route}/{ingredientName}") { backStackEntry ->
+            val ingredientName = backStackEntry.arguments?.getString("ingredientName") ?: ""
+            AddIngredientScreen(
+                navController = navController,
+                ingredientName = ingredientName
+            )
+        }
+
         composable(
             route = EditIngredientDestination.route + "/{id}",
             arguments = listOf(navArgument("id") { type = NavType.StringType })

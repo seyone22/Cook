@@ -102,9 +102,6 @@ fun AddRecipeScreen(
     }
     val imageHelper = ImageStorageHelper(context)
 
-    var ingredientFilter by remember { mutableStateOf("") }
-    val filteredIngredients = data.ingredients.filter { (it?.nameEn ?: "").contains(ingredientFilter, true) }
-
     Scaffold(topBar = {
         TopAppBar(modifier = Modifier.padding(0.dp),
             title = { Text(text = "Add Recipe") },
@@ -261,6 +258,9 @@ fun AddRecipeScreen(
                         var measuresExpanded by remember { mutableStateOf(false) }
                         var ingredientExpanded by remember { mutableStateOf(false) }
 
+                        var ingredientFilter by remember { mutableStateOf("") }
+                        val filteredIngredients = data.ingredients.filter { (it?.nameEn ?: "").contains(ingredientFilter, true) }
+
                         Column {
                             Row(
                                 modifier = Modifier.fillMaxWidth()
@@ -288,7 +288,7 @@ fun AddRecipeScreen(
                                                 ingredientExpanded = true
                                             },
                                             value = ingredientFilter,
-                                            onValueChange = { ingredientFilter = it },
+                                            onValueChange = { v -> ingredientFilter = v },
                                             label = { Text("") },
                                             singleLine = true,
                                             trailingIcon = {
@@ -314,7 +314,7 @@ fun AddRecipeScreen(
                                             } else {
                                                 DropdownMenuItem(text = { Text("Add $ingredientFilter to database") },
                                                     onClick = {
-
+                                                        navController.navigate("Add Ingredient/$ingredientFilter")
                                                     })
                                             }
                                         }

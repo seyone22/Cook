@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -73,6 +74,7 @@ object AddIngredientDestination : NavigationDestination {
 fun AddIngredientScreen(
     viewModel: IngredientOperationsViewModel = viewModel(factory = AppViewModelProvider.Factory),
     navController: NavController,
+    ingredientName: String = ""
 ) {
     viewModel.fetchData()
     val context = LocalContext.current
@@ -94,6 +96,12 @@ fun AddIngredientScreen(
         }
     }
     val imageHelper = ImageStorageHelper(context)
+
+    LaunchedEffect(Unit) {
+        if (ingredientName.isNotBlank()) {
+            ingredient = ingredient.copy(nameEn = ingredientName)
+        }
+    }
 
     Scaffold(topBar = {
         TopAppBar(modifier = Modifier.padding(0.dp),
