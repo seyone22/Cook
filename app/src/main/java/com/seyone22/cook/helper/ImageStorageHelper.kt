@@ -10,7 +10,7 @@ import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.InputStream
 
-class ImageHelper(private val context: Context) {
+class ImageStorageHelper(private val context: Context) {
     // Function to save bitmap image to internal storage
     fun saveImageToInternalStorage(bitmap: Bitmap, fileName: String): String? {
         val fileOutputStream: FileOutputStream

@@ -7,7 +7,7 @@ import com.seyone22.cook.data.repository.measure.MeasureRepository
 import com.seyone22.cook.data.repository.measureConversion.MeasureConversionRepository
 import kotlinx.coroutines.flow.first
 
-class MeasureHelper(private val context: Context) {
+class MeasurementConverter(private val context: Context) {
     suspend fun convertToBase(
         value: Double,
         fromMeasure: Measure,

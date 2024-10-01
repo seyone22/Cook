@@ -35,8 +35,6 @@ import com.seyone22.cook.ui.screen.more.MoreDestination
 import com.seyone22.cook.ui.screen.more.MoreScreen
 import com.seyone22.cook.ui.screen.more.SettingsDestination
 import com.seyone22.cook.ui.screen.more.SettingsDetailScreen
-import com.seyone22.cook.ui.screen.search.SearchDestination
-import com.seyone22.cook.ui.screen.search.SearchScreen
 import com.seyone22.cook.ui.screen.shoppingList.ShoppingListDestination
 import com.seyone22.cook.ui.screen.shoppingList.ShoppingListScreen
 import com.seyone22.cook.ui.screen.shoppingList.detail.ShoppingListDetailDestination
@@ -57,10 +55,6 @@ fun CookNavHost(
         enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None },
     ) {
-        composable(route = SearchDestination.route) {
-            SearchScreen(navController = navController, modifier = modifier.padding(innerPadding))
-        }
-
         // Main Navigation Destinations
         composable(route = HomeDestination.route) {
             HomeScreen(

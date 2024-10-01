@@ -1,5 +1,8 @@
 package com.seyone22.cook.ui.common
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.seyone22.cook.data.model.Recipe
@@ -44,9 +48,9 @@ fun CookTopBar(
     currentActivity: String?,
     title: String = "",
     navController: NavController,
-    searchAction: () -> Unit = {},
     recipeList: List<Recipe?> = listOf(),
     setOverlayStatus: (Boolean) -> Unit = {},
+    context: Context = LocalContext.current
 ) {
     if (currentActivity == "search") {
 
@@ -145,6 +149,21 @@ fun CookTopBar(
                             }
                         }
                     }
+                    if (query.isNotBlank()) {
+                        item {
+                            ListItem(
+                                headlineContent = { Text(text = "Search the web for $query") },
+                                modifier = Modifier.clickable { launchBrowser(context, query+" recipe") },
+                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                                leadingContent = {
+                                    Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = "Web Search"
+                                    )
+                                }
+                            )
+                        }
+                    }
                 }
             },
         )
@@ -189,4 +208,18 @@ fun CookTopBar(
             }
         }, actions = {})
     }
+}
+
+fun launchBrowser(context: Context, query: String) {
+    val intent = Intent(Intent.ACTION_WEB_SEARCH).apply {
+        putExtra("query", query)
+    }
+
+    if (intent.resolveActivity(context.packageManager) != null) {
+        context.startActivity(intent)
+    } else {
+        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.duckduckgo.com/?q=$query&ia=web"))
+        context.startActivity(browserIntent)
+    }
+
 }

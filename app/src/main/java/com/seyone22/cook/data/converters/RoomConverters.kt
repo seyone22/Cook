@@ -1,9 +1,9 @@
-package com.seyone22.cook.helper
+package com.seyone22.cook.data.converters
 
 import androidx.room.TypeConverter
 import com.seyone22.cook.data.model.MeasureType
 
-class Converters {
+class RoomConverters {
     @TypeConverter
     fun fromMeasureType(value: MeasureType): String {
         return value.name

@@ -61,7 +61,7 @@ import com.seyone22.cook.data.model.IngredientImage
 import com.seyone22.cook.data.model.IngredientVariantDetails
 import com.seyone22.cook.data.model.toIngredientVariant
 import com.seyone22.cook.data.model.toIngredientVariantDetails
-import com.seyone22.cook.helper.ImageHelper
+import com.seyone22.cook.helper.ImageStorageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
 import kotlinx.coroutines.launch
@@ -125,7 +125,7 @@ fun EditIngredientScreen(
                 photos + IngredientImage(imagePath = uri.toString(), ingredientId = ingredientId)
         }
     }
-    val imageHelper = ImageHelper(context)
+    val imageHelper = ImageStorageHelper(context)
 
     Scaffold(
         topBar = {

@@ -13,7 +13,7 @@ import com.seyone22.cook.data.repository.ingredient.IngredientRepository
 import com.seyone22.cook.data.repository.ingredientImage.IngredientImageRepository
 import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantRepository
 import com.seyone22.cook.data.repository.measure.MeasureRepository
-import com.seyone22.cook.helper.ImageHelper
+import com.seyone22.cook.helper.ImageStorageHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -66,7 +66,7 @@ class IngredientOperationsViewModel(
                     ingredientVariantRepository.insertIngredientVariant(variant)
                 }
                 // Save the images
-                val imageHelper = ImageHelper(context)
+                val imageHelper = ImageStorageHelper(context)
                 images?.forEachIndexed { index, image ->
                     val imageBitmap = imageHelper.loadImageFromUri(image)!!
                     val imagePath = imageHelper.saveImageToInternalStorage(
@@ -150,7 +150,7 @@ class IngredientOperationsViewModel(
                     Log.d("TAG", "updateIngredient: imagesToUpdate = $imagesToUpdate")
                     Log.d("TAG", "updateIngredient: imagesToDelete = $imagesToDelete")
 
-                    val imageHelper = ImageHelper(context)
+                    val imageHelper = ImageStorageHelper(context)
 
                     // Perform image operations
                     imagesToAdd.forEachIndexed { index, image ->

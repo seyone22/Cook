@@ -48,6 +48,8 @@ fun HomeScreen(
     navController: NavController,
     setOverlayStatus: (Boolean) -> Unit = {},
 ) {
+
+
     // Call the ViewModel function to fetch ingredients when the screen is first displayed
     LaunchedEffect(Unit) {
         viewModel.fetchData()
@@ -65,13 +67,14 @@ fun HomeScreen(
             navController = navController, currentActivity = "search", recipeList = recipes, setOverlayStatus = setOverlayStatus
         )
     }) {
+        it
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .padding(it)
+                .padding(top = 72.dp)
         ) {
             LazyVerticalStaggeredGrid(modifier = Modifier
-                .padding(8.dp)
+                .padding(8.dp, 0.dp)
                 .fillMaxHeight(),
                 columns = StaggeredGridCells.Adaptive(minSize = 240.dp),
                 content = {
@@ -89,7 +92,7 @@ fun HomeScreen(
 fun RecipeItem(modifier: Modifier, recipe: Recipe, image: RecipeImage?) {
     OutlinedCard(
         modifier = modifier
-            .padding(8.dp)
+            .padding(bottom = 12.dp)
             .fillMaxWidth()
     ) {
         Column(modifier = Modifier.fillMaxSize()) {

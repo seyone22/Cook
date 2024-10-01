@@ -125,7 +125,7 @@ fun ShoppingItemList(
             navController.navigate("${IngredientDetailDestination.route}/${item?.ingredientId}")
         }), leadingContent = {
         Checkbox(modifier = Modifier.height(32.dp),
-            enabled = !(ingredients.find { i -> i?.id == item?.ingredientId }?.stocked ?: false),
+            enabled = true,
             checked = checked,
             onCheckedChange = {
                 checked = !checked

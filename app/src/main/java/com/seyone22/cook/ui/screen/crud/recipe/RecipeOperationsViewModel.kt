@@ -18,17 +18,15 @@ import com.seyone22.cook.data.repository.measure.MeasureRepository
 import com.seyone22.cook.data.repository.recipe.RecipeRepository
 import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
 import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientRepository
-import com.seyone22.cook.helper.DataHelper.compressImageFile
-import com.seyone22.cook.helper.ImageHelper
+import com.seyone22.cook.helper.RecipeFileHandler.compressImageFile
+import com.seyone22.cook.helper.ImageStorageHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 import java.util.UUID
-import kotlin.math.log
 
 class RecipeOperationsViewModel(
     private val recipeRepository: RecipeRepository,
@@ -90,7 +88,7 @@ class RecipeOperationsViewModel(
                 }
 
                 // Save the images
-                val imageHelper = ImageHelper(context)
+                val imageHelper = ImageStorageHelper(context)
                 images?.forEach { image ->
                     Log.d("TAG", "saveRecipe: $image")
 
@@ -123,7 +121,7 @@ class RecipeOperationsViewModel(
     ): Boolean {
             try {
                 withContext(Dispatchers.IO) {
-                    val imageHelper = ImageHelper(context)
+                    val imageHelper = ImageStorageHelper(context)
 
                     // Update Recipe main details
                     recipeRepository.updateRecipe(recipe)

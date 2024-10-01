@@ -38,7 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.ShoppingList
-import com.seyone22.cook.helper.DateTimeHelper.toIsoString
+import com.seyone22.cook.helper.DateTimeUtil.toIsoString
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.common.CookFAB
 import com.seyone22.cook.ui.common.CookTopBar

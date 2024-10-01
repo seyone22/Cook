@@ -58,7 +58,7 @@ import com.seyone22.cook.data.model.IngredientDetails
 import com.seyone22.cook.data.model.IngredientVariantDetails
 import com.seyone22.cook.data.model.toIngredient
 import com.seyone22.cook.data.model.toIngredientVariant
-import com.seyone22.cook.helper.ImageHelper
+import com.seyone22.cook.helper.ImageStorageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
 
@@ -93,7 +93,7 @@ fun AddIngredientScreen(
             photos = photos + uri
         }
     }
-    val imageHelper = ImageHelper(context)
+    val imageHelper = ImageStorageHelper(context)
 
     Scaffold(topBar = {
         TopAppBar(modifier = Modifier.padding(0.dp),

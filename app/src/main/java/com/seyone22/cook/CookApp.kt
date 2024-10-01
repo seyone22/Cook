@@ -23,7 +23,6 @@ import com.seyone22.cook.ui.common.CookFAB
 import com.seyone22.cook.ui.common.CookNavBar
 import com.seyone22.cook.ui.common.CookTopBar
 import com.seyone22.cook.ui.navigation.CookNavHost
-import com.seyone22.cook.ui.screen.search.SearchDestination
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -46,7 +45,6 @@ fun CookApp(
             CookTopBar(
                 currentActivity = navBackStackEntry?.destination?.route,
                 navController = navController,
-                searchAction = { navController.navigate(SearchDestination.route) }
             )
         },
         bottomBar = {

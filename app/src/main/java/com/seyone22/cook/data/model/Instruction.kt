@@ -3,7 +3,7 @@ package com.seyone22.cook.data.model
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
-import com.seyone22.cook.helper.UUIDSerializer
+import com.seyone22.cook.helper.UuidSerializer
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import java.util.UUID
@@ -21,7 +21,7 @@ import java.util.UUID
 data class Instruction(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     @Contextual
-    @Serializable(with = UUIDSerializer::class)
+    @Serializable(with = UuidSerializer::class)
     val recipeId: UUID,
     val stepNumber: Int,
     val description: String

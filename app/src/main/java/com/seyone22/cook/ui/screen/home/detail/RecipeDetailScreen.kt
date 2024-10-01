@@ -31,7 +31,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.FitScreen
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.PriceCheck
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ThumbUpOffAlt
@@ -52,9 +51,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -96,8 +92,8 @@ import com.seyone22.cook.data.model.Recipe
 import com.seyone22.cook.data.model.RecipeImage
 import com.seyone22.cook.data.model.RecipeIngredient
 import com.seyone22.cook.data.model.ShoppingList
-import com.seyone22.cook.helper.DataHelper
-import com.seyone22.cook.helper.ImageHelper
+import com.seyone22.cook.helper.RecipeFileHandler
+import com.seyone22.cook.helper.ImageStorageHelper
 import com.seyone22.cook.helper.PriceHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
@@ -123,7 +119,7 @@ fun RecipeDetailScreen(
     navController: NavController,
     context: Context = LocalContext.current
 ) {
-    val imageHelper = ImageHelper(LocalContext.current)
+    val imageHelper = ImageStorageHelper(LocalContext.current)
     // Call the ViewModel function to fetch ingredients when the screen is first displayed
     viewModel.fetchData()
 
@@ -204,7 +200,7 @@ fun RecipeDetailScreen(
                         }
 
 
-                        val zipFile = DataHelper.exportRecipe(
+                        val zipFile = RecipeFileHandler.exportRecipe(
                             context,
                             recipe!!,
                             instructions,

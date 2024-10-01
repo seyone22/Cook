@@ -11,7 +11,7 @@ import com.seyone22.cook.data.repository.instruction.InstructionRepository
 import com.seyone22.cook.data.repository.recipe.RecipeRepository
 import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
 import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientRepository
-import com.seyone22.cook.helper.DataHelper
+import com.seyone22.cook.helper.RecipeFileHandler
 import kotlinx.coroutines.launch
 
 class MoreViewModel(
@@ -24,7 +24,7 @@ class MoreViewModel(
     fun importRecipe(context: Context, it: Uri) {
         viewModelScope.launch {
             try {
-                DataHelper.importRecipe(
+                RecipeFileHandler.importRecipe(
                     context,
                     it,
                     recipeRepository,
