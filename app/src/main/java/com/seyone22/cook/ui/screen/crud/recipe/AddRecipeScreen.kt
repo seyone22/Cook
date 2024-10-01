@@ -57,7 +57,6 @@ import com.seyone22.cook.data.model.Instruction
 import com.seyone22.cook.data.model.Recipe
 import com.seyone22.cook.data.model.RecipeIngredientDetails
 import com.seyone22.cook.data.model.toRecipeIngredient
-import com.seyone22.cook.helper.ImageStorageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
 import java.util.UUID
@@ -100,7 +99,6 @@ fun AddRecipeScreen(
             photos = photos + uri
         }
     }
-    val imageHelper = ImageStorageHelper(context)
 
     Scaffold(topBar = {
         TopAppBar(modifier = Modifier.padding(0.dp),
@@ -205,7 +203,7 @@ fun AddRecipeScreen(
                         Row {
                             OutlinedTextField(
                                 value = prepTime,
-                                onValueChange = { prepTime = it },
+                                onValueChange = { prepTime = it.filter { it.isDigit() } },
                                 label = { Text("Prep") },
                                 modifier = Modifier
                                     .width(107.dp)
@@ -216,7 +214,7 @@ fun AddRecipeScreen(
                             )
                             OutlinedTextField(
                                 value = cookTime,
-                                onValueChange = { cookTime = it },
+                                onValueChange = { cookTime = it.filter { it.isDigit() } },
                                 label = { Text("Cook") },
                                 modifier = Modifier
                                     .width(107.dp)
@@ -227,7 +225,7 @@ fun AddRecipeScreen(
                             )
                             OutlinedTextField(
                                 value = servingSize,
-                                onValueChange = { servingSize = it },
+                                onValueChange = { servingSize = it.filter { it.isDigit() } },
                                 label = { Text("Serves") },
                                 modifier = Modifier.width(107.dp),
                                 keyboardOptions = KeyboardOptions.Default.copy(
@@ -259,7 +257,12 @@ fun AddRecipeScreen(
                         var ingredientExpanded by remember { mutableStateOf(false) }
 
                         var ingredientFilter by remember { mutableStateOf("") }
-                        val filteredIngredients = data.ingredients.filter { (it?.nameEn ?: "").contains(ingredientFilter, true) }
+                        val filteredIngredients = data.ingredients.filter {
+                            (it?.nameEn ?: "").contains(
+                                ingredientFilter,
+                                true
+                            )
+                        }
 
                         Column {
                             Row(
@@ -306,7 +309,9 @@ fun AddRecipeScreen(
                                                             onClick = {
                                                                 ingredientFilter = ingredient.nameEn
                                                                 recipeIngredients[index] =
-                                                                    recipeIngredient.copy(ingredientId = ingredient.id)
+                                                                    recipeIngredient.copy(
+                                                                        ingredientId = ingredient.id
+                                                                    )
                                                                 ingredientExpanded = false
                                                             })
                                                     }
