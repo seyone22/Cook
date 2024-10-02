@@ -61,7 +61,6 @@ import com.seyone22.cook.data.model.toRecipe
 import com.seyone22.cook.data.model.toRecipeDetails
 import com.seyone22.cook.data.model.toRecipeIngredient
 import com.seyone22.cook.data.model.toRecipeIngredientDetails
-import com.seyone22.cook.helper.ImageStorageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
 import kotlinx.coroutines.launch
@@ -99,8 +98,6 @@ fun EditRecipeScreen(
     var instructions by remember { mutableStateOf(listOf<Instruction>()) }
     var recipeIngredients by remember { mutableStateOf(listOf<RecipeIngredientDetails>()) }
 
-    var showAltNames by remember { mutableStateOf(false) }
-
     // Populate fields with existing data when recipe data is loaded
     LaunchedEffect(dataRecipe) {
         dataRecipe?.let {
@@ -119,7 +116,6 @@ fun EditRecipeScreen(
             images = images + RecipeImage(imagePath = uri.toString(), recipeId = recipeId)
         }
     }
-    val imageHelper = ImageStorageHelper(context)
 
     Scaffold(topBar = {
         TopAppBar(modifier = Modifier.padding(0.dp),
@@ -287,6 +283,18 @@ fun EditRecipeScreen(
                         var measuresExpanded by remember { mutableStateOf(false) }
                         var ingredientExpanded by remember { mutableStateOf(false) }
 
+                        var ingredientFilter by remember {
+                            mutableStateOf(
+                                data.ingredients.find { m -> m?.id?.toInt() == recipeIngredient.ingredientId.toInt() }?.nameEn
+                                    ?: ""
+                            )
+                        }
+                        val filteredIngredients = data.ingredients.filter {
+                            (it?.nameEn ?: "").contains(
+                                ingredientFilter, true
+                            )
+                        }
+
                         Column {
                             Row(
                                 modifier = Modifier.fillMaxWidth()
@@ -299,47 +307,56 @@ fun EditRecipeScreen(
                                     )
                                 }
                                 Row {
-                                    ExposedDropdownMenuBox(
-                                        expanded = ingredientExpanded,
+                                    ExposedDropdownMenuBox(expanded = ingredientExpanded,
                                         onExpandedChange = {
                                             ingredientExpanded = !ingredientExpanded
                                         }) {
                                         OutlinedTextField(modifier = Modifier
-                                            .padding(0.dp, 0.dp, 8.dp, 0.dp)
+                                            .padding(
+                                                0.dp, 0.dp, 8.dp, 0.dp
+                                            )
                                             .width(156.dp)
                                             .menuAnchor(MenuAnchorType.PrimaryEditable, true)
                                             .clickable(enabled = true) {
                                                 ingredientExpanded = true
                                             },
-                                            value = data.ingredients.find { m -> m?.id?.toInt() == recipeIngredient.ingredientId.toInt() }?.nameEn
-                                                ?: "",
-                                            readOnly = true,
-                                            onValueChange = { },
+                                            value = ingredientFilter,
+                                            readOnly = false,
+                                            onValueChange = { it -> ingredientFilter = it },
                                             label = { Text("") },
                                             singleLine = true,
                                             trailingIcon = {
                                                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = ingredientExpanded)
                                             })
 
-                                        ExposedDropdownMenu(expanded = ingredientExpanded,
-                                            onDismissRequest = { ingredientExpanded = false }) {
-                                            data.ingredients.forEach { ingredient ->
-                                                ingredient?.let {
-                                                    DropdownMenuItem(text = { Text(ingredient.nameEn) },
-                                                        onClick = {
-                                                            recipeIngredients =
-                                                                recipeIngredients.mapIndexed { i, recipeIngredient ->
-                                                                    if (i == index) {
-                                                                        recipeIngredient.copy(
-                                                                            ingredientId = ingredient.id
-                                                                        )
-                                                                    } else {
-                                                                        recipeIngredient
+                                        ExposedDropdownMenu(
+                                            expanded = ingredientExpanded,
+                                            onDismissRequest = { }
+                                        ) {
+                                            if (filteredIngredients.isNotEmpty()) {
+                                                filteredIngredients.forEach { ingredient ->
+                                                    ingredient?.let {
+                                                        DropdownMenuItem(text = { Text(ingredient.nameEn) },
+                                                            onClick = {
+                                                                recipeIngredients =
+                                                                    recipeIngredients.mapIndexed { i, recipeIngredient ->
+                                                                        if (i == index) {
+                                                                            recipeIngredient.copy(
+                                                                                ingredientId = ingredient.id
+                                                                            )
+                                                                        } else {
+                                                                            recipeIngredient
+                                                                        }
                                                                     }
-                                                                }
-                                                            ingredientExpanded = false
-                                                        })
+                                                                ingredientExpanded = false
+                                                            })
+                                                    }
                                                 }
+                                            } else {
+                                                DropdownMenuItem(text = { Text("Add $ingredientFilter to database") },
+                                                    onClick = {
+                                                        navController.navigate("Add Ingredient/$ingredientFilter")
+                                                    })
                                             }
                                         }
                                     }
@@ -347,7 +364,7 @@ fun EditRecipeScreen(
                                         modifier = Modifier
                                             .width(64.dp)
                                             .padding(0.dp, 0.dp, 8.dp, 0.dp),
-                                        value = recipeIngredient.quantity.toString(),
+                                        value = recipeIngredient.quantity,
                                         singleLine = true,
                                         onValueChange = { newQty ->
                                             recipeIngredients =
@@ -365,12 +382,15 @@ fun EditRecipeScreen(
                                             keyboardType = KeyboardType.Number
                                         )
                                     )
-                                    ExposedDropdownMenuBox(expanded = measuresExpanded,
+                                    ExposedDropdownMenuBox(
+                                        expanded = measuresExpanded,
                                         onExpandedChange = {
                                             measuresExpanded = !measuresExpanded
                                         }) {
                                         OutlinedTextField(modifier = Modifier
-                                            .padding(0.dp, 0.dp, 8.dp, 0.dp)
+                                            .padding(
+                                                0.dp, 0.dp, 8.dp, 0.dp
+                                            )
                                             .menuAnchor(MenuAnchorType.PrimaryEditable, true)
                                             .width(80.dp)
                                             .clickable(enabled = true) {
@@ -485,12 +505,11 @@ fun EditRecipeScreen(
                         }
                     }
                     TextButton(onClick = {
-                        instructions = instructions +
-                                Instruction(
-                                    description = "",
-                                    stepNumber = instructions.size + 1,
-                                    recipeId = UUID.randomUUID()
-                                )
+                        instructions = instructions + Instruction(
+                            description = "",
+                            stepNumber = instructions.size + 1,
+                            recipeId = UUID.randomUUID()
+                        )
                     }) {
                         Icon(imageVector = Icons.Filled.Add, contentDescription = null)
                         Text(text = "Add Step")

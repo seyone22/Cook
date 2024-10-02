@@ -1,6 +1,5 @@
 package com.seyone22.cook.ui.screen.shoppingList
 
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -82,10 +81,11 @@ fun ShoppingListScreen(
         CookTopBar(
             currentActivity = ShoppingListDestination.route, navController = navController
         )
-    }, floatingActionButton = { CookFAB(currentActivity = "newlist", action = {
-        showNewDialog = true
-        Log.d("TAG", "ShoppingListScreen: $showNewDialog")
-    }) }) {
+    }, floatingActionButton = {
+        CookFAB(currentActivity = "newlist", action = {
+            showNewDialog = true
+        })
+    }) {
         LazyColumn(modifier = Modifier.padding(it)) {
             item {
                 Row(
@@ -153,7 +153,6 @@ fun ShoppingListCard(
                     contentDescription = null,
                     modifier = Modifier.padding(end = 8.dp)
                 )
-            } else {
             }
         })
 }
