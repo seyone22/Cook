@@ -181,7 +181,7 @@ abstract class CookDatabase : RoomDatabase() {
                 db.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS recipe_tags (
-                        recipeId TEXT NOT NULL,
+                        recipeId BLOB NOT NULL,
                         tagId INTEGER NOT NULL,
                         PRIMARY KEY (recipeId, tagId),
                         FOREIGN KEY (recipeId) REFERENCES recipes(id) ON DELETE CASCADE,
