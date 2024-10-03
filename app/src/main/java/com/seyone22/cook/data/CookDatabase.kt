@@ -19,6 +19,7 @@ import com.seyone22.cook.data.model.RecipeImage
 import com.seyone22.cook.data.model.RecipeIngredient
 import com.seyone22.cook.data.model.ShoppingList
 import com.seyone22.cook.data.model.ShoppingListItem
+import com.seyone22.cook.data.model.Tag
 import com.seyone22.cook.data.repository.ingredient.IngredientDao
 import com.seyone22.cook.data.repository.ingredientImage.IngredientImageDao
 import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantDao
@@ -29,14 +30,15 @@ import com.seyone22.cook.data.repository.recipe.RecipeDao
 import com.seyone22.cook.data.repository.recipeImage.RecipeImageDao
 import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientDao
 import com.seyone22.cook.data.repository.shoppingList.ShoppingListDao
+import com.seyone22.cook.data.repository.tag.TagDao
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 
 @Database(
-    entities = [Ingredient::class, IngredientVariant::class, IngredientImage::class, RecipeImage::class, Measure::class, MeasureConversion::class, Recipe::class, Instruction::class, RecipeIngredient::class, ShoppingList::class, ShoppingListItem::class],
-    version = 3,
+    entities = [Ingredient::class, IngredientVariant::class, IngredientImage::class, RecipeImage::class, Measure::class, MeasureConversion::class, Recipe::class, Instruction::class, RecipeIngredient::class, ShoppingList::class, ShoppingListItem::class, Tag::class],
+    version = 4,
     exportSchema = true
 )
 abstract class CookDatabase : RoomDatabase() {
@@ -50,6 +52,7 @@ abstract class CookDatabase : RoomDatabase() {
     abstract fun instructionDao(): InstructionDao
     abstract fun recipeIngredientDao(): RecipeIngredientDao
     abstract fun shoppingListDao(): ShoppingListDao
+    abstract fun tagDao(): TagDao
 
     companion object {
         @Volatile
