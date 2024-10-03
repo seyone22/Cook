@@ -8,6 +8,7 @@ import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.model.Recipe
 import com.seyone22.cook.data.model.RecipeImage
 import com.seyone22.cook.data.model.RecipeIngredient
+import com.seyone22.cook.data.model.RecipeTag
 import com.seyone22.cook.data.model.ShoppingList
 import com.seyone22.cook.data.model.ShoppingListItem
 import com.seyone22.cook.data.model.Tag
@@ -23,5 +24,6 @@ data class ViewState(
     val variants: List<IngredientVariant?> = emptyList(),
     val shoppingLists: List<ShoppingList?> = emptyList(),
     val shoppingListItems: List<ShoppingListItem?> = emptyList(),
-    val tags: List<Tag?> = emptyList()
+    val tags: List<Tag?> = emptyList(),
+    val recipeTags: List<RecipeTag?> = emptyList()
 )

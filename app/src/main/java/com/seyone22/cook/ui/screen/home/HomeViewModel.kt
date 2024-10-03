@@ -13,7 +13,9 @@ import com.seyone22.cook.data.repository.measure.MeasureRepository
 import com.seyone22.cook.data.repository.recipe.RecipeRepository
 import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
 import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientRepository
+import com.seyone22.cook.data.repository.recipeTag.RecipeTagRepository
 import com.seyone22.cook.data.repository.shoppingList.ShoppingListRepository
+import com.seyone22.cook.data.repository.tag.TagRepository
 import com.seyone22.cook.ui.common.ViewState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,14 +32,14 @@ class HomeViewModel(
     private val ingredientVariantRepository: IngredientVariantRepository,
     private val measureRepository: MeasureRepository,
     private val ingredientRepository: IngredientRepository,
-    private val shoppingListRepository: ShoppingListRepository
+    private val shoppingListRepository: ShoppingListRepository,
+    private val tagRepository: TagRepository,
+    private val recipeTagRepository: RecipeTagRepository
 ) : ViewModel() {
     private val _homeViewState = MutableStateFlow(ViewState())
     val homeViewState: StateFlow<ViewState> get() = _homeViewState
 
     fun fetchData() {
-        Log.d("TAG", "fetchData: ")
-
         viewModelScope.launch {
             val recipes = recipeRepository.getAllRecipes().first()
             val images = recipeImageRepository.getAllRecipeImages().first()
@@ -47,6 +49,8 @@ class HomeViewModel(
             val ingredients = ingredientRepository.getAllIngredients().first()
             val variants = ingredientVariantRepository.getAllIngredientVariants().first()
             val shoppingLists = shoppingListRepository.getAllShoppingLists().first()
+            val tags = tagRepository.getAllTags().first()
+            val recipeTags = recipeTagRepository.getAllRecipeTags().first()
 
             _homeViewState.value = ViewState(
                 recipes = recipes,
@@ -56,7 +60,9 @@ class HomeViewModel(
                 measures = measures,
                 ingredients = ingredients,
                 variants = variants,
-                shoppingLists = shoppingLists
+                shoppingLists = shoppingLists,
+                tags = tags,
+                recipeTags = recipeTags
             )
         }
     }

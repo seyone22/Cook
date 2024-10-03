@@ -7,10 +7,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
@@ -19,6 +24,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -29,6 +37,7 @@ import coil.compose.AsyncImage
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Recipe
 import com.seyone22.cook.data.model.RecipeImage
+import com.seyone22.cook.data.model.Tag
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.common.CookTopBar
 import com.seyone22.cook.ui.navigation.NavigationDestination
@@ -40,7 +49,6 @@ object HomeDestination : NavigationDestination {
     override val routeId = 0
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     modifier: Modifier,
@@ -48,8 +56,6 @@ fun HomeScreen(
     navController: NavController,
     setOverlayStatus: (Boolean) -> Unit = {},
 ) {
-
-
     // Call the ViewModel function to fetch ingredients when the screen is first displayed
     LaunchedEffect(Unit) {
         viewModel.fetchData()
@@ -59,8 +65,14 @@ fun HomeScreen(
     val homeViewState by viewModel.homeViewState.collectAsState()
 
     val recipes = homeViewState.recipes
+    var filteredRecipes by remember{ mutableStateOf(homeViewState.recipes) }
     val images = homeViewState.images
 
+    LaunchedEffect(homeViewState) {
+        filteredRecipes = homeViewState.recipes
+    }
+
+    var filters by remember { mutableStateOf<List<Tag>>(emptyList()) }
 
     Scaffold(topBar = {
         CookTopBar(
@@ -73,15 +85,66 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(top = 72.dp)
         ) {
+            LazyRow {
+                homeViewState.tags.forEach {
+                    item {
+                        var isSelected by remember{ mutableStateOf(false) }
+                        FilterChip(
+                            modifier = Modifier.padding(start = 8.dp),
+                            selected = isSelected,  // Chips are not selected by default
+                            onClick = {
+                                // Toggle selection
+                                isSelected = !isSelected
+
+                                // Update filters list: Add tag if selected, remove if deselected
+                                filters = if (isSelected) {
+                                    filters + it!!  // Add selected tag to filters
+                                } else {
+                                    filters - it!!  // Remove deselected tag from filters
+                                }
+
+                                if(filters.isNotEmpty()) {
+                                    // Now filter recipes based on the selected tags
+                                    filteredRecipes = recipes.filter { recipe ->
+                                        // Get all tags associated with this recipe (from recipeTags relation)
+                                        val recipeTagIds = homeViewState.recipeTags
+                                            .filter { recipeTag -> recipeTag?.recipeId == recipe?.id }
+                                            .map { recipeTag -> recipeTag?.tagId }
+
+                                        // Check if any of the recipe's tags match the selected filters
+                                        recipeTagIds.any { tagId ->
+                                            filters.any { filterTag -> filterTag.id == tagId }
+                                        }
+                                    }
+                                } else {
+                                    filteredRecipes = homeViewState.recipes
+                                }
+                            },
+                            label = {
+                                Text(text = it?.name ?: "")
+                            },
+                            trailingIcon = {
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,  // Close icon for the chip
+                                        contentDescription = "Remove Tag"
+                                    )
+                                }
+                            }
+                        )
+
+                    }
+                }
+            }
             LazyVerticalStaggeredGrid(modifier = Modifier
                 .padding(8.dp, 0.dp)
                 .fillMaxHeight(),
                 columns = StaggeredGridCells.Adaptive(minSize = 240.dp),
                 content = {
-                    items(count = recipes.size, itemContent = {
-                        RecipeItem(recipe = recipes[it]!!,
-                            image = images.find { img -> img!!.recipeId == recipes[it]!!.id },
-                            modifier = Modifier.clickable { navController.navigate("${RecipeDetailDestination.route}/${recipes[it]?.id}") })
+                    items(count = filteredRecipes.size, itemContent = {
+                        RecipeItem(recipe = filteredRecipes[it]!!,
+                            image = images.find { img -> img!!.recipeId == filteredRecipes[it]!!.id },
+                            modifier = Modifier.clickable { navController.navigate("${RecipeDetailDestination.route}/${filteredRecipes[it]?.id}") })
                     })
                 })
         }
