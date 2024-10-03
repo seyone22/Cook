@@ -315,6 +315,7 @@ fun EditRecipeScreen(
                                                     // Add the new tag if it doesn't exist
                                                     recipeTags = recipeTags + tag
                                                 }
+                                                tagFilter = ""
                                                 tagsExpanded = false
                                             })
                                         }
