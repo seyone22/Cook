@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
@@ -29,6 +30,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,19 +84,19 @@ fun SettingsDetailScreen(
         ) {
             when (backStackEntry) {
                 "General" -> {
-                    GeneralSettingsList(
-                        viewModel = viewModel
-                    )
+                    GeneralSettingsList(viewModel = viewModel)
                 }
 
                 "Data" -> {
                     DataSettingsList(viewModel = viewModel)
                 }
 
+                "Tag" -> {
+                    TagSettingsList(viewModel = viewModel)
+                }
+
                 "About" -> {
-                    AboutList(
-                        context = context
-                    )
+                    AboutList()
                 }
             }
         }
@@ -101,7 +104,7 @@ fun SettingsDetailScreen(
 }
 
 @Composable
-fun AboutList(context: Context) {
+fun AboutList(context: Context = LocalContext.current) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -232,6 +235,25 @@ fun DataSettingsList(
                 }
                 filePickerLauncher.launch(arrayOf("*/*"))
             })
+    }
+}
+
+@Composable
+fun TagSettingsList(
+    viewModel: MoreViewModel,
+    scope: CoroutineScope = rememberCoroutineScope(),
+    context: Context = LocalContext.current,
+    activity: Activity = LocalContext.current as Activity
+) {
+    viewModel.fetchTags()
+    val tagsViewState by viewModel.moreViewState.collectAsState()
+
+    LazyColumn {
+        tagsViewState.tags.forEach { tag ->
+            item(key = tag?.id) {
+                ListItem(headlineContent = { Text(text = tag?.name ?: "") })
+            }
+        }
     }
 }
 

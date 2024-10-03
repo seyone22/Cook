@@ -12,12 +12,16 @@ import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.model.Recipe
 import com.seyone22.cook.data.model.RecipeImage
 import com.seyone22.cook.data.model.RecipeIngredient
+import com.seyone22.cook.data.model.RecipeTag
+import com.seyone22.cook.data.model.Tag
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
 import com.seyone22.cook.data.repository.instruction.InstructionRepository
 import com.seyone22.cook.data.repository.measure.MeasureRepository
 import com.seyone22.cook.data.repository.recipe.RecipeRepository
 import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
 import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientRepository
+import com.seyone22.cook.data.repository.recipeTag.RecipeTagRepository
+import com.seyone22.cook.data.repository.tag.TagRepository
 import com.seyone22.cook.helper.RecipeFileHandler.compressImageFile
 import com.seyone22.cook.helper.ImageStorageHelper
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +38,9 @@ class RecipeOperationsViewModel(
     private val measureRepository: MeasureRepository,
     private val instructionRepository: InstructionRepository,
     private val ingredientRepository: IngredientRepository,
-    private val recipeIngredientRepository: RecipeIngredientRepository
+    private val recipeIngredientRepository: RecipeIngredientRepository,
+    private val tagRepository: TagRepository,
+    private val recipeTagRepository: RecipeTagRepository
 ) : ViewModel() {
     private val _addRecipeViewState = MutableStateFlow(AddRecipeViewState())
     val addRecipeViewState: StateFlow<AddRecipeViewState> get() = _addRecipeViewState
@@ -48,13 +54,17 @@ class RecipeOperationsViewModel(
             val instructions = instructionRepository.getInstructionsForRecipe(id).first()
             val recipeIngredients =
                 recipeIngredientRepository.getRecipeIngredientsForRecipe(id).first()
+            val tags = tagRepository.getAllTags().first()
+            val recipeTags = recipeTagRepository.getRecipeTagByRecipeId(id).first()
             _addRecipeViewState.value = AddRecipeViewState(
                 measures,
                 ingredients,
                 recipe,
                 images,
                 instructions,
-                recipeIngredients
+                recipeIngredients,
+                tags,
+                recipeTags
             )
         }
     }
@@ -64,6 +74,7 @@ class RecipeOperationsViewModel(
         images: List<Uri>?,
         instructions: List<Instruction>,
         recipeIngredients: List<RecipeIngredient>,
+        recipeTags: List<Tag>,
         context: Context
     ) {
         viewModelScope.launch {
@@ -85,6 +96,11 @@ class RecipeOperationsViewModel(
                 }
                 updatedRecipeIngredients.forEach { recipeIngredient ->
                     recipeIngredientRepository.insertRecipeIngredient(recipeIngredient)
+                }
+
+                // Save the recipe tag info
+                recipeTags.forEach {
+                    recipeTagRepository.insertRecipeTag(RecipeTag(recipeId = recipe.id, tagId = it.id))
                 }
 
                 // Save the images
@@ -117,6 +133,7 @@ class RecipeOperationsViewModel(
         images: List<RecipeImage?>,
         instructions: List<Instruction?>,
         recipeIngredients: List<RecipeIngredient?>,
+        recipeTags: List<Tag>,
         context: Context
     ): Boolean {
             try {
@@ -133,6 +150,8 @@ class RecipeOperationsViewModel(
                         recipeIngredientRepository.getRecipeIngredientsForRecipe(recipe.id).first()
                     val currentImages =
                         recipeImageRepository.getImagesForRecipe(recipe.id).first()
+                    val currentTags =
+                        recipeTagRepository.getRecipeTagByRecipeId(recipe.id).first()
 
                     // Instructions operations (Add/Update/Delete)
                     val instructionsToAdd =
@@ -204,6 +223,19 @@ class RecipeOperationsViewModel(
                             }
                         }
                     }
+
+                    // Tag operations (Add/Delete)
+                    val tagsToAdd =
+                        recipeTags.map { RecipeTag(recipeId = recipe.id, tagId = it.id) }.filter { currentTags.find { i -> i!!.recipeId == it.recipeId && i.tagId == it.tagId } == null }
+                    val tagsToDelete =
+                        currentTags.filter { it != null && recipeTags.find { i -> i.id == it.tagId && recipe.id == it.recipeId } == null }
+
+                    tagsToAdd.forEach { tag ->
+                        recipeTagRepository.insertRecipeTag(tag)
+                    }
+                    tagsToDelete.forEach { tag ->
+                        recipeTagRepository.deleteRecipeTag(tag!!)
+                    }
                 }
                 return true
             } catch (e: Exception) {
@@ -220,5 +252,7 @@ data class AddRecipeViewState(
     val recipe: Recipe? = null,
     val images: List<RecipeImage?> = emptyList(),
     val instructions: List<Instruction?> = emptyList(),
-    val recipeIngredients: List<RecipeIngredient?> = emptyList()
+    val recipeIngredients: List<RecipeIngredient?> = emptyList(),
+    val tags: List<Tag?> = emptyList(),
+    val recipeTags: List<RecipeTag?> = emptyList()
 )

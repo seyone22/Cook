@@ -27,6 +27,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -56,6 +57,7 @@ import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Instruction
 import com.seyone22.cook.data.model.Recipe
 import com.seyone22.cook.data.model.RecipeIngredientDetails
+import com.seyone22.cook.data.model.Tag
 import com.seyone22.cook.data.model.toRecipeIngredient
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
@@ -99,6 +101,7 @@ fun AddRecipeScreen(
             photos = photos + uri
         }
     }
+    var recipeTags by remember { mutableStateOf(listOf<Tag>()) }
 
     Scaffold(topBar = {
         TopAppBar(modifier = Modifier.padding(0.dp),
@@ -129,6 +132,7 @@ fun AddRecipeScreen(
                             photos,
                             instructions,
                             recipeIngredients.map { i -> i.toRecipeIngredient() },
+                            recipeTags,
                             context
                         )
                         navController.popBackStack()
@@ -137,6 +141,14 @@ fun AddRecipeScreen(
     }) {
         LazyColumn(modifier = Modifier.padding(it)) {
             item {
+                var tagsExpanded by remember { mutableStateOf(false) }
+                var tagFilter by remember { mutableStateOf("") }
+                val filteredTags = data.tags.filter {
+                    (it?.name ?: "").contains(
+                        tagFilter, true
+                    )
+                }
+
                 Column(modifier = Modifier.padding(12.dp, 0.dp)) {
                     // Section for Photos
                     Column(
@@ -247,6 +259,67 @@ fun AddRecipeScreen(
                             label = { Text("Reference URL") },
                             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
                         )
+
+                        ExposedDropdownMenuBox(expanded = tagsExpanded, onExpandedChange = {
+                            tagsExpanded = !tagsExpanded
+                        }) {
+                            OutlinedTextField(modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(MenuAnchorType.PrimaryEditable, true)
+                                .clickable(enabled = true) {
+                                    tagsExpanded = true
+                                },
+                                value = tagFilter,
+                                readOnly = false,
+                                onValueChange = { tagFilter = it },
+                                label = { Text("Select a tag") },
+                                singleLine = true,
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = tagsExpanded)
+                                })
+
+                            ExposedDropdownMenu(expanded = tagsExpanded, onDismissRequest = { }) {
+                                if (filteredTags.isNotEmpty()) {
+                                    filteredTags.forEach { tag ->
+                                        tag?.let {
+                                            DropdownMenuItem(text = { Text(tag.name) }, onClick = {
+                                                // Check if the tag is already in the list
+                                                if (!recipeTags.any { it.id == tag.id }) {
+                                                    // Add the new tag if it doesn't exist
+                                                    recipeTags = recipeTags + tag
+                                                }
+                                                tagsExpanded = false
+                                            })
+                                        }
+                                    }
+                                } else {
+                                    DropdownMenuItem(text = { Text("Add $tagFilter to database") },
+                                        onClick = {
+                                            navController.navigate("Add Tag/$tagFilter")
+                                        })
+                                }
+                            }
+                        }
+                        LazyRow {
+                            recipeTags.forEach { tag ->
+                                item(key = tag.id) {
+                                    FilterChip(
+                                        modifier = Modifier.padding(end= 4.dp),
+                                        selected = true,  // Chips are not selected by default
+                                        onClick = {
+                                            // Remove the tag from the list when clicked
+                                            recipeTags = recipeTags.filter { it != tag }
+                                        }, label = {
+                                            Text(text = tag.name)
+                                        }, trailingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,  // Close icon for the chip
+                                                contentDescription = "Remove Tag"
+                                            )
+                                        })
+                                }
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))

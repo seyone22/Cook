@@ -19,8 +19,12 @@ import com.seyone22.cook.data.repository.recipeImage.OfflineRecipeImageRepositor
 import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
 import com.seyone22.cook.data.repository.recipeIngredient.OfflineRecipeIngredientRepository
 import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientRepository
+import com.seyone22.cook.data.repository.recipeTag.OfflineRecipeTagRepository
+import com.seyone22.cook.data.repository.recipeTag.RecipeTagRepository
 import com.seyone22.cook.data.repository.shoppingList.OfflineShoppingListRepository
 import com.seyone22.cook.data.repository.shoppingList.ShoppingListRepository
+import com.seyone22.cook.data.repository.tag.OfflineTagRepository
+import com.seyone22.cook.data.repository.tag.TagRepository
 import kotlinx.coroutines.CoroutineScope
 
 interface AppContainer {
@@ -34,6 +38,8 @@ interface AppContainer {
     val instructionRepository: InstructionRepository
     val recipeIngredientRepository: RecipeIngredientRepository
     val shoppingListRepository: ShoppingListRepository
+    val tagRepository: TagRepository
+    val recipeTagRepository: RecipeTagRepository
 }
 
 /**
@@ -78,5 +84,11 @@ class AppDataContainer(private val context: Context, private val scope: Coroutin
     }
     override val shoppingListRepository: ShoppingListRepository by lazy {
         OfflineShoppingListRepository(CookDatabase.getDatabase(context, scope).shoppingListDao())
+    }
+    override val tagRepository: TagRepository by lazy {
+        OfflineTagRepository(CookDatabase.getDatabase(context, scope).tagDao())
+    }
+    override val recipeTagRepository: RecipeTagRepository by lazy {
+        OfflineRecipeTagRepository(CookDatabase.getDatabase(context, scope).recipeTagDao())
     }
 }

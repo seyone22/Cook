@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.ImportExport
 import androidx.compose.material.icons.outlined.Info
@@ -36,8 +37,7 @@ object MoreDestination : NavigationDestination {
 
 @Composable
 fun MoreScreen(
-    modifier: Modifier = Modifier,
-    navController: NavController
+    modifier: Modifier = Modifier, navController: NavController
 ) {
     Scaffold(
         modifier = Modifier,
@@ -49,26 +49,25 @@ fun MoreScreen(
         Column(
             Modifier.padding(innerPadding)
         ) {
-            SettingsListItem(
-                settingName = "Shopping List",
+            SettingsListItem(settingName = "Shopping List",
                 settingSubtext = "View and edit your shopping list",
                 settingIcon = Icons.Outlined.ShoppingBag,
-                action = { navController.navigate("Shopping List") }
-            )
+                action = { navController.navigate("Shopping List") })
             HorizontalDivider()
-            SettingsListItem(
-                settingName = "Settings",
+            SettingsListItem(settingName = "Settings",
                 settingSubtext = "General application settings",
                 settingIcon = Icons.Outlined.Checklist,
-                action = { navController.navigate("Settings/General") }
-            )
+                action = { navController.navigate("Settings/General") })
 
-            SettingsListItem(
-                settingName = "Data Management",
+            SettingsListItem(settingName = "Data Management",
                 settingSubtext = "Import and Export Data",
                 settingIcon = Icons.Outlined.ImportExport,
-                action = { navController.navigate("Settings/Data") }
-            )
+                action = { navController.navigate("Settings/Data") })
+
+            SettingsListItem(settingName = "Tag Management",
+                settingSubtext = "Add, delete, and manage tags",
+                settingIcon = Icons.Default.BookmarkBorder,
+                action = { navController.navigate("Settings/Tag") })
             /*            SettingsListItem(
                             settingName = "Privacy and Security",
                             settingSubtext = "App lock, Secure Screen",
@@ -81,16 +80,14 @@ fun MoreScreen(
                             settingIcon = Icons.Outlined.ImportExport,
                             action = { navController.navigate("SettingsDetail/ImportExport") }
                         )*/
-            SettingsListItem(
-                settingName = "About",
+            SettingsListItem(settingName = "About",
                 settingSubtext = "${stringResource(id = R.string.app_name)} ${
                     stringResource(
                         id = R.string.app_version
                     )
                 }",
                 settingIcon = Icons.Outlined.Info,
-                action = { navController.navigate("Settings/About") }
-            )
+                action = { navController.navigate("Settings/About") })
         }
     }
 }
@@ -101,7 +98,6 @@ fun SettingsListItem(
     settingName: String,
     settingSubtext: String,
     settingIcon: ImageVector? = null,
-    toggle: Boolean = false,
     action: () -> Unit
 ) {
     ListItem(
@@ -130,31 +126,25 @@ fun SettingsToggleListItem(
     onToggleChange: (Boolean) -> Unit
 ) {
     var tx by remember { mutableStateOf(toggle) }
-    ListItem(
-        modifier = modifier.clickable(onClick = {
+    ListItem(modifier = modifier.clickable(onClick = {
+        tx = !tx
+        onToggleChange(tx)
+    }), headlineContent = { Text(text = settingName) }, supportingContent = {
+        if (settingSubtext != null) {
+            Text(text = settingSubtext)
+        }
+    }, leadingContent = {
+        if (settingIcon != null) {
+            Icon(
+                imageVector = settingIcon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+    }, trailingContent = {
+        Switch(checked = tx, onCheckedChange = {
             tx = !tx
             onToggleChange(tx)
-        }),
-        headlineContent = { Text(text = settingName) },
-        supportingContent = {
-            if (settingSubtext != null) {
-                Text(text = settingSubtext)
-            }
-        },
-        leadingContent = {
-            if (settingIcon != null) {
-                Icon(
-                    imageVector = settingIcon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        },
-        trailingContent = {
-            Switch(checked = tx, onCheckedChange = {
-                tx = !tx
-                onToggleChange(tx)
-            })
-        }
-    )
+        })
+    })
 }

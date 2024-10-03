@@ -27,6 +27,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -57,6 +58,8 @@ import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Instruction
 import com.seyone22.cook.data.model.RecipeImage
 import com.seyone22.cook.data.model.RecipeIngredientDetails
+import com.seyone22.cook.data.model.RecipeTag
+import com.seyone22.cook.data.model.Tag
 import com.seyone22.cook.data.model.toRecipe
 import com.seyone22.cook.data.model.toRecipeDetails
 import com.seyone22.cook.data.model.toRecipeIngredient
@@ -97,6 +100,7 @@ fun EditRecipeScreen(
     var images by remember { mutableStateOf(listOf<RecipeImage>()) }
     var instructions by remember { mutableStateOf(listOf<Instruction>()) }
     var recipeIngredients by remember { mutableStateOf(listOf<RecipeIngredientDetails>()) }
+    var recipeTags by remember { mutableStateOf(listOf<Tag>()) }
 
     // Populate fields with existing data when recipe data is loaded
     LaunchedEffect(dataRecipe) {
@@ -106,6 +110,7 @@ fun EditRecipeScreen(
         images = dataImages.map { i -> i!! }
         instructions = dataInstructions.map { i -> i!! }
         recipeIngredients = dataRecipeIngredients.map { i -> i!!.toRecipeIngredientDetails() }
+        recipeTags = data.recipeTags.mapNotNull { i -> data.tags.find { tag -> tag?.id == i?.tagId }}
     }
 
     // Launcher for selecting images
@@ -141,10 +146,9 @@ fun EditRecipeScreen(
                                 recipeIngredients.map { i ->
                                     i.copy(recipeId = recipeId).toRecipeIngredient()
                                 },
+                                recipeTags,
                                 context
                             )
-
-                            Log.d("TAG", "EditRecipeScreen: $success")
                             if (success) {
                                 navController.popBackStack()
                             }
@@ -155,6 +159,14 @@ fun EditRecipeScreen(
     }) { paddingValues ->
         LazyColumn(modifier = Modifier.padding(paddingValues)) {
             item {
+                var tagsExpanded by remember { mutableStateOf(false) }
+                var tagFilter by remember { mutableStateOf("") }
+                val filteredTags = data.tags.filter {
+                    (it?.name ?: "").contains(
+                        tagFilter, true
+                    )
+                }
+
                 Column(modifier = Modifier.padding(12.dp, 0.dp)) {
                     // Section for Photos
                     Column(
@@ -274,6 +286,67 @@ fun EditRecipeScreen(
                             label = { Text("Reference URL") },
                             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
                         )
+
+                        ExposedDropdownMenuBox(expanded = tagsExpanded, onExpandedChange = {
+                            tagsExpanded = !tagsExpanded
+                        }) {
+                            OutlinedTextField(modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(MenuAnchorType.PrimaryEditable, true)
+                                .clickable(enabled = true) {
+                                    tagsExpanded = true
+                                },
+                                value = tagFilter,
+                                readOnly = false,
+                                onValueChange = { tagFilter = it },
+                                label = { Text("Select a tag") },
+                                singleLine = true,
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = tagsExpanded)
+                                })
+
+                            ExposedDropdownMenu(expanded = tagsExpanded, onDismissRequest = { }) {
+                                if (filteredTags.isNotEmpty()) {
+                                    filteredTags.forEach { tag ->
+                                        tag?.let {
+                                            DropdownMenuItem(text = { Text(tag.name) }, onClick = {
+                                                // Check if the tag is already in the list
+                                                if (!recipeTags.any { it.id == tag.id }) {
+                                                    // Add the new tag if it doesn't exist
+                                                    recipeTags = recipeTags + tag
+                                                }
+                                                tagsExpanded = false
+                                            })
+                                        }
+                                    }
+                                } else {
+                                    DropdownMenuItem(text = { Text("Add $tagFilter to database") },
+                                        onClick = {
+                                            navController.navigate("Add Tag/$tagFilter")
+                                        })
+                                }
+                            }
+                        }
+                        LazyRow {
+                            recipeTags.forEach { tag ->
+                                item(key = tag.id) {
+                                    FilterChip(
+                                        modifier = Modifier.padding(end= 4.dp),
+                                        selected = true,  // Chips are not selected by default
+                                        onClick = {
+                                            // Remove the tag from the list when clicked
+                                            recipeTags = recipeTags.filter { it != tag }
+                                        }, label = {
+                                            Text(text = tag.name)
+                                        }, trailingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,  // Close icon for the chip
+                                                contentDescription = "Remove Tag"
+                                            )
+                                        })
+                                }
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -331,8 +404,7 @@ fun EditRecipeScreen(
 
                                         ExposedDropdownMenu(
                                             expanded = ingredientExpanded,
-                                            onDismissRequest = { }
-                                        ) {
+                                            onDismissRequest = { }) {
                                             if (filteredIngredients.isNotEmpty()) {
                                                 filteredIngredients.forEach { ingredient ->
                                                     ingredient?.let {
