@@ -1,6 +1,7 @@
 package com.seyone22.cook.ui.screen.home
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,13 +14,14 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -27,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -65,7 +68,7 @@ fun HomeScreen(
     val homeViewState by viewModel.homeViewState.collectAsState()
 
     val recipes = homeViewState.recipes
-    var filteredRecipes by remember{ mutableStateOf(homeViewState.recipes) }
+    var filteredRecipes by remember { mutableStateOf(homeViewState.recipes) }
     val images = homeViewState.images
 
     LaunchedEffect(homeViewState) {
@@ -76,7 +79,10 @@ fun HomeScreen(
 
     Scaffold(topBar = {
         CookTopBar(
-            navController = navController, currentActivity = "search", recipeList = recipes, setOverlayStatus = setOverlayStatus
+            navController = navController,
+            currentActivity = "search",
+            recipeList = recipes,
+            setOverlayStatus = setOverlayStatus
         )
     }) {
         it
@@ -88,7 +94,7 @@ fun HomeScreen(
             LazyRow {
                 homeViewState.tags.forEach {
                     item {
-                        var isSelected by remember{ mutableStateOf(false) }
+                        var isSelected by remember { mutableStateOf(false) }
                         FilterChip(
                             modifier = Modifier.padding(start = 8.dp),
                             selected = isSelected,  // Chips are not selected by default
@@ -103,7 +109,7 @@ fun HomeScreen(
                                     filters - it!!  // Remove deselected tag from filters
                                 }
 
-                                if(filters.isNotEmpty()) {
+                                if (filters.isNotEmpty()) {
                                     // Now filter recipes based on the selected tags
                                     filteredRecipes = recipes.filter { recipe ->
                                         // Get all tags associated with this recipe (from recipeTags relation)
@@ -136,17 +142,25 @@ fun HomeScreen(
                     }
                 }
             }
-            LazyVerticalStaggeredGrid(modifier = Modifier
-                .padding(8.dp, 0.dp)
-                .fillMaxHeight(),
-                columns = StaggeredGridCells.Adaptive(minSize = 240.dp),
-                content = {
-                    items(count = filteredRecipes.size, itemContent = {
-                        RecipeItem(recipe = filteredRecipes[it]!!,
-                            image = images.find { img -> img!!.recipeId == filteredRecipes[it]!!.id },
-                            modifier = Modifier.clickable { navController.navigate("${RecipeDetailDestination.route}/${filteredRecipes[it]?.id}") })
+            if (filteredRecipes.isNotEmpty()) {
+                LazyVerticalStaggeredGrid(modifier = Modifier
+                    .padding(8.dp, 0.dp)
+                    .fillMaxHeight(),
+                    columns = StaggeredGridCells.Adaptive(minSize = 240.dp),
+                    content = {
+                        items(count = filteredRecipes.size, itemContent = {
+                            RecipeItem(recipe = filteredRecipes[it]!!,
+                                image = images.find { img -> img!!.recipeId == filteredRecipes[it]!!.id },
+                                modifier = Modifier.clickable { navController.navigate("${RecipeDetailDestination.route}/${filteredRecipes[it]?.id}") })
+                        })
                     })
-                })
+            } else {
+                Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                    TextButton(onClick = { navController.navigate("Settings/Data") }) {
+                        Text(text = "Import Recipe")
+                    }
+                }
+            }
         }
     }
 }
