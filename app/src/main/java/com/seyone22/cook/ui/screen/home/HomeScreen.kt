@@ -17,7 +17,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -82,6 +81,8 @@ fun HomeScreen(
             navController = navController,
             currentActivity = "search",
             recipeList = recipes,
+            tagList = homeViewState.tags,
+            recipeTags = homeViewState.recipeTags,
             setOverlayStatus = setOverlayStatus
         )
     }) {
@@ -92,53 +93,53 @@ fun HomeScreen(
                 .padding(top = 72.dp)
         ) {
             LazyRow {
-                homeViewState.tags.forEach {
-                    item {
-                        var isSelected by remember { mutableStateOf(false) }
-                        FilterChip(
-                            modifier = Modifier.padding(start = 8.dp),
-                            selected = isSelected,  // Chips are not selected by default
-                            onClick = {
-                                // Toggle selection
-                                isSelected = !isSelected
+                homeViewState.tags.forEach { tag ->
+                    if (homeViewState.recipeTags.any { t -> t?.tagId == tag?.id }) {
+                        item {
+                            var isSelected by remember { mutableStateOf(false) }
+                            FilterChip(modifier = Modifier.padding(start = 8.dp),
+                                selected = isSelected,  // Chips are not selected by default
+                                onClick = {
+                                    // Toggle selection
+                                    isSelected = !isSelected
 
-                                // Update filters list: Add tag if selected, remove if deselected
-                                filters = if (isSelected) {
-                                    filters + it!!  // Add selected tag to filters
-                                } else {
-                                    filters - it!!  // Remove deselected tag from filters
-                                }
-
-                                if (filters.isNotEmpty()) {
-                                    // Now filter recipes based on the selected tags
-                                    filteredRecipes = recipes.filter { recipe ->
-                                        // Get all tags associated with this recipe (from recipeTags relation)
-                                        val recipeTagIds = homeViewState.recipeTags
-                                            .filter { recipeTag -> recipeTag?.recipeId == recipe?.id }
-                                            .map { recipeTag -> recipeTag?.tagId }
-
-                                        // Check if any of the recipe's tags match the selected filters
-                                        recipeTagIds.any { tagId ->
-                                            filters.any { filterTag -> filterTag.id == tagId }
-                                        }
+                                    // Update filters list: Add tag if selected, remove if deselected
+                                    filters = if (isSelected) {
+                                        filters + tag!!  // Add selected tag to filters
+                                    } else {
+                                        filters - tag!!  // Remove deselected tag from filters
                                     }
-                                } else {
-                                    filteredRecipes = homeViewState.recipes
-                                }
-                            },
-                            label = {
-                                Text(text = it?.name ?: "")
-                            },
-                            trailingIcon = {
-                                if (isSelected) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,  // Close icon for the chip
-                                        contentDescription = "Remove Tag"
-                                    )
-                                }
-                            }
-                        )
 
+                                    if (filters.isNotEmpty()) {
+                                        // Now filter recipes based on the selected tags
+                                        filteredRecipes = recipes.filter { recipe ->
+                                            // Get all tags associated with this recipe (from recipeTags relation)
+                                            val recipeTagIds =
+                                                homeViewState.recipeTags.filter { recipeTag -> recipeTag?.recipeId == recipe?.id }
+                                                    .map { recipeTag -> recipeTag?.tagId }
+
+                                            // Check if any of the recipe's tags match the selected filters
+                                            recipeTagIds.any { tagId ->
+                                                filters.any { filterTag -> filterTag.id == tagId }
+                                            }
+                                        }
+                                    } else {
+                                        filteredRecipes = homeViewState.recipes
+                                    }
+                                },
+                                label = {
+                                    Text(text = tag?.name ?: "")
+                                },
+                                trailingIcon = {
+                                    if (isSelected) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,  // Close icon for the chip
+                                            contentDescription = "Remove Tag"
+                                        )
+                                    }
+                                })
+
+                        }
                     }
                 }
             }
@@ -155,7 +156,11 @@ fun HomeScreen(
                         })
                     })
             } else {
-                Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     TextButton(onClick = { navController.navigate("Settings/Data") }) {
                         Text(text = "Import Recipe")
                     }

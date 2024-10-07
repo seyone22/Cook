@@ -4,6 +4,8 @@ plugins {
 
     id("com.google.devtools.ksp")
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.21"
+
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -135,4 +137,6 @@ dependencies {
     implementation(libs.accompanist.permissions)
 
     implementation(libs.coil.compose)
+
+    implementation(platform(libs.firebase.bom))
 }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "662029970133",
+    "project_id": "cook-2bde1",
+    "storage_bucket": "cook-2bde1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:662029970133:android:ca1d85ca66d101b447505c",
+        "android_client_info": {
+          "package_name": "com.seyone22.cook"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzKEIVrmGGlj6N1vmmlmQu2TpwjNv2DfA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
