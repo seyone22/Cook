@@ -10,12 +10,12 @@ plugins {
 
 android {
     namespace = "com.seyone22.cook"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.seyone22.cook"
         minSdk = 30
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 4
         versionName = "Cook v4.0.0-beta2"
 
@@ -73,6 +73,8 @@ dependencies {
 
     // AndroidX Compose Material3
     implementation(libs.androidx.material3)
+    implementation(libs.material)
+    implementation(libs.androidx.security.crypto.ktx)
 
     // JUnit
     testImplementation(libs.junit)
@@ -125,7 +127,6 @@ dependencies {
 
     // For `compose`. Creates a `ChartStyle` based on an M3 Material Theme.
     implementation(libs.vico.compose.m3)
-    implementation(libs.vico.compose.m3.alpha)
 
     // Workers
     implementation(libs.androidx.work.runtime.ktx)
@@ -138,5 +139,10 @@ dependencies {
 
     implementation(libs.coil.compose)
 
-    implementation(platform(libs.firebase.bom))
+    implementation(project(":atproto-auth2"))
+
+
+    implementation("io.ktor:ktor-client-android:2.0.0") // For Android-specific support
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.3")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.3")
 }
