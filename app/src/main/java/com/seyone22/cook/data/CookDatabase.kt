@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [Ingredient::class, IngredientVariant::class, IngredientImage::class, RecipeImage::class, Measure::class, MeasureConversion::class, Recipe::class, Instruction::class, RecipeIngredient::class, ShoppingList::class, ShoppingListItem::class, Tag::class, RecipeTag::class],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 abstract class CookDatabase : RoomDatabase() {
@@ -62,6 +62,7 @@ abstract class CookDatabase : RoomDatabase() {
         fun getDatabase(context: Context, scope: CoroutineScope): CookDatabase {
             return Instance ?: synchronized(this) {
                 Room.databaseBuilder(context, CookDatabase::class.java, "cook_database")
+                    .fallbackToDestructiveMigration()
                     .addMigrations(MIGRATION_1_2).addMigrations(MIGRATION_2_3)
                     .addMigrations(MIGRATION_1_3)
                     .addMigrations(MIGRATION_3_4)
