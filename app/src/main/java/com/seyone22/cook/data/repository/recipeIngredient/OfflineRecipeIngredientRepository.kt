@@ -27,6 +27,6 @@ class OfflineRecipeIngredientRepository(private val recipeIngredientDao: RecipeI
     override suspend fun deleteIngredientsForRecipe(recipeId: UUID) =
         recipeIngredientDao.deleteIngredientsForRecipe(recipeId)
 
-    override suspend fun ingredientIsUsed(ingredientId: Int): Int =
+    override suspend fun ingredientIsUsed(ingredientId: UUID): Int =
         recipeIngredientDao.ingredientIsUsed(ingredientId)
 }

@@ -2,11 +2,17 @@ package com.seyone22.cook.data.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.seyone22.cook.helper.UuidSerializer
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
+import java.util.UUID
 
 @Entity(tableName = "ingredient_variants")
 data class IngredientVariant(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val ingredientId: Long,
+    @Contextual
+    @Serializable(with = UuidSerializer::class)
+    val ingredientId: UUID,
     val variantName: String,
     val brand: String?,
     val type: String?,
@@ -17,7 +23,7 @@ data class IngredientVariant(
 
 data class IngredientVariantDetails(
     val id: Long = 0,
-    val ingredientId: Long = 0,
+    val ingredientId: UUID = UUID.randomUUID(),
     val variantName: String = "",
     val brand: String = "",
     val type: String = "",

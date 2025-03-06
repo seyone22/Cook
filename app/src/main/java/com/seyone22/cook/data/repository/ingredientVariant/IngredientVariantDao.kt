@@ -8,6 +8,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.seyone22.cook.data.model.IngredientVariant
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 @Dao
 interface IngredientVariantDao {
@@ -32,7 +33,7 @@ interface IngredientVariantDao {
                 "   WHERE ingredientId = :ingredientId" +
                 "   ORDER BY variantName ASC"
     )
-    fun getVariantsForIngredient(ingredientId: Int): Flow<List<IngredientVariant>>
+    fun getVariantsForIngredient(ingredientId: UUID): Flow<List<IngredientVariant>>
 
     @Query(
         "SELECT * FROM ingredient_variants" +

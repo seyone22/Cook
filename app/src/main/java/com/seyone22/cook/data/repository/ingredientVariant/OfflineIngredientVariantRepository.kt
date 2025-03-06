@@ -2,6 +2,7 @@ package com.seyone22.cook.data.repository.ingredientVariant
 
 import com.seyone22.cook.data.model.IngredientVariant
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 class OfflineIngredientVariantRepository(private val ingredientVariantDao: IngredientVariantDao) :
     IngredientVariantRepository {
@@ -17,7 +18,7 @@ class OfflineIngredientVariantRepository(private val ingredientVariantDao: Ingre
     override suspend fun getVariantById(id: Int): Flow<IngredientVariant?> =
         ingredientVariantDao.getVariantById(id)
 
-    override suspend fun getVariantsForIngredient(ingredientId: Int): Flow<List<IngredientVariant?>> =
+    override suspend fun getVariantsForIngredient(ingredientId: UUID): Flow<List<IngredientVariant?>> =
         ingredientVariantDao.getVariantsForIngredient(ingredientId)
 
     override suspend fun getAllIngredientVariants(): Flow<List<IngredientVariant?>> =
