@@ -8,11 +8,12 @@ import androidx.room.Query
 import androidx.room.Update
 import com.seyone22.cook.data.model.Ingredient
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 @Dao
 interface IngredientDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insert(ingredient: Ingredient): Long
+    suspend fun insert(ingredient: Ingredient)
 
     @Update
     suspend fun update(ingredient: Ingredient)
@@ -25,7 +26,7 @@ interface IngredientDao {
                 "   WHERE id = :ingredientId" +
                 "   ORDER BY nameEn ASC"
     )
-    fun getIngredientById(ingredientId: Int): Flow<Ingredient>
+    fun getIngredientById(ingredientId: UUID): Flow<Ingredient>
 
     @Query(
         "SELECT * FROM ingredients" +
