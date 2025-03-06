@@ -23,7 +23,9 @@ data class RecipeIngredient(
     @Contextual
     @Serializable(with = UuidSerializer::class)
     val recipeId: UUID,
-    val ingredientId: Long,
+    @Contextual
+    @Serializable(with = UuidSerializer::class)
+    val ingredientId: UUID,
     val quantity: Double,
     val measureId: Long
 )
@@ -31,7 +33,7 @@ data class RecipeIngredient(
 data class RecipeIngredientDetails(
     val id: Long = 0,
     val recipeId: UUID,
-    val ingredientId: Long,
+    val ingredientId: UUID,
     val quantity: String,
     val measureId: Long
 )
