@@ -359,7 +359,7 @@ fun EditRecipeScreen(
 
                         var ingredientFilter by remember {
                             mutableStateOf(
-                                data.ingredients.find { m -> m?.id?.toInt() == recipeIngredient.ingredientId.toInt() }?.nameEn
+                                data.ingredients.find { m -> m?.id == recipeIngredient.ingredientId }?.nameEn
                                     ?: ""
                             )
                         }
@@ -522,7 +522,7 @@ fun EditRecipeScreen(
 
                     TextButton(onClick = {
                         recipeIngredients = recipeIngredients + RecipeIngredientDetails(
-                            ingredientId = -1,
+                            ingredientId = UUID.randomUUID(),
                             measureId = -1,
                             quantity = "",
                             recipeId = UUID.randomUUID()

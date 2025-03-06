@@ -65,6 +65,7 @@ import com.seyone22.cook.helper.ImageStorageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 object EditIngredientDestination : NavigationDestination {
     override val route = "Edit Ingredient"
@@ -75,7 +76,7 @@ object EditIngredientDestination : NavigationDestination {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditIngredientScreen(
-    ingredientId: Long,
+    ingredientId: UUID,
     viewModel: IngredientOperationsViewModel = viewModel(factory = AppViewModelProvider.Factory),
     navController: NavController,
 ) {
