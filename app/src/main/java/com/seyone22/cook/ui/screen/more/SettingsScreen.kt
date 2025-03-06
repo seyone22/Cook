@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -44,6 +45,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.seyone22.cook.R
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
+import com.seyone22.cook.ui.screen.home.HomeDestination
 import kotlinx.coroutines.CoroutineScope
 
 object SettingsDestination : NavigationDestination {
@@ -85,6 +87,13 @@ fun SettingsDetailScreen(
             when (backStackEntry) {
                 "General" -> {
                     GeneralSettingsList(viewModel = viewModel)
+                }
+
+                "Account" -> {
+                    AccountSettingsList(
+                        viewModel = viewModel,
+                        navigateToScreen = navigateToScreen,
+                    )
                 }
 
                 "Data" -> {
@@ -191,7 +200,8 @@ fun GeneralSettingsList(
     viewModel: MoreViewModel, scope: CoroutineScope = rememberCoroutineScope()
 ) {
     Column {
-        SettingsToggleListItem(settingName = "Require Unlock",
+        SettingsToggleListItem(
+            settingName = "Require Unlock",
             toggle = false,
             onToggleChange = { newValue ->
 
@@ -214,19 +224,17 @@ fun DataSettingsList(
     viewModel: MoreViewModel,
     scope: CoroutineScope = rememberCoroutineScope(),
     context: Context = LocalContext.current,
-    activity: Activity = LocalContext.current as Activity
 ) {
     val filePickerLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
             uri?.let {
                 // Handle the selected file URI here
-                viewModel.importRecipe(activity, it)
+                viewModel.importRecipe(context, it)
             }
         }
 
     Column {
-        SettingsListItem(
-            settingName = "Import a recipe",
+        SettingsListItem(settingName = "Import a recipe",
             settingSubtext = "Import from .recipe file",
             action = {
                 val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
@@ -239,11 +247,50 @@ fun DataSettingsList(
 }
 
 @Composable
+fun AccountSettingsList(
+    viewModel: MoreViewModel,
+    scope: CoroutineScope = rememberCoroutineScope(),
+    context: Context = LocalContext.current,
+    navigateToScreen: (screen: String) -> Unit,
+) {
+
+    Column {
+        if (true) {
+            // Show "Create Account" and "Login" options only when no user is logged in
+            SettingsListItem(settingName = "Create Cook Account",
+                settingSubtext = "If you haven't already, create an account to join shared groups",
+                action = {
+                    navigateToScreen("Register")  // Navigate to Register screen
+                })
+            SettingsListItem(settingName = "Login",
+                settingSubtext = "Login to access your shared groups and recipes",
+                action = {
+                    navigateToScreen("Login")  // Navigate to Login screen
+                })
+        } else {
+            // Show logged-in user's email and "Logout" option
+            SettingsListItem(settingName = "Account",
+                settingSubtext = "Logged in as ",
+                action = { /* No action, just display user info */ })
+            SettingsListItem(settingName = "Logout",
+                settingSubtext = "Tap here to log out",
+                action = {
+                    navigateToScreen(HomeDestination.route)  // Navigate back to home after logging out
+                })
+            SettingsListItem(settingName = "Change Password",
+                settingSubtext = "Tap here to change your password",
+                action = {
+                    navigateToScreen("ChangePassword")  // Navigate to Change Password screen
+                })
+        }
+    }
+}
+
+@Composable
 fun TagSettingsList(
     viewModel: MoreViewModel,
     scope: CoroutineScope = rememberCoroutineScope(),
     context: Context = LocalContext.current,
-    activity: Activity = LocalContext.current as Activity
 ) {
     viewModel.fetchTags()
     val tagsViewState by viewModel.moreViewState.collectAsState()
