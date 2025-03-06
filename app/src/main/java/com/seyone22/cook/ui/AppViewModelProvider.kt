@@ -11,6 +11,7 @@ import com.seyone22.cook.ui.screen.crud.recipe.RecipeOperationsViewModel
 import com.seyone22.cook.ui.screen.home.HomeViewModel
 import com.seyone22.cook.ui.screen.ingredients.IngredientsViewModel
 import com.seyone22.cook.ui.screen.more.MoreViewModel
+import com.seyone22.cook.ui.screen.more.account.AuthViewModel
 import com.seyone22.cook.ui.screen.shoppingList.ShoppingListViewModel
 
 object AppViewModelProvider {
@@ -91,6 +92,9 @@ object AppViewModelProvider {
                 ingredientVariantRepository = cookApplication().container.ingredientVariantRepository,
                 shoppingListRepository = cookApplication().container.shoppingListRepository
             )
+        }
+        initializer {
+            AuthViewModel()
         }
     }
 }
