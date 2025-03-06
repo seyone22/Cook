@@ -46,5 +46,5 @@ interface RecipeIngredientDao {
 
     // Query to check if ingredient is used by any recipes
     @Query("SELECT COUNT(*) FROM recipe_ingredients WHERE ingredientId = :ingredientId")
-    suspend fun ingredientIsUsed(ingredientId: Int): Int
+    suspend fun ingredientIsUsed(ingredientId: UUID): Int
 }
