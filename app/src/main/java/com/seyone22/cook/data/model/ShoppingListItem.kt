@@ -3,6 +3,10 @@ package com.seyone22.cook.data.model
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import com.seyone22.cook.helper.UuidSerializer
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
+import java.util.UUID
 
 @Entity(
     tableName = "shopping_list_items",
@@ -16,7 +20,9 @@ import androidx.room.PrimaryKey
 data class ShoppingListItem(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val shoppingListId: Long,
-    val ingredientId: Long,
+    @Serializable(with = UuidSerializer::class)
+    @Contextual
+    val ingredientId: UUID,
     val quantity: Double,
     val measureId: Long,
     val checked: Boolean = false
@@ -25,7 +31,7 @@ data class ShoppingListItem(
 data class ShoppingListItemDetails(
     val id: Long = 0,
     val shoppingListId: Long = -1,
-    val ingredientId: Long = -1,
+    val ingredientId: UUID = UUID.randomUUID(),
     val quantity: String = "",
     val measureId: Long = -1,
     val checked: Boolean = false
