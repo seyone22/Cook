@@ -5,19 +5,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -30,19 +25,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.seyone22.cook.R
-import com.seyone22.cook.data.model.Recipe
-import com.seyone22.cook.data.model.RecipeImage
 import com.seyone22.cook.data.model.Tag
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.common.CookTopBar
 import com.seyone22.cook.ui.navigation.NavigationDestination
+import com.seyone22.cook.ui.screen.home.composables.RecipeCard
 import com.seyone22.cook.ui.screen.home.detail.RecipeDetailDestination
 
 object HomeDestination : NavigationDestination {
@@ -86,19 +77,20 @@ fun HomeScreen(
             setOverlayStatus = setOverlayStatus
         )
     }) {
-        it
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .padding(top = 72.dp)
+                .padding(it)
+                .padding(16.dp, 0.dp),
         ) {
-            LazyRow {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 homeViewState.tags.forEach { tag ->
                     if (homeViewState.recipeTags.any { t -> t?.tagId == tag?.id }) {
                         item {
                             var isSelected by remember { mutableStateOf(false) }
-                            FilterChip(modifier = Modifier.padding(start = 8.dp),
-                                selected = isSelected,  // Chips are not selected by default
+                            FilterChip(selected = isSelected,  // Chips are not selected by default
                                 onClick = {
                                     // Toggle selection
                                     isSelected = !isSelected
@@ -126,11 +118,9 @@ fun HomeScreen(
                                     } else {
                                         filteredRecipes = homeViewState.recipes
                                     }
-                                },
-                                label = {
+                                }, label = {
                                     Text(text = tag?.name ?: "")
-                                },
-                                trailingIcon = {
+                                }, trailingIcon = {
                                     if (isSelected) {
                                         Icon(
                                             imageVector = Icons.Default.Close,  // Close icon for the chip
@@ -144,13 +134,12 @@ fun HomeScreen(
                 }
             }
             if (filteredRecipes.isNotEmpty()) {
-                LazyVerticalStaggeredGrid(modifier = Modifier
-                    .padding(8.dp, 0.dp)
-                    .fillMaxHeight(),
+                LazyVerticalStaggeredGrid(modifier = Modifier.fillMaxHeight(),
+                    verticalItemSpacing = 16.dp,
                     columns = StaggeredGridCells.Adaptive(minSize = 240.dp),
                     content = {
                         items(count = filteredRecipes.size, itemContent = {
-                            RecipeItem(recipe = filteredRecipes[it]!!,
+                            RecipeCard(recipe = filteredRecipes[it]!!,
                                 image = images.find { img -> img!!.recipeId == filteredRecipes[it]!!.id },
                                 modifier = Modifier.clickable { navController.navigate("${RecipeDetailDestination.route}/${filteredRecipes[it]?.id}") })
                         })
@@ -166,41 +155,6 @@ fun HomeScreen(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun RecipeItem(modifier: Modifier, recipe: Recipe, image: RecipeImage?) {
-    OutlinedCard(
-        modifier = modifier
-            .padding(bottom = 12.dp)
-            .fillMaxWidth()
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            if (image != null) {
-                AsyncImage(
-                    model = image.imagePath,
-                    contentScale = ContentScale.Crop,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(216.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                )
-            }
-            Text(
-                text = recipe.name,
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(16.dp, 8.dp, 16.dp, 0.dp),
-            )
-            Text(
-                text = recipe.description ?: "",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(16.dp, 0.dp, 16.dp, 16.dp),
-            )
         }
     }
 }

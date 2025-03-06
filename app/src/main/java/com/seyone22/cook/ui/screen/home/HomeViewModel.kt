@@ -84,7 +84,7 @@ class HomeViewModel(
             ingredients.forEach { ingredient ->
                 shoppingListRepository.insertItem(
                     ShoppingListItem(
-                        ingredientId = (ingredient?.ingredientId?.toInt() ?: 0).toLong(),
+                        ingredientId = (ingredient?.ingredientId ?: UUID.randomUUID()),
                         quantity = ingredient?.quantity ?: 0.0,
                         measureId = (ingredient?.measureId?.toInt() ?: 0).toLong(),
                         shoppingListId = it
