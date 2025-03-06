@@ -35,6 +35,12 @@ import com.seyone22.cook.ui.screen.more.MoreDestination
 import com.seyone22.cook.ui.screen.more.MoreScreen
 import com.seyone22.cook.ui.screen.more.SettingsDestination
 import com.seyone22.cook.ui.screen.more.SettingsDetailScreen
+import com.seyone22.cook.ui.screen.more.account.ChangePasswordDestination
+import com.seyone22.cook.ui.screen.more.account.ChangePasswordScreen
+import com.seyone22.cook.ui.screen.more.account.LoginDestination
+import com.seyone22.cook.ui.screen.more.account.LoginScreen
+import com.seyone22.cook.ui.screen.more.account.RegisterDestination
+import com.seyone22.cook.ui.screen.more.account.RegisterScreen
 import com.seyone22.cook.ui.screen.shoppingList.ShoppingListDestination
 import com.seyone22.cook.ui.screen.shoppingList.ShoppingListScreen
 import com.seyone22.cook.ui.screen.shoppingList.detail.ShoppingListDetailDestination
@@ -65,14 +71,12 @@ fun CookNavHost(
         }
         composable(route = IngredientsDestination.route) {
             IngredientsScreen(
-                modifier = modifier.padding(innerPadding),
-                navController = navController
+                modifier = modifier.padding(innerPadding), navController = navController
             )
         }
         composable(route = MoreDestination.route) {
             MoreScreen(
-                modifier = modifier.padding(innerPadding),
-                navController = navController
+                modifier = modifier.padding(innerPadding), navController = navController
             )
         }
 
@@ -86,8 +90,7 @@ fun CookNavHost(
         composable(route = "${AddIngredientDestination.route}/{ingredientName}") { backStackEntry ->
             val ingredientName = backStackEntry.arguments?.getString("ingredientName") ?: ""
             AddIngredientScreen(
-                navController = navController,
-                ingredientName = ingredientName
+                navController = navController, ingredientName = ingredientName
             )
         }
 
@@ -97,7 +100,7 @@ fun CookNavHost(
         ) {
             EditIngredientScreen(
                 navController = navController,
-                ingredientId = (it.arguments?.getString("id") ?: "-1").toLong()
+                ingredientId = (UUID.fromString(it.arguments?.getString("id")))
             )
         }
         composable(route = AddRecipeDestination.route) {
@@ -150,8 +153,7 @@ fun CookNavHost(
             route = ShoppingListDestination.route,
         ) {
             ShoppingListScreen(
-                navController = navController,
-                modifier = modifier.padding(innerPadding)
+                navController = navController, modifier = modifier.padding(innerPadding)
             )
         }
         composable(
@@ -172,6 +174,28 @@ fun CookNavHost(
                 navigateToScreen = { screen -> navController.navigate(screen) },
                 navigateBack = { navController.popBackStack() },
                 backStackEntry = it.arguments?.getString("setting") ?: "-1",
+            )
+        }
+
+        composable(
+            route = RegisterDestination.route,
+        ) {
+            RegisterScreen(onRegisterSuccess = { navController.popBackStack() })
+        }
+
+        composable(
+            route = LoginDestination.route,
+        ) {
+            LoginScreen(
+                navController = navController
+            )
+        }
+
+        composable(
+            route = ChangePasswordDestination.route,
+        ) {
+            ChangePasswordScreen(
+                navController = navController
             )
         }
     }
