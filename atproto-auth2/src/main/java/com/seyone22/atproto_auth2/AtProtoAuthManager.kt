@@ -1,102 +1,114 @@
 package com.seyone22.atproto_auth2
 
+import android.util.Log
+import com.seyone22.atproto_auth2.data.AuthServerResponse
 import com.seyone22.atproto_auth2.utils.PkceUtils
-import io.ktor.client.HttpClient
+import com.seyone22.atproto_auth2.utils.createDPoPJWT
+import com.seyone22.atproto_auth2.utils.generateKeyPair
+import io.ktor.client.call.body
+import io.ktor.client.request.headers
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
-import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
 import io.ktor.http.contentType
+import io.ktor.http.formUrlEncode
+import java.security.interfaces.ECPrivateKey
+import java.security.interfaces.ECPublicKey
 
 class AtProtoAuthManager(
-    private val client: HttpClient, // HttpClient to make network requests
-    private val metadataUrl: String // URL of the client metadata JSON file
+    private val metadataUrl: String = "https://seyone22.github.io/cook-oauth-metadata/client-metadata.json", // URL of the client metadata JSON file
+    private val userHandle: String
 ) {
+    private var dpop_nonce: String? = null
+    private var client_id: String? = null
+    private var userTokenEndpoint: String? = null
+    private var redirectURI: String? = null
 
-    suspend fun startAuthFlow(): Pair<String, String> {
-        // Step 1: Fetch and parse client metadata from the provided URL
+    // Generated values
+    val state = PkceUtils.generateState() // Generate a unique state value
+    val codeVerifier = PkceUtils.generateCodeVerifier() // Generate a code verifier
+    val codeChallenge =
+        PkceUtils.generateCodeChallenge(codeVerifier) // Generate code challenge based on code verifier
+
+    suspend fun fetchRedirectURI(): String {
+        // STAGE 1: Fetch Data
+        // 1: Get Client Metadata
         val clientMetadata = fetchClientMetadata(metadataUrl)
+        client_id = clientMetadata.client_id;
+        redirectURI = clientMetadata.redirect_uris.first()
 
-        // Step 2: Extract necessary fields from the metadata
-        val clientId = clientMetadata.client_id
-        val redirectUri = clientMetadata.redirect_uris.firstOrNull()
-            ?: throw Exception("No redirect URI found in client metadata")
+        // 2. Get User's DID
+        val userDID = fetchDIDFromHandle(userHandle, "https://bsky.social");
 
-        // Step 3: Continue with the OAuth flow using clientId and redirectUri
-        return initiateAuthorizationRequest(clientId, redirectUri)
+        // 3. Get User's DID document
+        val didDocument = fetchDIDDocument(userDID!!);
+
+        // 4. Get PDS Metadata
+        val pdsMetadata = fetchPDSMetadata(didDocument!!.service[0].serviceEndpoint);
+
+        // 5. Fetch Authorization Server Metadata (need authorization_endpoint, token_endpoint, pushed_authorization_request_endpoint)
+        val oAuthServerMetadata = fetchOAuthServerMetadata(pdsMetadata!!.authorizationServers[0]);
+        userTokenEndpoint = oAuthServerMetadata!!.tokenEndpoint;
+
+        // STAGE 2: AUTHENTICATION
+        // 6: Send the PAR Request
+        val (requestUri, _nonce) = initiatePARRequest(
+            pushedAuthorizationRequestEndpoint = oAuthServerMetadata!!.pushedAuthorizationRequestEndpoint,
+            codeChallengeMethod = oAuthServerMetadata.CodeChallengeMethodsSupported[0],
+            scope = "atproto transition:generic",
+            clientId = clientMetadata.client_id,
+            redirectUri = redirectURI!!,
+            loginHint = userHandle,
+            state = state,
+            codeChallenge = codeChallenge
+        )
+        dpop_nonce = _nonce;
+
+        // 7: User Authentication
+        // of the form https://bsky.social/oauth/authorize?client_id=https://oauthbluesky.onrender.com/oauth/client-metadata.json&request_uri=urn:ietf:params:oauth:request_uri:req-34rcew23e
+        val redirectURI = buildRedirectURL(
+            authorizationEndpoint = oAuthServerMetadata.authorizationEndpoint,
+            clientId = clientMetadata.client_id,
+            requestUri = requestUri
+        )
+        return redirectURI;
     }
 
+    suspend fun requestTokenDPoP(
+        receivedCode: String,
+    ) {
+        Log.d("TAG", "requestTokenDPoP: Got to here!")
 
-    private suspend fun initiateAuthorizationRequest(
-        clientId: String, redirectUri: String
-    ): Pair<String, String> {
-        val state = PkceUtils.generateState() // Generate a unique state value
-        val codeVerifier = PkceUtils.generateCodeVerifier() // Generate a code verifier
-        val codeChallenge =
-            PkceUtils.generateCodeChallenge(codeVerifier) // Generate code challenge based on code verifier
+        val keyPair = generateKeyPair()
+        Log.d("TAG", "requestTokenDPoP: Got to here middle!")
+        val dpopProof = createDPoPJWT(
+            privateKey = keyPair.private as ECPrivateKey,
+            publicKey = keyPair.public as ECPublicKey,
+            htu = userTokenEndpoint!!,
+            dpopNonce = dpop_nonce!!
+        )
 
-        // Step 4: Request authorization from Bluesky's Authorization Server
-        val response: HttpResponse = client.post("https://bsky.social/oauth/par") {
+        Log.d("TAG", "requestTokenDPoP: Got to here 2!")
+
+        val response: AuthServerResponse = client.post(userTokenEndpoint!!) {
             contentType(ContentType.Application.FormUrlEncoded)
-            setBody(Parameters.build {
-                append("response_type", "code")
-                append("code_challenge_method", "S256")
-                append("scope", "atproto transition:generic")
-                append("client_id", clientId)
-                append("redirect_uri", redirectUri)
-                append("code_challenge", codeChallenge)
-                append("state", state)
-            })
-        }
-
-        if (response.status == HttpStatusCode.Created) {
-            val json = response.bodyAsText()
-            val requestUri = extractJsonValue(json, "request_uri")
-            val nonce = response.headers["DPoP-Nonce"] ?: ""
-
-            // Return the request URI and nonce for further processing
-            if (requestUri !== null) {
-                return requestUri to nonce
-            } else {
-                throw Exception("Request URI is null")
+            headers {
+                append("DPOP", dpopProof)
+                append("DPoP-Nonce", dpop_nonce!!)
             }
-        } else {
-            throw Exception("Failed to initiate authorization request: ${response.status}")
-        }
-    }
+            setBody(
+                Parameters.build {
+                    append("grant_type", "authorization_code")
+                    append("client_id", client_id!!)
+                    append("redirect_uri", redirectURI!!)
+                    append("code", receivedCode)
+                    append("code_verifier", codeVerifier)
+                }.formUrlEncode()
+            )
+        }.body()
 
-    private fun extractJsonValue(json: String, key: String): String? {
-        return Regex("\"$key\":\"(.*?)\"").find(json)?.groups?.get(1)?.value
-    }
+        Log.d("TAG", "requestTokenDPoP: $response");
 
-    suspend fun handleAuthorizationCallback(code: String, state: String): String {
-        val clientMetadata = fetchClientMetadata(metadataUrl)
-
-        // Step 5: Handle the callback and exchange authorization code for an access token
-        val response: HttpResponse = client.post("https://bsky.social/oauth/token") {
-            contentType(ContentType.Application.FormUrlEncoded)
-            setBody(Parameters.build {
-                append("grant_type", "authorization_code")
-                append("code", code)
-                append("state", state)
-                append("client_id", clientMetadata.client_id)
-                append("redirect_uri", clientMetadata.redirect_uris.first())
-            })
-        }
-
-        if (response.status == HttpStatusCode.OK) {
-            val jsonResponse = response.bodyAsText()
-            val accessToken = extractJsonValue(jsonResponse, "access_token")
-            if (accessToken !== null) {
-                return accessToken
-            } else {
-                throw Exception("Access token is null")
-            }
-        } else {
-            throw Exception("Failed to exchange authorization code for access token")
-        }
     }
 }

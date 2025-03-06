@@ -53,7 +53,7 @@ class BlueskyOAuth(
 
     suspend fun getAuthorizationUrl(serviceEndpoint: String, requestUri: String): String {
         // Fetch OAuth server metadata from the service endpoint
-        val metadata = fetchOAuthServerMetadata(serviceEndpoint, client)
+        val metadata = fetchOAuthServerMetadata(serviceEndpoint)
 
         return if (metadata != null) {
             // Use the authorization_endpoint from the metadata instead of hardcoding the URL

@@ -3,10 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.seyone22.cook">
 
+    <!-- Required permissions -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <!-- Add the INTERNET permission here -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
@@ -20,6 +20,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Cook"
         tools:targetApi="31">
+
+        <!-- FileProvider for managing shared files -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.seyone22.cook.provider"
@@ -29,17 +31,20 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- Main activity -->
         <activity
             android:name="com.seyone22.cook.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Cook">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
     </application>
 
 </manifest>

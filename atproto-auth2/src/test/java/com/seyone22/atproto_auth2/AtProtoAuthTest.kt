@@ -48,13 +48,13 @@ class AtProtoAuthTest {
 
     @Test
     fun `test resolveHandle returns correct DID`() = runBlocking {
-        val result = resolveHandle("madrilenyer.bsky.social")
+        val result = fetchDIDFromHandle("madrilenyer.bsky.social")
         assertEquals("did:plc:tjc27aje4uwxtw5ab6wwm4km", result)
     }
 
     @Test
     fun `test resolveHandle returns null on error`() = runBlocking {
-        val result = resolveHandle("")
+        val result = fetchDIDFromHandle("")
         assertNull(result)
     }
 
@@ -166,7 +166,7 @@ class AtProtoAuthTest {
             }
         }
 
-        val result = fetchAuthorizationServer("https://velvetfoot.us-east.host.bsky.network", client)
+        val result = fetchPDSMetadata("https://velvetfoot.us-east.host.bsky.network", client)
         assertEquals("https://bsky.social", result)
     }
 
@@ -187,7 +187,7 @@ class AtProtoAuthTest {
             }
         }
 
-        val result = fetchAuthorizationServer("https://velvetfoot.us-east.host.bsky.network", client)
+        val result = fetchPDSMetadata("https://velvetfoot.us-east.host.bsky.network", client)
         assertNull(result)
     }
 
@@ -204,7 +204,7 @@ class AtProtoAuthTest {
             }
         }
 
-        val result = fetchAuthorizationServer("https://velvetfoot.us-east.host.bsky.network", client)
+        val result = fetchPDSMetadata("https://velvetfoot.us-east.host.bsky.network", client)
         assertNull(result)
     }
 
