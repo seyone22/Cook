@@ -83,6 +83,7 @@ import com.seyone22.cook.ui.navigation.NavigationDestination
 import com.seyone22.cook.ui.screen.ingredients.IngredientsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 object IngredientDetailDestination : NavigationDestination {
     override val route = "Ingredient Details"
@@ -600,7 +601,7 @@ fun NewSubstituteDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddToShoppingListDialog(
-    ingredientId: Long,
+    ingredientId: UUID,
     shoppingLists: List<ShoppingList?>,
     measures: List<Measure?>,
     onConfirm: (ShoppingListItem) -> Unit,
