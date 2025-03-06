@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.ImportExport
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.ManageAccounts
 import androidx.compose.material.icons.outlined.ShoppingBag
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -53,11 +54,18 @@ fun MoreScreen(
                 settingSubtext = "View and edit your shopping list",
                 settingIcon = Icons.Outlined.ShoppingBag,
                 action = { navController.navigate("Shopping List") })
+
             HorizontalDivider()
+
             SettingsListItem(settingName = "Settings",
                 settingSubtext = "General application settings",
                 settingIcon = Icons.Outlined.Checklist,
                 action = { navController.navigate("Settings/General") })
+
+            SettingsListItem(settingName = "Account",
+                settingSubtext = "Account and Sharing settings",
+                settingIcon = Icons.Outlined.ManageAccounts,
+                action = { navController.navigate("Settings/Account") })
 
             SettingsListItem(settingName = "Data Management",
                 settingSubtext = "Import and Export Data",
