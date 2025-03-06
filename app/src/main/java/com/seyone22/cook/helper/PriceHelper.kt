@@ -3,6 +3,7 @@ package com.seyone22.cook.helper
 import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.model.IngredientVariant
 import com.seyone22.cook.data.model.RecipeIngredient
+import java.util.UUID
 
 object PriceHelper {
     private fun priceOf(
@@ -12,7 +13,7 @@ object PriceHelper {
     }
 
     private suspend fun getCheapestVariant(
-        ingredientId: Long?, variants: List<IngredientVariant?>
+        ingredientId: UUID?, variants: List<IngredientVariant?>
     ): IngredientVariant? {
         // Find the cheapest variant for the given ingredientId
         var cheapestVariant: IngredientVariant? = null
@@ -29,7 +30,7 @@ object PriceHelper {
     }
 
     suspend fun getCheapestPrice(
-        ingredientId: Long?, variants: List<IngredientVariant?>, quantity: Double
+        ingredientId: UUID?, variants: List<IngredientVariant?>, quantity: Double
     ): Double {
         val cheapestVariant = getCheapestVariant(ingredientId, variants)
         return if (cheapestVariant != null) {

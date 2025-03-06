@@ -22,6 +22,7 @@ import kotlinx.serialization.json.Json
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
+import java.util.UUID
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -124,10 +125,11 @@ object RecipeFileHandler {
 
                 if (existingIngredient == null) {
                     // Ingredient with similar name does not exist, proceed with insertion
-                    val ingredientToAdd = ingredient.copy(id = 0L) // Clear the ID field
+                    val ingredientToAdd = ingredient.copy(id = UUID.randomUUID()) // Clear the ID field
                     val newId = ingredientRepository.insertIngredient(ingredientToAdd)
                     recipeIngredients.find { ri -> ri.ingredientId == ingredient.id }?.let { ri ->
-                        recipeIngredientRepository.insertRecipeIngredient(ri.copy(ingredientId = newId))
+                        Log.d("TAG", "importRecipe: ${newId.toString()}")
+                        recipeIngredientRepository.insertRecipeIngredient(ri.copy(ingredientId = UUID.fromString(newId.toString())))
                     }
                 } else {
                     // Ingredient with similar name already exists, handle accordingly
