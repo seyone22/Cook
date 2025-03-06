@@ -374,7 +374,7 @@ fun AddRecipeScreen(
 
                                         ExposedDropdownMenu(
                                             expanded = ingredientExpanded,
-                                            onDismissRequest = { }
+                                            onDismissRequest = { ingredientExpanded = false }
                                         ) {
                                             if (filteredIngredients.isNotEmpty()) {
                                                 filteredIngredients.forEach { ingredient ->
@@ -471,7 +471,7 @@ fun AddRecipeScreen(
                     TextButton(onClick = {
                         recipeIngredients.add(
                             RecipeIngredientDetails(
-                                ingredientId = -1,
+                                ingredientId = UUID.randomUUID(),
                                 measureId = -1,
                                 quantity = "",
                                 recipeId = UUID.randomUUID()

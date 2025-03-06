@@ -62,6 +62,7 @@ import com.seyone22.cook.data.model.toIngredientVariant
 import com.seyone22.cook.helper.ImageStorageHelper
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
+import java.util.UUID
 
 object AddIngredientDestination : NavigationDestination {
     override val route = "Add Ingredient"
@@ -394,7 +395,7 @@ fun AddIngredientScreen(
                         variants.add(
                             IngredientVariantDetails(
                                 brand = "",
-                                ingredientId = 0,
+                                ingredientId = UUID.randomUUID(),
                                 price = "",
                                 type = "",
                                 variantName = "",
