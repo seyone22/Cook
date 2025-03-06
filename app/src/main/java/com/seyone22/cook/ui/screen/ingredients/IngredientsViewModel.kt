@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 class IngredientsViewModel(
     private val ingredientRepository: IngredientRepository,
@@ -51,7 +52,7 @@ class IngredientsViewModel(
     }
 
     suspend fun deleteIngredient(ingredient: Ingredient): Boolean {
-        val usedCount = recipeIngredientRepository.ingredientIsUsed(ingredient.id.toInt())
+        val usedCount = recipeIngredientRepository.ingredientIsUsed(ingredient.id)
         if (usedCount == 0) {
             ingredientRepository.deleteIngredient(ingredient)
             return true
@@ -66,7 +67,7 @@ class IngredientsViewModel(
         }
     }
 
-    fun addVariant(ingredientId: Long, variant: IngredientVariantDetails) {
+    fun addVariant(ingredientId: UUID, variant: IngredientVariantDetails) {
         viewModelScope.launch {
             ingredientVariantRepository.insertIngredientVariant(
                 variant.toIngredientVariant().copy(ingredientId = ingredientId)

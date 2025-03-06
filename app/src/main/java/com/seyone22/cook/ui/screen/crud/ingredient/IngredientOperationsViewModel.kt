@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
 
 class IngredientOperationsViewModel(
@@ -31,16 +32,16 @@ class IngredientOperationsViewModel(
     private val _addIngredientViewState = MutableStateFlow(AddIngredientViewState())
     val addIngredientViewState: StateFlow<AddIngredientViewState> get() = _addIngredientViewState
 
-    fun fetchData(id: Long = -1) {
+    fun fetchData(id: UUID? = null) {
         viewModelScope.launch {
             val measures = measureRepository.getAllMeasures().first()
             var ingredient: Ingredient? = null
             var variants: List<IngredientVariant?> = emptyList()
             var photos: List<IngredientImage?> = emptyList()
-            if (id.toInt() != -1) {
-                ingredient = ingredientRepository.getIngredientById(id.toInt()).first()
-                variants = ingredientVariantRepository.getVariantsForIngredient(id.toInt()).first()
-                photos = ingredientImageRepository.getImagesForIngredient(id.toInt()).first()
+            if (id != null) {
+                ingredient = ingredientRepository.getIngredientById(id).first()
+                variants = ingredientVariantRepository.getVariantsForIngredient(id).first()
+                photos = ingredientImageRepository.getImagesForIngredient(id).first()
             }
             _addIngredientViewState.value =
                 AddIngredientViewState(measures, ingredient, variants, photos)
@@ -60,7 +61,7 @@ class IngredientOperationsViewModel(
 
                 // Update the ingredientId for each variant and insert them into the database
                 val updatedVariants = ingredientVariantList.map { variant ->
-                    variant.copy(ingredientId = ingredientId)
+                    variant.copy(ingredientId = UUID.fromString(ingredientId.toString()))
                 }
                 updatedVariants.forEach { variant ->
                     ingredientVariantRepository.insertIngredientVariant(variant)
@@ -74,7 +75,7 @@ class IngredientOperationsViewModel(
                         "ingredient_${ingredientId}_${index}_${System.currentTimeMillis()}.jpg"
                     )
                     val ingredientImage = IngredientImage(
-                        ingredientId = ingredientId, imagePath = imagePath ?: "NULL"
+                        ingredientId = UUID.fromString(ingredientId.toString()), imagePath = imagePath ?: "NULL"
                     )
                     ingredientImageRepository.insertIngredientImage(ingredientImage)
                 }
@@ -101,10 +102,10 @@ class IngredientOperationsViewModel(
 
                     // Fetch the current variants and images from the database
                     val currentVariants =
-                        ingredientVariantRepository.getVariantsForIngredient(ingredient.id.toInt())
+                        ingredientVariantRepository.getVariantsForIngredient(ingredient.id)
                             .first()
                     val currentImages =
-                        ingredientImageRepository.getImagesForIngredient(ingredient.id.toInt())
+                        ingredientImageRepository.getImagesForIngredient(ingredient.id)
                             .first()
                     Log.d("TAG", "updateIngredient: Fetched current variants and images")
 
