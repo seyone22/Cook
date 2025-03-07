@@ -1,53 +1,25 @@
-import android.util.Log
-import com.seyone22.atproto_auth2.data.service.KeyManager
-import com.seyone22.atproto_auth2.utils.getPrivateKeyFromKeystore
+package com.seyone22.atproto_auth2.utils
+
 import java.math.BigInteger
 import java.nio.ByteBuffer
-import java.security.KeyStore
 import java.security.Signature
+import java.security.interfaces.ECPrivateKey
 
 object SignatureUtils {
     /**
-     * Signs a message using ECDSA with SHA-256, using the private key stored in the Keystore.
+     * Signs a message using ECDSA with SHA-256.
      *
+     * @param privateKey The private EC key used for signing.
      * @param message The message to sign.
      * @return The ECDSA signature in raw R || S format.
      */
-    @OptIn(ExperimentalStdlibApi::class)
-    fun signMessage(message: String): ByteArray {
+    fun signMessage(privateKey: ECPrivateKey, message: String): ByteArray {
+        val signature = Signature.getInstance("SHA256withECDSA").apply {
+            initSign(privateKey)
+            update(message.toByteArray())
+        }.sign()
 
-        Log.d("TAG", "requestTokenDPoP: Got to here 1!")
-
-        // Check if key exists
-        val keyStore = KeyStore.getInstance("AndroidKeyStore")
-        keyStore.load(null)
-        Log.d("TAG", "Keystore loaded: ${keyStore.containsAlias(KeyManager.KEYALIAS)}")
-
-        val privateKey = getPrivateKeyFromKeystore()?.privateKey
-        if (privateKey == null) {
-            Log.e("TAG", "Private key is not available.")
-        } else {
-            Log.d("TAG", "Private key successfully retrieved.")
-        }
-
-        Log.d("TAG", "Private key type: ${privateKey?.javaClass?.name}")
-
-        try {
-            val signature = Signature.getInstance("SHA256withECDSA").apply {
-                initSign(privateKey)
-                update(message.toByteArray())
-            }.sign()
-
-            Log.d("TAG", "Signature created: ${signature.toHexString()}")
-            return signature
-        } catch (e: Exception) {
-            Log.e("TAG", "Keystore operation failed: ${e.message}", e)
-            return ByteArray(3)
-        }
-
-        Log.d("TAG", "requestTokenDPoP: Got to here 2!")
-
-
+        return derToConcatenated(signature)
     }
 
     /**
@@ -56,7 +28,7 @@ object SignatureUtils {
      * @param derSignature The DER-encoded ECDSA signature.
      * @return The raw R || S format signature.
      */
-    fun derToConcatenated(derSignature: ByteArray): ByteArray {
+    private fun derToConcatenated(derSignature: ByteArray): ByteArray {
         val byteBuffer = ByteBuffer.wrap(derSignature)
 
         // Read ASN.1 structure

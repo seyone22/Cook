@@ -86,9 +86,6 @@ class AtProtoAuthManager(
     suspend fun requestTokenDPoP(
         receivedCode: String,
     ) {
-        Log.d("TAG", "requestTokenDPoP: Got to here!")
-
-        Log.d("TAG", "requestTokenDPoP: Got to here middle!")
         val dpopProof = createDPoPJWT(
             htu = userTokenEndpoint!!,
             dpopNonce = dpop_nonce!!
