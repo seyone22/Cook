@@ -1,6 +1,6 @@
 package com.seyone22.atproto_auth2.utils
 
-import com.seyone22.atproto_auth2.data.CallbackParams
+import com.seyone22.atproto_auth2.data.auth.CallbackParams
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 

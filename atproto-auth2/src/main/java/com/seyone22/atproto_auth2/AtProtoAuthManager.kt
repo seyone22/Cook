@@ -1,9 +1,17 @@
 package com.seyone22.atproto_auth2
 
 import android.util.Log
-import com.seyone22.atproto_auth2.data.AuthServerResponse
+import com.seyone22.atproto_auth2.data.auth.AuthServerResponse
+import com.seyone22.atproto_auth2.network.DIDFetcher.fetchDIDDocument
+import com.seyone22.atproto_auth2.network.DIDFetcher.fetchDIDFromHandle
+import com.seyone22.atproto_auth2.network.KtorClient.client
+import com.seyone22.atproto_auth2.network.MetadataFetcher.fetchClientMetadata
+import com.seyone22.atproto_auth2.network.MetadataFetcher.fetchOAuthServerMetadata
+import com.seyone22.atproto_auth2.network.MetadataFetcher.fetchPDSMetadata
+import com.seyone22.atproto_auth2.network.OAuthService.buildRedirectURL
+import com.seyone22.atproto_auth2.network.OAuthService.initiatePARRequest
+import com.seyone22.atproto_auth2.utils.JwtUtils.createDPoPJWT
 import com.seyone22.atproto_auth2.utils.PkceUtils
-import com.seyone22.atproto_auth2.utils.createDPoPJWT
 import com.seyone22.atproto_auth2.utils.generateKeyPair
 import io.ktor.client.call.body
 import io.ktor.client.request.headers
@@ -80,21 +88,17 @@ class AtProtoAuthManager(
     ) {
         Log.d("TAG", "requestTokenDPoP: Got to here!")
 
-        val keyPair = generateKeyPair()
         Log.d("TAG", "requestTokenDPoP: Got to here middle!")
         val dpopProof = createDPoPJWT(
-            privateKey = keyPair.private as ECPrivateKey,
-            publicKey = keyPair.public as ECPublicKey,
             htu = userTokenEndpoint!!,
             dpopNonce = dpop_nonce!!
         )
-
-        Log.d("TAG", "requestTokenDPoP: Got to here 2!")
 
         val response: AuthServerResponse = client.post(userTokenEndpoint!!) {
             contentType(ContentType.Application.FormUrlEncoded)
             headers {
                 append("DPOP", dpopProof)
+                append("Content-Type", "application/x-www-form-urlencoded")
                 append("DPoP-Nonce", dpop_nonce!!)
             }
             setBody(

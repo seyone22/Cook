@@ -1,5 +1,6 @@
-package com.seyone22.atproto_auth2.data
+package com.seyone22.atproto_auth2.data.did
 
+import com.seyone22.atproto_auth2.data.service.Service
 import kotlinx.serialization.Serializable
 
 @Serializable
