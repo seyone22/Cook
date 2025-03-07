@@ -39,7 +39,7 @@ class AtProtoAuthManager(
     val codeChallenge =
         PkceUtils.generateCodeChallenge(codeVerifier) // Generate code challenge based on code verifier
 
-    suspend fun fetchRedirectURI(): String {
+    suspend fun fetchRedirectURI(serviceEndpoint: String = "https://bsky.social"): String {
         // STAGE 1: Fetch Data
         // 1: Get Client Metadata
         val clientMetadata = fetchClientMetadata(metadataUrl)
@@ -47,7 +47,7 @@ class AtProtoAuthManager(
         redirectURI = clientMetadata.redirect_uris.first()
 
         // 2. Get User's DID
-        val userDID = fetchDIDFromHandle(userHandle, "https://bsky.social");
+        val userDID = fetchDIDFromHandle(userHandle, serviceEndpoint);
 
         // 3. Get User's DID document
         val didDocument = fetchDIDDocument(userDID!!);
