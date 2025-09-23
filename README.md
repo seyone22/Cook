@@ -1,0 +1,40 @@
+# Recipe Importer - Kotlin JSON-LD Parser
+
+[![GitHub](https://img.shields.io/badge/github-seyone22/recipe--importer-blue.svg)](https://github.com/seyone22/recipe-importer)
+[![Kotlin](https://img.shields.io/badge/kotlin-1.9.0-orange.svg)](https://kotlinlang.org/)
+[![Maven Central](https://img.shields.io/maven-central/v/com.seyone22/recipe-importer.svg)](https://search.maven.org/artifact/com.seyone22/recipe-importer)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+## Overview
+
+`recipe-importer` is a lightweight Kotlin library for parsing [JSON-LD](https://json-ld.org/) recipe metadata from web pages. It extracts structured recipe data (ingredients, instructions, images, nutrition info, etc.) from any HTML containing `ld+json` script tags of type `Recipe`. Designed for both **Kotlin/JVM projects** and **Android apps**, it provides a clean, idiomatic API for integrating recipe data into your applications.
+
+---
+
+## Features
+
+- Extract recipes from HTML `ld+json` scripts.
+- Parse structured data including:
+  - Title, description, author
+  - Ingredients and instructions (supports nested steps)
+  - Prep, cook, and total time
+  - Yield/servings
+  - Nutrition info (calories, fat, protein, sugar)
+  - Images and videos
+  - Ratings and rating counts
+- Safe handling of JSON arrays, objects, and primitives.
+- Fully Kotlin idiomatic API.
+- Compatible with Android and JVM projects.
+- Minimal dependencies: [Kotlinx Serialization](https://github.com/Kotlin/kotlinx.serialization) and [Jsoup](https://jsoup.org/).
+
+---
+
+## Installation
+
+### Gradle (Kotlin DSL)
+Add JitPack repository:
+
+```kotlin
+repositories {
+    maven { url = uri("https://jitpack.io") }
+}
