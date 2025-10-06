@@ -93,8 +93,6 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         val clipText = clipboardManager.getText()?.text
 
-        Log.d("TAG", "HomeScreen: $clipText")
-
         if (!clipText.isNullOrBlank() && clipText.startsWith("http") && clipText != lastCheckedUrl) {
             lastCheckedUrl = clipText
 
