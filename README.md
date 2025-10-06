@@ -1,101 +1,39 @@
-# Recipe Importer - Kotlin JSON-LD Parser
+# Cook App
 
-[![GitHub](https://img.shields.io/badge/github-seyone22/recipe--importer-blue.svg)](https://github.com/seyone22/recipe-importer)
+[![GitHub](https://img.shields.io/badge/github-seyone22/recipe--importer-blue.svg)](https://github.com/seyone22/cook)
 [![Kotlin](https://img.shields.io/badge/kotlin-1.9.0-orange.svg)](https://kotlinlang.org/)
-[![Maven Central](https://img.shields.io/maven-central/v/com.seyone22/recipe-importer.svg)](https://search.maven.org/artifact/com.seyone22/recipe-importer)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-## Overview
-
-`recipe-importer` is a lightweight Kotlin library for parsing [JSON-LD](https://json-ld.org/) recipe metadata from web pages. It extracts structured recipe data (ingredients, instructions, images, nutrition info, etc.) from any HTML containing `ld+json` script tags of type `Recipe`. Designed for both **Kotlin/JVM projects** and **Android apps**, it provides a clean, idiomatic API for integrating recipe data into your applications.
+Cook App is a modern, multi-platform recipe and meal management application built with Jetpack Compose (Android) and Kotlin. It helps users import recipes from websites and social media, track pantry inventory, create smart grocery lists, manage meals, and plan cooking schedules. Features include camera-based recipe import (OCR), nutritional info, expiry alerts, and AI-driven suggestions. Designed for home cooks, busy professionals, and food enthusiasts, Cook App streamlines meal planning, cooking, and grocery management in one seamless experience.
 
 ## Features
 
-- Extract recipes from HTML `ld+json` scripts.
-- Parse structured data including:
-  - Title, description, author
-  - Ingredients and instructions (supports nested steps)
-  - Prep, cook, and total time
-  - Yield/servings
-  - Nutrition info (calories, fat, protein, sugar)
-  - Images and videos
-  - Ratings and rating counts
-- Safe handling of JSON arrays, objects, and primitives.
-- Fully Kotlin idiomatic API.
-- Compatible with Android and JVM projects.
-- Minimal dependencies: [Kotlinx Serialization](https://github.com/Kotlin/kotlinx.serialization) and [Jsoup](https://jsoup.org/).
+- Import recipes from websites, Instagram, Pinterest, Facebook, and YouTube  
+- Smart grocery lists & pantry tracking  
+- Meal planning and scheduling  
+- Recipe OCR via camera  
+- Nutritional info and expiry alerts  
+- Tag-based recipe filtering  
+- AI-based recipe suggestions  
+- Community and social features  
 
-## Installation
+## Tech Stack
 
-### Gradle (Kotlin DSL)
-Add JitPack repository:
+- Kotlin & Jetpack Compose (Android)  
+- Room Database for local storage  
+- Coroutine-based asynchronous operations  
+- Navigation and Scaffold UI patterns  
 
-```kotlin
-repositories {
-    maven { url = uri("https://jitpack.io") }
-}
-````
+## Setup
 
-Add dependency:
-
-```kotlin
-dependencies {
-    implementation("com.github.seyone22:recipe-importer:1.0.2")
-}
-```
-
-## Usage
-
-### Extract JSON-LD from HTML
-
-```kotlin
-import recipeimporter.parser.JsonLdExtractor
-import kotlinx.serialization.json.JsonObject
-
-val html: String = "<html>...</html>"
-val recipeJson: JsonObject? = JsonLdExtractor.extractRecipeJsonLd(html)
-```
-
-### Parse Recipe Object
-
-```kotlin
-import recipeimporter.parser.RecipeParser
-
-recipeJson?.let {
-    val recipe = RecipeParser.parseRecipe(it)
-    println(recipe.title)
-    println(recipe.ingredients)
-}
-```
-
-### Recipe Data Model
-
-The library provides the following models:
-
-* `Recipe` - main data class
-* `InstructionSection` - represents steps or sections of instructions
-* `NutritionInfo` - nutrition details
-
-## Example
-
-```kotlin
-val html = fetchHtmlFromUrl("https://example.com/recipe")
-val jsonLd = JsonLdExtractor.extractRecipeJsonLd(html)
-
-val recipe = jsonLd?.let { RecipeParser.parseRecipe(it) }
-println("Recipe: ${recipe?.title}")
-println("Ingredients: ${recipe?.ingredients?.joinToString()}")
-```
+1. Clone the repository  
+2. Open in Android Studio  
+3. Build & run on a device or emulator  
 
 ## Contributing
 
-Contributions are welcome!
-
-* Fork the repository
-* Create a feature branch
-* Submit pull requests for review
-
-Please ensure your code follows Kotlin idioms and includes unit tests.
+PRs welcome. Please follow Kotlin coding conventions and Jetpack Compose best practices.
+ioms and includes unit tests.
 
 ## License
 
