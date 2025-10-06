@@ -57,18 +57,25 @@ fun RecipeCard(modifier: Modifier, recipe: Recipe, image: RecipeImage?) {
                     )
             )
             Column(
-                modifier = Modifier.align(Alignment.BottomStart).padding(16.dp, 0.dp, 0.dp, 16.dp)
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp, 0.dp, 0.dp, 16.dp)
             ) {
                 Text(
                     text = recipe.name,
                     style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onPrimary,
+                    color = Color.White,
                 )
                 Row {
                     Text(
                         text = "${recipe.prepTime + recipe.cookTime} min",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = Color.White,
+                    )
+                    Text(
+                        text = " • ${recipe.author}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.White,
                     )
                 }
             }

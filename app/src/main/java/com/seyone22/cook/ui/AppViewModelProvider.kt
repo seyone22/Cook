@@ -5,11 +5,13 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.seyone22.cook.CookApplication
+import com.seyone22.cook.SharedViewModel
 import com.seyone22.cook.ui.screen.cooking.CookingViewModel
 import com.seyone22.cook.ui.screen.crud.ingredient.IngredientOperationsViewModel
 import com.seyone22.cook.ui.screen.crud.recipe.RecipeOperationsViewModel
 import com.seyone22.cook.ui.screen.home.HomeViewModel
 import com.seyone22.cook.ui.screen.ingredients.IngredientsViewModel
+import com.seyone22.cook.ui.screen.meals.MealsViewModel
 import com.seyone22.cook.ui.screen.more.MoreViewModel
 import com.seyone22.cook.ui.screen.more.account.AuthViewModel
 import com.seyone22.cook.ui.screen.shoppingList.ShoppingListViewModel
@@ -27,7 +29,8 @@ object AppViewModelProvider {
                 ingredientVariantRepository = cookApplication().container.ingredientVariantRepository,
                 shoppingListRepository = cookApplication().container.shoppingListRepository,
                 tagRepository = cookApplication().container.tagRepository,
-                recipeTagRepository = cookApplication().container.recipeTagRepository
+                recipeTagRepository = cookApplication().container.recipeTagRepository,
+                instructionSectionRepository = cookApplication().container.instructionSectionRepository
             )
         }
         initializer {
@@ -57,7 +60,8 @@ object AppViewModelProvider {
                 ingredientRepository = cookApplication().container.ingredientRepository,
                 recipeIngredientRepository = cookApplication().container.recipeIngredientRepository,
                 tagRepository = cookApplication().container.tagRepository,
-                recipeTagRepository = cookApplication().container.recipeTagRepository
+                recipeTagRepository = cookApplication().container.recipeTagRepository,
+                instructionSectionRepository = cookApplication().container.instructionSectionRepository
             )
         }
         initializer {
@@ -95,6 +99,15 @@ object AppViewModelProvider {
         }
         initializer {
             AuthViewModel()
+        }
+        initializer {
+            MealsViewModel(
+                mealEntryRepository = cookApplication().container.mealEntryRepository,
+            )
+        }
+        initializer {
+            SharedViewModel(
+            )
         }
     }
 }

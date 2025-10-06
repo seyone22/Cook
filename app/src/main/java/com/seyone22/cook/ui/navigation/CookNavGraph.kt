@@ -6,13 +6,17 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.seyone22.cook.SharedViewModel
+import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.screen.cooking.CookingDestination
 import com.seyone22.cook.ui.screen.cooking.CookingScreen
 import com.seyone22.cook.ui.screen.crud.ingredient.AddIngredientDestination
@@ -20,9 +24,10 @@ import com.seyone22.cook.ui.screen.crud.ingredient.AddIngredientScreen
 import com.seyone22.cook.ui.screen.crud.ingredient.EditIngredientDestination
 import com.seyone22.cook.ui.screen.crud.ingredient.EditIngredientScreen
 import com.seyone22.cook.ui.screen.crud.recipe.AddRecipeDestination
-import com.seyone22.cook.ui.screen.crud.recipe.AddRecipeScreen
 import com.seyone22.cook.ui.screen.crud.recipe.EditRecipeDestination
-import com.seyone22.cook.ui.screen.crud.recipe.EditRecipeScreen
+import com.seyone22.cook.ui.screen.crud.recipe.ImportRecipeDestination
+import com.seyone22.cook.ui.screen.crud.recipe.RecipeFormMode
+import com.seyone22.cook.ui.screen.crud.recipe.RecipeFormScreen
 import com.seyone22.cook.ui.screen.home.HomeDestination
 import com.seyone22.cook.ui.screen.home.HomeScreen
 import com.seyone22.cook.ui.screen.home.detail.RecipeDetailDestination
@@ -31,14 +36,14 @@ import com.seyone22.cook.ui.screen.ingredients.IngredientsDestination
 import com.seyone22.cook.ui.screen.ingredients.IngredientsScreen
 import com.seyone22.cook.ui.screen.ingredients.detail.IngredientDetailDestination
 import com.seyone22.cook.ui.screen.ingredients.detail.IngredientDetailScreen
+import com.seyone22.cook.ui.screen.meals.MealsDestination
+import com.seyone22.cook.ui.screen.meals.MealsScreen
 import com.seyone22.cook.ui.screen.more.MoreDestination
 import com.seyone22.cook.ui.screen.more.MoreScreen
 import com.seyone22.cook.ui.screen.more.SettingsDestination
 import com.seyone22.cook.ui.screen.more.SettingsDetailScreen
 import com.seyone22.cook.ui.screen.more.account.ChangePasswordDestination
 import com.seyone22.cook.ui.screen.more.account.ChangePasswordScreen
-import com.seyone22.cook.ui.screen.more.account.LoginDestination
-import com.seyone22.cook.ui.screen.more.account.LoginScreen
 import com.seyone22.cook.ui.screen.more.account.RegisterDestination
 import com.seyone22.cook.ui.screen.more.account.RegisterScreen
 import com.seyone22.cook.ui.screen.shoppingList.ShoppingListDestination
@@ -54,6 +59,10 @@ fun CookNavHost(
     modifier: Modifier = Modifier,
     innerPadding: PaddingValues,
     setOverlayStatus: (Boolean) -> Unit = {},
+    sharedViewModel: SharedViewModel = viewModel(
+        factory = AppViewModelProvider.Factory
+    ),
+    snackbarHostState: SnackbarHostState
 ) {
     NavHost(
         navController = navController,
@@ -64,8 +73,10 @@ fun CookNavHost(
         // Main Navigation Destinations
         composable(route = HomeDestination.route) {
             HomeScreen(
-                modifier = modifier.padding(innerPadding),
+                modifier = Modifier,
+                snackbarHostState = snackbarHostState,
                 navController = navController,
+                navigateToScreen = { screen -> navController.navigate(screen) },
                 setOverlayStatus = setOverlayStatus
             )
         }
@@ -76,6 +87,12 @@ fun CookNavHost(
         }
         composable(route = MoreDestination.route) {
             MoreScreen(
+                modifier = modifier.padding(innerPadding), navController = navController
+            )
+        }
+
+        composable(route = MealsDestination.route) {
+            MealsScreen(
                 modifier = modifier.padding(innerPadding), navController = navController
             )
         }
@@ -104,17 +121,30 @@ fun CookNavHost(
             )
         }
         composable(route = AddRecipeDestination.route) {
-            AddRecipeScreen(
-                navController = navController
+            RecipeFormScreen(
+                navController = navController,
+                sharedViewModel = sharedViewModel,
+                recipeId = null,
+                mode = RecipeFormMode.ADD
+            )
+        }
+        composable(route = ImportRecipeDestination.route) {
+            RecipeFormScreen(
+                navController = navController,
+                sharedViewModel = sharedViewModel,
+                recipeId = null,
+                mode = RecipeFormMode.IMPORT
             )
         }
         composable(
             route = EditRecipeDestination.route + "/{id}",
             arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) {
-            EditRecipeScreen(
+            RecipeFormScreen(
                 navController = navController,
-                recipeId = (UUID.fromString(it.arguments?.getString("id") ?: "-1"))
+                sharedViewModel = sharedViewModel,
+                recipeId = UUID.fromString(it.arguments?.getString("id") ?: "-1"),
+                mode = RecipeFormMode.EDIT
             )
         }
 
@@ -174,6 +204,7 @@ fun CookNavHost(
                 navigateToScreen = { screen -> navController.navigate(screen) },
                 navigateBack = { navController.popBackStack() },
                 backStackEntry = it.arguments?.getString("setting") ?: "-1",
+                sharedViewModel = sharedViewModel
             )
         }
 
@@ -181,14 +212,6 @@ fun CookNavHost(
             route = RegisterDestination.route,
         ) {
             RegisterScreen(onRegisterSuccess = { navController.popBackStack() })
-        }
-
-        composable(
-            route = LoginDestination.route,
-        ) {
-            LoginScreen(
-                navController = navController
-            )
         }
 
         composable(

@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 class OfflineTagRepository(private val tagDao: TagDao) :
     TagRepository {
 
-    override suspend fun insertTag(tag: Tag) =
+    override suspend fun insertTag(tag: Tag): Long =
         tagDao.insert(tag)
 
     override suspend fun updateTag(tag: Tag) =
@@ -22,4 +22,7 @@ class OfflineTagRepository(private val tagDao: TagDao) :
 
     override fun getAllTags(): Flow<List<Tag?>> =
         tagDao.getAllTags()
+
+    override fun getTagByName(name: String): Flow<Tag?> =
+        tagDao.getTagByName(name)
 }

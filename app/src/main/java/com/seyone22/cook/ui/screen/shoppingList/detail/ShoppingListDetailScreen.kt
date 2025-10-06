@@ -232,7 +232,7 @@ fun ShoppingListDetailScreen(
             })
     }, floatingActionButton = {
         CookFAB(currentActivity = ShoppingListDetailDestination.route,
-            action = { showNewDialog = true })
+            )
     }) {
         LazyColumn(modifier = Modifier.padding(it)) {
             items.forEach { item ->

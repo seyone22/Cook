@@ -26,7 +26,7 @@ interface IngredientDao {
                 "   WHERE id = :ingredientId" +
                 "   ORDER BY nameEn ASC"
     )
-    fun getIngredientById(ingredientId: UUID): Flow<Ingredient>
+    fun getIngredientById(ingredientId: UUID): Flow<Ingredient?>
 
     @Query(
         "SELECT * FROM ingredients" +

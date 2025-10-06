@@ -39,10 +39,10 @@ class ShoppingListViewModel(
             val measures = measureRepository.getAllMeasures().first()
 
             _shoppingListViewState.value = ViewState(
+                measures = measures,
+                ingredients = ingredients,
                 shoppingLists = shoppingLists,
                 shoppingListItems = shoppingListItems,
-                ingredients = ingredients,
-                measures = measures
             )
         }
     }

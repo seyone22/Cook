@@ -23,6 +23,7 @@ data class Instruction(
     @Contextual
     @Serializable(with = UuidSerializer::class)
     val recipeId: UUID,
+    val sectionId: Int?,           // nullable for flat instructions
     val stepNumber: Int,
     val description: String
 )

@@ -35,7 +35,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -43,15 +42,17 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    implementation("io.ktor:ktor-client-core:2.3.6")
-    implementation("io.ktor:ktor-client-cio:2.3.6")  // Or OkHttp
-    implementation("io.ktor:ktor-client-content-negotiation:2.3.6")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.6")
-    implementation("io.ktor:ktor-client-logging:2.3.6") // Replace with latest version
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)  // Or OkHttp
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.client.logging) // Replace with latest version
 
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+    implementation(libs.kotlinx.serialization.json)
 
-    testImplementation("org.jetbrains.kotlin:kotlin-test")
-    testImplementation("io.ktor:ktor-client-mock:2.3.6")
-    testImplementation("io.mockk:mockk:1.13.7")
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.ktor.client.mock)
+    testImplementation(libs.mockk)
+
+    implementation(libs.androidx.datastore.preferences)
 }

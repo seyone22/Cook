@@ -47,6 +47,7 @@ import com.seyone22.cook.ui.screen.ingredients.IngredientsDestination
 import com.seyone22.cook.ui.screen.more.MoreDestination
 import com.seyone22.cook.ui.screen.shoppingList.ShoppingListDestination
 import com.seyone22.cook.ui.screen.shoppingList.detail.ShoppingListDetailDestination
+import androidx.core.net.toUri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -131,7 +132,6 @@ fun CookTopBar(
             shape = SearchBarDefaults.inputFieldShape,
             tonalElevation = SearchBarDefaults.TonalElevation,
             shadowElevation = SearchBarDefaults.ShadowElevation,
-            windowInsets = SearchBarDefaults.windowInsets,
             content = {
                 LazyRow {
                     tagList.forEach { tag ->
@@ -301,7 +301,7 @@ fun launchBrowser(context: Context, query: String) {
         context.startActivity(intent)
     } else {
         val browserIntent =
-            Intent(Intent.ACTION_VIEW, Uri.parse("https://www.duckduckgo.com/?q=$query&ia=web"))
+            Intent(Intent.ACTION_VIEW, "https://www.duckduckgo.com/?q=$query&ia=web".toUri())
         context.startActivity(browserIntent)
     }
 

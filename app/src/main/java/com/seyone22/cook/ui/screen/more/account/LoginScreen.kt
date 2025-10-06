@@ -21,6 +21,7 @@ import androidx.navigation.NavController
 import com.seyone22.cook.R
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
+import com.seyone22.cook.ui.screen.more.MoreDestination
 
 object LoginDestination : NavigationDestination {
     override val route = "Login"
@@ -57,7 +58,7 @@ fun LoginScreen(
                     val redirectURI = (authState as AuthState.Success).result
                     if (redirectURI.isNotEmpty()) {
                         OAuthWebView(redirectURI) { code, state, iss ->
-                            viewModel.handleOAuthResult(code, state, iss)
+                            viewModel.handleOAuthResult(code, state, iss, context)
                         }
 
 
@@ -70,7 +71,7 @@ fun LoginScreen(
                 }
 
                 is AuthState.Authenticated -> {
-
+                    navController.navigate(MoreDestination.route)
                 }
             }
         }

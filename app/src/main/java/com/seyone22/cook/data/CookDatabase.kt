@@ -4,12 +4,18 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.seyone22.cook.data.converters.RoomConverters
 import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.model.IngredientImage
 import com.seyone22.cook.data.model.IngredientVariant
 import com.seyone22.cook.data.model.Instruction
+import com.seyone22.cook.data.model.InstructionSection
+import com.seyone22.cook.data.model.MealEntry
+import com.seyone22.cook.data.model.MealEntryIngredientCrossRef
+import com.seyone22.cook.data.model.MealEntryTagCrossRef
 import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.model.MeasureConversion
 import com.seyone22.cook.data.model.MeasureType
@@ -20,10 +26,13 @@ import com.seyone22.cook.data.model.RecipeTag
 import com.seyone22.cook.data.model.ShoppingList
 import com.seyone22.cook.data.model.ShoppingListItem
 import com.seyone22.cook.data.model.Tag
+import com.seyone22.cook.data.model.TagType
 import com.seyone22.cook.data.repository.ingredient.IngredientDao
 import com.seyone22.cook.data.repository.ingredientImage.IngredientImageDao
 import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantDao
 import com.seyone22.cook.data.repository.instruction.InstructionDao
+import com.seyone22.cook.data.repository.instructionsection.InstructionSectionDao
+import com.seyone22.cook.data.repository.mealEntry.MealEntryDao
 import com.seyone22.cook.data.repository.measure.MeasureDao
 import com.seyone22.cook.data.repository.measureConversion.MeasureConversionDao
 import com.seyone22.cook.data.repository.recipe.RecipeDao
@@ -37,10 +46,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [Ingredient::class, IngredientVariant::class, IngredientImage::class, RecipeImage::class, Measure::class, MeasureConversion::class, Recipe::class, Instruction::class, RecipeIngredient::class, ShoppingList::class, ShoppingListItem::class, Tag::class, RecipeTag::class],
-    version = 5,
+    entities = [Ingredient::class, IngredientVariant::class, IngredientImage::class, RecipeImage::class, Measure::class, MeasureConversion::class, Recipe::class, Instruction::class, InstructionSection::class, RecipeIngredient::class, ShoppingList::class, ShoppingListItem::class, Tag::class, RecipeTag::class, MealEntry::class, MealEntryTagCrossRef::class, MealEntryIngredientCrossRef::class],
+    version = 7,
     exportSchema = true
 )
+@TypeConverters(RoomConverters::class)
 abstract class CookDatabase : RoomDatabase() {
     abstract fun ingredientDao(): IngredientDao
     abstract fun ingredientVariantDao(): IngredientVariantDao
@@ -50,10 +60,12 @@ abstract class CookDatabase : RoomDatabase() {
     abstract fun measureConversionDao(): MeasureConversionDao
     abstract fun recipeDao(): RecipeDao
     abstract fun instructionDao(): InstructionDao
+    abstract fun instructionSectionDao(): InstructionSectionDao
     abstract fun recipeIngredientDao(): RecipeIngredientDao
     abstract fun shoppingListDao(): ShoppingListDao
     abstract fun tagDao(): TagDao
     abstract fun recipeTagDao() : RecipeTagDao
+    abstract fun mealEntryDao() : MealEntryDao
 
     companion object {
         @Volatile
@@ -194,66 +206,66 @@ abstract class CookDatabase : RoomDatabase() {
                 // Insert initial tags using raw SQL
                 val initialTags = listOf(
                     // Meal Types
-                    Pair("Breakfast", "Meals"), Pair("Brunch", "Meals"), Pair("Lunch", "Meals"),
-                    Pair("Dinner", "Meals"), Pair("Snack", "Meals"), Pair("Appetizer", "Meals"),
-                    Pair("Dessert", "Meals"), Pair("Side Dish", "Meals"), Pair("Main Course", "Meals"),
-                    Pair("Salad", "Meals"), Pair("Soup", "Meals"), Pair("Beverage", "Meals"),
+                    Pair("Breakfast", TagType.MEAL), Pair("Brunch", TagType.MEAL), Pair("Lunch", TagType.MEAL),
+                    Pair("Dinner", TagType.MEAL), Pair("Snack", TagType.MEAL), Pair("Appetizer", TagType.MEAL),
+                    Pair("Dessert", TagType.MEAL), Pair("Side Dish", TagType.MEAL), Pair("Main Course", TagType.MEAL),
+                    Pair("Salad", TagType.MEAL), Pair("Soup", TagType.MEAL), Pair("Beverage", TagType.MEAL),
 
                     // Cuisines
-                    Pair("American", "Cuisines"), Pair("Italian", "Cuisines"), Pair("Mexican", "Cuisines"),
-                    Pair("Chinese", "Cuisines"), Pair("Indian", "Cuisines"), Pair("French", "Cuisines"),
-                    Pair("Thai", "Cuisines"), Pair("Japanese", "Cuisines"), Pair("Mediterranean", "Cuisines"),
-                    Pair("Greek", "Cuisines"), Pair("Middle Eastern", "Cuisines"), Pair("African", "Cuisines"),
-                    Pair("Spanish", "Cuisines"), Pair("Vietnamese", "Cuisines"), Pair("Korean", "Cuisines"),
-                    Pair("Caribbean", "Cuisines"), Pair("Latin American", "Cuisines"),
+                    Pair("American", TagType.CUISINE), Pair("Italian", TagType.CUISINE), Pair("Mexican", TagType.CUISINE),
+                    Pair("Chinese", TagType.CUISINE), Pair("Indian", TagType.CUISINE), Pair("French", TagType.CUISINE),
+                    Pair("Thai", TagType.CUISINE), Pair("Japanese", TagType.CUISINE), Pair("Mediterranean", TagType.CUISINE),
+                    Pair("Greek", TagType.CUISINE), Pair("Middle Eastern", TagType.CUISINE), Pair("African", TagType.CUISINE),
+                    Pair("Spanish", TagType.CUISINE), Pair("Vietnamese", TagType.CUISINE), Pair("Korean", TagType.CUISINE),
+                    Pair("Caribbean", TagType.CUISINE), Pair("Latin American", TagType.CUISINE),
 
                     // Dietary
-                    Pair("Vegetarian", "Dietary"), Pair("Vegan", "Dietary"), Pair("Gluten-Free", "Dietary"),
-                    Pair("Dairy-Free", "Dietary"), Pair("Nut-Free", "Dietary"), Pair("Low-Carb", "Dietary"),
-                    Pair("Keto", "Dietary"), Pair("Paleo", "Dietary"), Pair("Pescatarian", "Dietary"),
-                    Pair("Whole30", "Dietary"), Pair("Sugar-Free", "Dietary"), Pair("Low-Fat", "Dietary"),
-                    Pair("High-Protein", "Dietary"), Pair("Low-Sodium", "Dietary"),
+                    Pair("Vegetarian", TagType.DIETARY), Pair("Vegan", TagType.DIETARY), Pair("Gluten-Free", TagType.DIETARY),
+                    Pair("Dairy-Free", TagType.DIETARY), Pair("Nut-Free", TagType.DIETARY), Pair("Low-Carb", TagType.DIETARY),
+                    Pair("Keto", TagType.DIETARY), Pair("Paleo", TagType.DIETARY), Pair("Pescatarian", TagType.DIETARY),
+                    Pair("Whole30", TagType.DIETARY), Pair("Sugar-Free", TagType.DIETARY), Pair("Low-Fat", TagType.DIETARY),
+                    Pair("High-Protein", TagType.DIETARY), Pair("Low-Sodium", TagType.DIETARY),
 
                     // Cooking Time
-                    Pair("15 Minutes or Less", "Time"), Pair("30 Minutes or Less", "Time"),
-                    Pair("Under 1 Hour", "Time"), Pair("Slow Cooker", "Time"), Pair("Instant Pot", "Time"),
-                    Pair("Quick & Easy", "Time"), Pair("Make-Ahead", "Time"), Pair("5 Ingredients or Less", "Time"),
+                    Pair("15 Minutes or Less", TagType.TIME), Pair("30 Minutes or Less", TagType.TIME),
+                    Pair("Under 1 Hour", TagType.TIME), Pair("Slow Cooker", TagType.TIME), Pair("Instant Pot", TagType.TIME),
+                    Pair("Quick & Easy", TagType.TIME), Pair("Make-Ahead", TagType.TIME), Pair("5 Ingredients or Less", TagType.TIME),
 
                     // Cooking Methods
-                    Pair("Baking", "Methods"), Pair("Grilling", "Methods"), Pair("Roasting", "Methods"),
-                    Pair("Stir-Frying", "Methods"), Pair("Sautéing", "Methods"), Pair("Steaming", "Methods"),
-                    Pair("Boiling", "Methods"), Pair("Broiling", "Methods"), Pair("Pressure Cooking", "Methods"),
-                    Pair("Slow Cooking", "Methods"), Pair("Air Fryer", "Methods"), Pair("Sous Vide", "Methods"),
-                    Pair("One-Pot", "Methods"), Pair("No-Cook", "Methods"),
+                    Pair("Baking", TagType.METHODS), Pair("Grilling", TagType.METHODS), Pair("Roasting", TagType.METHODS),
+                    Pair("Stir-Frying", TagType.METHODS), Pair("Sautéing", TagType.METHODS), Pair("Steaming", TagType.METHODS),
+                    Pair("Boiling", TagType.METHODS), Pair("Broiling", TagType.METHODS), Pair("Pressure Cooking", TagType.METHODS),
+                    Pair("Slow Cooking", TagType.METHODS), Pair("Air Fryer", TagType.METHODS), Pair("Sous Vide", TagType.METHODS),
+                    Pair("One-Pot", TagType.METHODS), Pair("No-Cook", TagType.METHODS),
 
                     // Seasonal & Occasions
-                    Pair("Spring", "Seasonal"), Pair("Summer", "Seasonal"), Pair("Fall", "Seasonal"),
-                    Pair("Winter", "Seasonal"), Pair("Thanksgiving", "Seasonal"), Pair("Christmas", "Seasonal"),
-                    Pair("New Year’s Eve", "Seasonal"), Pair("Easter", "Seasonal"), Pair("Halloween", "Seasonal"),
-                    Pair("Valentine's Day", "Seasonal"), Pair("Fourth of July", "Seasonal"), Pair("Birthday", "Seasonal"),
-                    Pair("Party", "Seasonal"), Pair("Picnic", "Seasonal"), Pair("BBQ", "Seasonal"),
-                    Pair("Potluck", "Seasonal"), Pair("Holiday Special", "Seasonal"), Pair("Weeknight Dinner", "Seasonal"),
-                    Pair("Comfort Food", "Seasonal"),
+                    Pair("Spring", TagType.SEASONAL), Pair("Summer", TagType.SEASONAL), Pair("Fall", TagType.SEASONAL),
+                    Pair("Winter", TagType.SEASONAL), Pair("Thanksgiving", TagType.SEASONAL), Pair("Christmas", TagType.SEASONAL),
+                    Pair("New Year’s Eve", TagType.SEASONAL), Pair("Easter", TagType.SEASONAL), Pair("Halloween", TagType.SEASONAL),
+                    Pair("Valentine's Day", TagType.SEASONAL), Pair("Fourth of July", TagType.SEASONAL), Pair("Birthday", TagType.SEASONAL),
+                    Pair("Party", TagType.SEASONAL), Pair("Picnic", TagType.SEASONAL), Pair("BBQ", TagType.SEASONAL),
+                    Pair("Potluck", TagType.SEASONAL), Pair("Holiday Special", TagType.SEASONAL), Pair("Weeknight Dinner", TagType.SEASONAL),
+                    Pair("Comfort Food", TagType.SEASONAL),
 
                     // Allergies
-                    Pair("Egg-Free", "Allergies"), Pair("Soy-Free", "Allergies"), Pair("Peanut-Free", "Allergies"),
-                    Pair("Shellfish-Free", "Allergies"), Pair("Low FODMAP", "Allergies"), Pair("Halal", "Allergies"),
-                    Pair("Kosher", "Allergies"),
+                    Pair("Egg-Free", TagType.ALLERGIES), Pair("Soy-Free", TagType.ALLERGIES), Pair("Peanut-Free", TagType.ALLERGIES),
+                    Pair("Shellfish-Free", TagType.ALLERGIES), Pair("Low FODMAP", TagType.ALLERGIES), Pair("Halal", TagType.ALLERGIES),
+                    Pair("Kosher", TagType.ALLERGIES),
 
                     // Skill Levels
-                    Pair("Beginner", "Skill Level"), Pair("Intermediate", "Skill Level"), Pair("Advanced", "Skill Level"),
-                    Pair("Kid-Friendly", "Skill Level"),
+                    Pair("Beginner", TagType.SKILL_LEVEL), Pair("Intermediate", TagType.SKILL_LEVEL), Pair("Advanced", TagType.SKILL_LEVEL),
+                    Pair("Kid-Friendly", TagType.SKILL_LEVEL),
 
-                    // Health Goals
-                    Pair("Weight Loss", "Health"), Pair("Muscle Gain", "Health"), Pair("Heart-Healthy", "Health"),
-                    Pair("Diabetic-Friendly", "Health"), Pair("High Fiber", "Health"), Pair("Detox", "Health"),
-                    Pair("Low Cholesterol", "Health"),
+                    // HEALTH Goals
+                    Pair("Weight Loss", TagType.HEALTH), Pair("Muscle Gain", TagType.HEALTH), Pair("Heart-HEALTHy", TagType.HEALTH),
+                    Pair("Diabetic-Friendly", TagType.HEALTH), Pair("High Fiber", TagType.HEALTH), Pair("Detox", TagType.HEALTH),
+                    Pair("Low Cholesterol", TagType.HEALTH),
 
                     // Meal Planning
-                    Pair("Meal Prep", "Planning"), Pair("Freezer-Friendly", "Planning"), Pair("Leftovers", "Planning"),
-                    Pair("Family-Friendly", "Planning"), Pair("Budget-Friendly", "Planning"), Pair("Date Night", "Planning"),
-                    Pair("Kids’ Lunchbox", "Planning"), Pair("Work-from-Home Lunch", "Planning"),
-                    Pair("Outdoor Cooking", "Planning")
+                    Pair("Meal Prep", TagType.PLANNING), Pair("Freezer-Friendly", TagType.PLANNING), Pair("Leftovers", TagType.PLANNING),
+                    Pair("Family-Friendly", TagType.PLANNING), Pair("Budget-Friendly", TagType.PLANNING), Pair("Date Night", TagType.PLANNING),
+                    Pair("Kids’ Lunchbox", TagType.PLANNING), Pair("Work-from-Home Lunch", TagType.PLANNING),
+                    Pair("Outdoor Cooking", TagType.PLANNING)
                 )
 
                 // Inserting each tag into the database
@@ -265,6 +277,26 @@ abstract class CookDatabase : RoomDatabase() {
                 }
             }
         }
+
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Add sectionId column to instructions
+                db.execSQL("ALTER TABLE instructions ADD COLUMN sectionId INTEGER")
+
+                // Create the instruction_sections table
+                db.execSQL(
+                    """
+            CREATE TABLE IF NOT EXISTS instruction_sections (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                recipeId BLOB NOT NULL,
+                name TEXT NOT NULL,
+                FOREIGN KEY (recipeId) REFERENCES recipes(id) ON DELETE CASCADE
+            )
+            """.trimIndent()
+                )
+            }
+        }
+
 
     }
 
@@ -330,140 +362,139 @@ abstract class CookDatabase : RoomDatabase() {
 
             val initialTags = listOf(
                 // Meal Types
-                Tag(name = "Breakfast", category = "Meals"),
-                Tag(name = "Brunch", category = "Meals"),
-                Tag(name = "Lunch", category = "Meals"),
-                Tag(name = "Dinner", category = "Meals"),
-                Tag(name = "Snack", category = "Meals"),
-                Tag(name = "Appetizer", category = "Meals"),
-                Tag(name = "Dessert", category = "Meals"),
-                Tag(name = "Side Dish", category = "Meals"),
-                Tag(name = "Main Course", category = "Meals"),
-                Tag(name = "Salad", category = "Meals"),
-                Tag(name = "Soup", category = "Meals"),
-                Tag(name = "Beverage", category = "Meals"),
+                Tag(name = "Breakfast", category = TagType.MEAL),
+                Tag(name = "Brunch", category = TagType.MEAL),
+                Tag(name = "Lunch", category = TagType.MEAL),
+                Tag(name = "Dinner", category = TagType.MEAL),
+                Tag(name = "Snack", category = TagType.MEAL),
+                Tag(name = "Appetizer", category = TagType.MEAL),
+                Tag(name = "Dessert", category = TagType.MEAL),
+                Tag(name = "Side Dish", category = TagType.MEAL),
+                Tag(name = "Main Course", category = TagType.MEAL),
+                Tag(name = "Salad", category = TagType.MEAL),
+                Tag(name = "Soup", category = TagType.MEAL),
+                Tag(name = "Beverage", category = TagType.MEAL),
 
                 // Cuisines
-                Tag(name = "American", category = "Cuisines"),
-                Tag(name = "Italian", category = "Cuisines"),
-                Tag(name = "Mexican", category = "Cuisines"),
-                Tag(name = "Chinese", category = "Cuisines"),
-                Tag(name = "Indian", category = "Cuisines"),
-                Tag(name = "French", category = "Cuisines"),
-                Tag(name = "Thai", category = "Cuisines"),
-                Tag(name = "Japanese", category = "Cuisines"),
-                Tag(name = "Mediterranean", category = "Cuisines"),
-                Tag(name = "Greek", category = "Cuisines"),
-                Tag(name = "Middle Eastern", category = "Cuisines"),
-                Tag(name = "African", category = "Cuisines"),
-                Tag(name = "Spanish", category = "Cuisines"),
-                Tag(name = "Vietnamese", category = "Cuisines"),
-                Tag(name = "Korean", category = "Cuisines"),
-                Tag(name = "Caribbean", category = "Cuisines"),
-                Tag(name = "Latin American", category = "Cuisines"),
+                Tag(name = "American", category = TagType.CUISINE),
+                Tag(name = "Italian", category = TagType.CUISINE),
+                Tag(name = "Mexican", category = TagType.CUISINE),
+                Tag(name = "Chinese", category = TagType.CUISINE),
+                Tag(name = "Indian", category = TagType.CUISINE),
+                Tag(name = "French", category = TagType.CUISINE),
+                Tag(name = "Thai", category = TagType.CUISINE),
+                Tag(name = "Japanese", category = TagType.CUISINE),
+                Tag(name = "Mediterranean", category = TagType.CUISINE),
+                Tag(name = "Greek", category = TagType.CUISINE),
+                Tag(name = "Middle Eastern", category = TagType.CUISINE),
+                Tag(name = "African", category = TagType.CUISINE),
+                Tag(name = "Spanish", category = TagType.CUISINE),
+                Tag(name = "Vietnamese", category = TagType.CUISINE),
+                Tag(name = "Korean", category = TagType.CUISINE),
+                Tag(name = "Caribbean", category = TagType.CUISINE),
+                Tag(name = "Latin American", category = TagType.CUISINE),
 
                 // Dietary
-                Tag(name = "Vegetarian", category = "Dietary"),
-                Tag(name = "Vegan", category = "Dietary"),
-                Tag(name = "Gluten-Free", category = "Dietary"),
-                Tag(name = "Dairy-Free", category = "Dietary"),
-                Tag(name = "Nut-Free", category = "Dietary"),
-                Tag(name = "Low-Carb", category = "Dietary"),
-                Tag(name = "Keto", category = "Dietary"),
-                Tag(name = "Paleo", category = "Dietary"),
-                Tag(name = "Pescatarian", category = "Dietary"),
-                Tag(name = "Whole30", category = "Dietary"),
-                Tag(name = "Sugar-Free", category = "Dietary"),
-                Tag(name = "Low-Fat", category = "Dietary"),
-                Tag(name = "High-Protein", category = "Dietary"),
-                Tag(name = "Low-Sodium", category = "Dietary"),
+                Tag(name = "Vegetarian", category = TagType.DIETARY),
+                Tag(name = "Vegan", category = TagType.DIETARY),
+                Tag(name = "Gluten-Free", category = TagType.DIETARY),
+                Tag(name = "Dairy-Free", category = TagType.DIETARY),
+                Tag(name = "Nut-Free", category = TagType.DIETARY),
+                Tag(name = "Low-Carb", category = TagType.DIETARY),
+                Tag(name = "Keto", category = TagType.DIETARY),
+                Tag(name = "Paleo", category = TagType.DIETARY),
+                Tag(name = "Pescatarian", category = TagType.DIETARY),
+                Tag(name = "Whole30", category = TagType.DIETARY),
+                Tag(name = "Sugar-Free", category = TagType.DIETARY),
+                Tag(name = "Low-Fat", category = TagType.DIETARY),
+                Tag(name = "High-Protein", category = TagType.DIETARY),
+                Tag(name = "Low-Sodium", category = TagType.DIETARY),
 
                 // Cooking Time
-                Tag(name = "15 Minutes or Less", category = "Time"),
-                Tag(name = "30 Minutes or Less", category = "Time"),
-                Tag(name = "Under 1 Hour", category = "Time"),
-                Tag(name = "Slow Cooker", category = "Time"),
-                Tag(name = "Instant Pot", category = "Time"),
-                Tag(name = "Quick & Easy", category = "Time"),
-                Tag(name = "Make-Ahead", category = "Time"),
-                Tag(name = "5 Ingredients or Less", category = "Time"),
+                Tag(name = "15 Minutes or Less", category = TagType.TIME),
+                Tag(name = "30 Minutes or Less", category = TagType.TIME),
+                Tag(name = "Under 1 Hour", category = TagType.TIME),
+                Tag(name = "Slow Cooker", category = TagType.TIME),
+                Tag(name = "Instant Pot", category = TagType.TIME),
+                Tag(name = "Quick & Easy", category = TagType.TIME),
+                Tag(name = "Make-Ahead", category = TagType.TIME),
+                Tag(name = "5 Ingredients or Less", category = TagType.TIME),
 
                 // Cooking Methods
-                Tag(name = "Baking", category = "Methods"),
-                Tag(name = "Grilling", category = "Methods"),
-                Tag(name = "Roasting", category = "Methods"),
-                Tag(name = "Stir-Frying", category = "Methods"),
-                Tag(name = "Sautéing", category = "Methods"),
-                Tag(name = "Steaming", category = "Methods"),
-                Tag(name = "Boiling", category = "Methods"),
-                Tag(name = "Broiling", category = "Methods"),
-                Tag(name = "Pressure Cooking", category = "Methods"),
-                Tag(name = "Slow Cooking", category = "Methods"),
-                Tag(name = "Air Fryer", category = "Methods"),
-                Tag(name = "Sous Vide", category = "Methods"),
-                Tag(name = "One-Pot", category = "Methods"),
-                Tag(name = "No-Cook", category = "Methods"),
+                Tag(name = "Baking", category = TagType.METHODS),
+                Tag(name = "Grilling", category = TagType.METHODS),
+                Tag(name = "Roasting", category = TagType.METHODS),
+                Tag(name = "Stir-Frying", category = TagType.METHODS),
+                Tag(name = "Sautéing", category = TagType.METHODS),
+                Tag(name = "Steaming", category = TagType.METHODS),
+                Tag(name = "Boiling", category = TagType.METHODS),
+                Tag(name = "Broiling", category = TagType.METHODS),
+                Tag(name = "Pressure Cooking", category = TagType.METHODS),
+                Tag(name = "Slow Cooking", category = TagType.METHODS),
+                Tag(name = "Air Fryer", category = TagType.METHODS),
+                Tag(name = "Sous Vide", category = TagType.METHODS),
+                Tag(name = "One-Pot", category = TagType.METHODS),
+                Tag(name = "No-Cook", category = TagType.METHODS),
 
                 // Seasonal & Occasions
-                Tag(name = "Spring", category = "Seasonal"),
-                Tag(name = "Summer", category = "Seasonal"),
-                Tag(name = "Fall", category = "Seasonal"),
-                Tag(name = "Winter", category = "Seasonal"),
-                Tag(name = "Thanksgiving", category = "Seasonal"),
-                Tag(name = "Christmas", category = "Seasonal"),
-                Tag(name = "New Year’s Eve", category = "Seasonal"),
-                Tag(name = "Easter", category = "Seasonal"),
-                Tag(name = "Halloween", category = "Seasonal"),
-                Tag(name = "Valentine's Day", category = "Seasonal"),
-                Tag(name = "Fourth of July", category = "Seasonal"),
-                Tag(name = "Birthday", category = "Seasonal"),
-                Tag(name = "Party", category = "Seasonal"),
-                Tag(name = "Picnic", category = "Seasonal"),
-                Tag(name = "BBQ", category = "Seasonal"),
-                Tag(name = "Potluck", category = "Seasonal"),
-                Tag(name = "Holiday Special", category = "Seasonal"),
-                Tag(name = "Weeknight Dinner", category = "Seasonal"),
-                Tag(name = "Comfort Food", category = "Seasonal"),
+                Tag(name = "Spring", category = TagType.SEASONAL),
+                Tag(name = "Summer", category = TagType.SEASONAL),
+                Tag(name = "Fall", category = TagType.SEASONAL),
+                Tag(name = "Winter", category = TagType.SEASONAL),
+                Tag(name = "Thanksgiving", category = TagType.SEASONAL),
+                Tag(name = "Christmas", category = TagType.SEASONAL),
+                Tag(name = "New Year’s Eve", category = TagType.SEASONAL),
+                Tag(name = "Easter", category = TagType.SEASONAL),
+                Tag(name = "Halloween", category = TagType.SEASONAL),
+                Tag(name = "Valentine's Day", category = TagType.SEASONAL),
+                Tag(name = "Fourth of July", category = TagType.SEASONAL),
+                Tag(name = "Birthday", category = TagType.SEASONAL),
+                Tag(name = "Party", category = TagType.SEASONAL),
+                Tag(name = "Picnic", category = TagType.SEASONAL),
+                Tag(name = "BBQ", category = TagType.SEASONAL),
+                Tag(name = "Potluck", category = TagType.SEASONAL),
+                Tag(name = "Holiday Special", category = TagType.SEASONAL),
+                Tag(name = "Weeknight Dinner", category = TagType.SEASONAL),
+                Tag(name = "Comfort Food", category = TagType.SEASONAL),
 
                 // Allergies
-                Tag(name = "Egg-Free", category = "Allergies"),
-                Tag(name = "Soy-Free", category = "Allergies"),
-                Tag(name = "Peanut-Free", category = "Allergies"),
-                Tag(name = "Shellfish-Free", category = "Allergies"),
-                Tag(name = "Low FODMAP", category = "Allergies"),
-                Tag(name = "Halal", category = "Allergies"),
-                Tag(name = "Kosher", category = "Allergies"),
+                Tag(name = "Egg-Free", category = TagType.ALLERGIES),
+                Tag(name = "Soy-Free", category = TagType.ALLERGIES),
+                Tag(name = "Peanut-Free", category = TagType.ALLERGIES),
+                Tag(name = "Shellfish-Free", category = TagType.ALLERGIES),
+                Tag(name = "Low FODMAP", category = TagType.ALLERGIES),
+                Tag(name = "Halal", category = TagType.ALLERGIES),
+                Tag(name = "Kosher", category = TagType.ALLERGIES),
 
                 // Skill Levels
-                Tag(name = "Beginner", category = "Skill Level"),
-                Tag(name = "Intermediate", category = "Skill Level"),
-                Tag(name = "Advanced", category = "Skill Level"),
-                Tag(name = "Kid-Friendly", category = "Skill Level"),
+                Tag(name = "Beginner", category = TagType.SKILL_LEVEL),
+                Tag(name = "Intermediate", category = TagType.SKILL_LEVEL),
+                Tag(name = "Advanced", category = TagType.SKILL_LEVEL),
+                Tag(name = "Kid-Friendly", category = TagType.SKILL_LEVEL),
 
-                // Health Goals
-                Tag(name = "Weight Loss", category = "Health"),
-                Tag(name = "Muscle Gain", category = "Health"),
-                Tag(name = "Heart-Healthy", category = "Health"),
-                Tag(name = "Diabetic-Friendly", category = "Health"),
-                Tag(name = "High Fiber", category = "Health"),
-                Tag(name = "Detox", category = "Health"),
-                Tag(name = "Low Cholesterol", category = "Health"),
+                // HEALTH Goals
+                Tag(name = "Weight Loss", category = TagType.HEALTH),
+                Tag(name = "Muscle Gain", category = TagType.HEALTH),
+                Tag(name = "Heart-Healthy", category = TagType.HEALTH),
+                Tag(name = "Diabetic-Friendly", category = TagType.HEALTH),
+                Tag(name = "High Fiber", category = TagType.HEALTH),
+                Tag(name = "Detox", category = TagType.HEALTH),
+                Tag(name = "Low Cholesterol", category = TagType.HEALTH),
 
                 // Meal Planning
-                Tag(name = "Meal Prep", category = "Planning"),
-                Tag(name = "Freezer-Friendly", category = "Planning"),
-                Tag(name = "Leftovers", category = "Planning"),
-                Tag(name = "Family-Friendly", category = "Planning"),
-                Tag(name = "Budget-Friendly", category = "Planning"),
-                Tag(name = "Date Night", category = "Planning"),
-                Tag(name = "Kids’ Lunchbox", category = "Planning"),
-                Tag(name = "Work-from-Home Lunch", category = "Planning"),
-                Tag(name = "Outdoor Cooking", category = "Planning")
+                Tag(name = "Meal Prep", category = TagType.PLANNING),
+                Tag(name = "Freezer-Friendly", category = TagType.PLANNING),
+                Tag(name = "Leftovers", category = TagType.PLANNING),
+                Tag(name = "Family-Friendly", category = TagType.PLANNING),
+                Tag(name = "Budget-Friendly", category = TagType.PLANNING),
+                Tag(name = "Date Night", category = TagType.PLANNING),
+                Tag(name = "Kids’ Lunchbox", category = TagType.PLANNING),
+                Tag(name = "Work-from-Home Lunch", category = TagType.PLANNING),
+                Tag(name = "Outdoor Cooking", category = TagType.PLANNING)
             )
             initialTags.forEach {
                 tagDao.insert(it)
             }
-
         }
     }
 }

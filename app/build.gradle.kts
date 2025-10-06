@@ -1,21 +1,22 @@
 plugins {
-    alias(libs.plugins.androidApplication)
-    alias(libs.plugins.jetbrainsKotlinAndroid)
+        alias(libs.plugins.androidApplication)
+        alias(libs.plugins.jetbrainsKotlinAndroid)
+        alias(libs.plugins.compose.compiler)
 
-    id("com.google.devtools.ksp")
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.21"
+        id("com.google.devtools.ksp")
+        id("org.jetbrains.kotlin.plugin.serialization") version "2.2.20"
 
-    id("com.google.gms.google-services")
-}
+        id("com.google.gms.google-services")
+    }
 
 android {
     namespace = "com.seyone22.cook"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.seyone22.cook"
         minSdk = 30
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 4
         versionName = "Cook v4.0.0-beta2"
 
@@ -29,8 +30,7 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             )
         }
     }
@@ -43,9 +43,6 @@ android {
     }
     buildFeatures {
         compose = true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
     }
     packaging {
         resources {
@@ -74,7 +71,6 @@ dependencies {
     // AndroidX Compose Material3
     implementation(libs.androidx.material3)
     implementation(libs.material)
-    implementation(libs.androidx.security.crypto.ktx)
 
     // JUnit
     testImplementation(libs.junit)
@@ -142,7 +138,21 @@ dependencies {
     implementation(project(":atproto-auth2"))
 
 
-    implementation("io.ktor:ktor-client-android:2.0.0") // For Android-specific support
-    implementation("io.ktor:ktor-client-content-negotiation:2.3.3")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.3")
+    implementation(libs.ktor.client.android) // For Android-specific support
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+
+    // The compose calendar library for Android
+    implementation("com.kizitonwose.calendar:compose:2.9.0")
+
+    implementation("com.github.seyone22:recipe-importer:v2.0.3")
+
+    // To recognize Latin script
+    implementation("com.google.mlkit:text-recognition:16.0.1")
+
+    // …
+    implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
+
+    // Task.await() helpers to await Play Services Tasks
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.1")
 }

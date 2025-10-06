@@ -6,6 +6,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.seyone22.cook.BaseViewModel
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
 import com.seyone22.cook.data.repository.instruction.InstructionRepository
 import com.seyone22.cook.data.repository.recipe.RecipeRepository
@@ -13,11 +14,14 @@ import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
 import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientRepository
 import com.seyone22.cook.data.repository.tag.TagRepository
 import com.seyone22.cook.helper.RecipeFileHandler
+import com.seyone22.cook.service.RecipeImportService
 import com.seyone22.cook.ui.common.ViewState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import recipeimporter.RecipeImporter.importFromUrl
+import recipeimporter.model.Recipe
 
 class MoreViewModel(
     private val recipeRepository: RecipeRepository,
@@ -26,14 +30,15 @@ class MoreViewModel(
     private val recipeIngredientRepository: RecipeIngredientRepository,
     private val ingredientRepository: IngredientRepository,
     private val tagRepository: TagRepository,
-) : ViewModel() {
+    private val recipeImportService: RecipeImportService = RecipeImportService() // default instance
+) : BaseViewModel() {
     private val _moreViewState = MutableStateFlow(ViewState())
     val moreViewState: StateFlow<ViewState> get() = _moreViewState
 
     fun fetchTags() {
         viewModelScope.launch {
             val tags = tagRepository.getAllTags().first()
-            _moreViewState.value = _moreViewState.value.copy(tags = tags)
+            _moreViewState.value = _moreViewState.value.copy(tags = tags,)
         }
     }
 
@@ -56,5 +61,10 @@ class MoreViewModel(
                 Log.e("ImportError", "Error importing recipe: ", e)
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        recipeImportService.close() // close client when ViewModel is destroyed
     }
 }

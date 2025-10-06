@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TagDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(tag: Tag)
+    suspend fun insert(tag: Tag) : Long
 
     @Update
     suspend fun update(tag: Tag)
@@ -25,4 +25,7 @@ interface TagDao {
 
     @Query("SELECT * FROM tags")
     fun getAllTags(): Flow<List<Tag>>
+
+    @Query("SELECT * FROM tags WHERE name = :name")
+    fun getTagByName(name: String): Flow<Tag?>
 }

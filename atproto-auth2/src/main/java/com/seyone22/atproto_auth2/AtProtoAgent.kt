@@ -1,5 +1,6 @@
 package com.seyone22.atproto_auth2
 
+import android.content.Context
 import android.util.Log
 import com.seyone22.atproto_auth2.data.auth.AuthServerResponse
 import com.seyone22.atproto_auth2.network.DIDFetcher.fetchDIDDocument
@@ -10,23 +11,24 @@ import com.seyone22.atproto_auth2.network.MetadataFetcher.fetchOAuthServerMetada
 import com.seyone22.atproto_auth2.network.MetadataFetcher.fetchPDSMetadata
 import com.seyone22.atproto_auth2.network.OAuthService.buildRedirectURL
 import com.seyone22.atproto_auth2.network.OAuthService.initiatePARRequest
+import com.seyone22.atproto_auth2.utils.AuthTokenManager
 import com.seyone22.atproto_auth2.utils.JwtUtils.createDPoPJWT
 import com.seyone22.atproto_auth2.utils.PkceUtils
-import com.seyone22.atproto_auth2.utils.generateKeyPair
 import io.ktor.client.call.body
 import io.ktor.client.request.headers
 import io.ktor.client.request.post
+import io.ktor.client.request.request
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.Parameters
 import io.ktor.http.contentType
 import io.ktor.http.formUrlEncode
-import java.security.interfaces.ECPrivateKey
-import java.security.interfaces.ECPublicKey
 
-class AtProtoAuthManager(
+class AtProtoAgent(
     private val metadataUrl: String = "https://seyone22.github.io/cook-oauth-metadata/client-metadata.json", // URL of the client metadata JSON file
-    private val userHandle: String
+    private val serviceEndpoint: String = "https://bsky.social",
 ) {
     private var dpop_nonce: String? = null
     private var client_id: String? = null
@@ -34,12 +36,12 @@ class AtProtoAuthManager(
     private var redirectURI: String? = null
 
     // Generated values
-    val state = PkceUtils.generateState() // Generate a unique state value
-    val codeVerifier = PkceUtils.generateCodeVerifier() // Generate a code verifier
-    val codeChallenge =
+    private val state = PkceUtils.generateState() // Generate a unique state value
+    private val codeVerifier = PkceUtils.generateCodeVerifier() // Generate a code verifier
+    private val codeChallenge =
         PkceUtils.generateCodeChallenge(codeVerifier) // Generate code challenge based on code verifier
 
-    suspend fun fetchRedirectURI(serviceEndpoint: String = "https://bsky.social"): String {
+    suspend fun fetchRedirectURI(userHandle: String): String {
         // STAGE 1: Fetch Data
         // 1: Get Client Metadata
         val clientMetadata = fetchClientMetadata(metadataUrl)
@@ -84,32 +86,65 @@ class AtProtoAuthManager(
     }
 
     suspend fun requestTokenDPoP(
-        receivedCode: String,
-    ) {
+        receivedCode: String, context: Context
+    ): Boolean {
         val dpopProof = createDPoPJWT(
-            htu = userTokenEndpoint!!,
-            dpopNonce = dpop_nonce!!
+            htu = userTokenEndpoint!!, dpopNonce = dpop_nonce!!
         )
 
-        val response: AuthServerResponse = client.post(userTokenEndpoint!!) {
-            contentType(ContentType.Application.FormUrlEncoded)
-            headers {
-                append("DPOP", dpopProof)
-                append("Content-Type", "application/x-www-form-urlencoded")
-                append("DPoP-Nonce", dpop_nonce!!)
-            }
-            setBody(
-                Parameters.build {
-                    append("grant_type", "authorization_code")
-                    append("client_id", client_id!!)
-                    append("redirect_uri", redirectURI!!)
-                    append("code", receivedCode)
-                    append("code_verifier", codeVerifier)
-                }.formUrlEncode()
+        try {
+            val response: AuthServerResponse = client.post(userTokenEndpoint!!) {
+                contentType(ContentType.Application.FormUrlEncoded)
+                headers {
+                    append("DPOP", dpopProof)
+                    append("Content-Type", "application/x-www-form-urlencoded")
+                    append("DPoP-Nonce", dpop_nonce!!)
+                }
+                setBody(
+                    Parameters.build {
+                        append("grant_type", "authorization_code")
+                        append("client_id", client_id!!)
+                        append("redirect_uri", redirectURI!!)
+                        append("code", receivedCode)
+                        append("code_verifier", codeVerifier)
+                    }.formUrlEncode()
+                )
+            }.body()
+
+            Log.d("TAG", "requestTokenDPoP: $response");
+            val secureStorageManager = AuthTokenManager(context)
+
+            secureStorageManager.saveTokens(
+                response.accessToken, response.refreshToken, response.tokenType
             )
-        }.body()
 
-        Log.d("TAG", "requestTokenDPoP: $response");
+            return true
+        } catch (e: Exception) {
+            Log.d("TAG", "requestTokenDPoP: $e");
+            return false
+        }
+    }
 
+    suspend fun makeAuthenticatedRequest(
+        url: String, httpMethod: HttpMethod, dpopNonce: String, context: Context
+    ) {
+        val authTokenManager = AuthTokenManager(context)
+        val accessToken = authTokenManager.getAccessToken()
+        val dpopProof = createDPoPJWT(url, dpopNonce);
+
+        try {
+            val response = client.request(url) {
+                method = httpMethod
+                headers {
+                    append(HttpHeaders.Authorization, "DPoP $accessToken")
+                    append("DPOP", dpopProof)
+                    append(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    append(HttpHeaders.Accept, ContentType.Application.Json.toString())
+                }
+            }
+            Log.d("TAG", "makeAuthenticatedRequest: $response");
+        } catch (_: Exception) {
+
+        }
     }
 }

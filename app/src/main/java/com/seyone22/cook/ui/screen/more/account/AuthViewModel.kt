@@ -1,16 +1,17 @@
 package com.seyone22.cook.ui.screen.more.account
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.seyone22.atproto_auth2.AtProtoAuthManager
+import com.seyone22.atproto_auth2.AtProtoAgent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class AuthViewModel : ViewModel() {
     private val userHandle = "akimoriss.bsky.social"
-    private val authManager = AtProtoAuthManager(userHandle = userHandle)
+    private val agent = AtProtoAgent(serviceEndpoint = "https://bsky.social")
 
     // Use MutableStateFlow for state management
     private val _authState = MutableStateFlow<AuthState>(AuthState.Initial)
@@ -22,8 +23,7 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 _authState.value = AuthState.Loading
-                redirectURI =
-                    authManager.fetchRedirectURI()  // Assuming this fetches the correct URI
+                redirectURI = agent.fetchRedirectURI(userHandle = userHandle)  // Assuming this fetches the correct URI
                 _authState.value = AuthState.Success(redirectURI ?: "")
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Unknown error")
@@ -31,14 +31,20 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun handleOAuthResult(code: String?, state: String?, iss: String?) {
+    fun handleOAuthResult(code: String?, state: String?, iss: String?, context: Context) {
         if (code != null) {
             Log.d("OAuth", "Auth successful: Code=$code, State=$state, Iss=$iss")
-            _authState.value = AuthState.Authenticated(code, state, iss)
+            _authState.value = AuthState.Authenticated(true)
 
             viewModelScope.launch {
                 try {
-                    authManager.requestTokenDPoP(code)
+                    agent.requestTokenDPoP(code, context = context)
+
+                    Log.d("OAuth", "Token request successful")
+                    _authState.value = AuthState.Authenticated(true)
+
+                    //agent.makeAuthenticatedRequest()
+
                 } catch (e: Exception) {
                     Log.e("OAuth", "Failed to request token: ${e.message}")
                 }
@@ -55,6 +61,6 @@ sealed class AuthState {
     object Initial : AuthState()
     object Loading : AuthState()
     data class Success(val result: String) : AuthState()
-    data class Authenticated(val code: String?, val state: String?, val iss: String?) : AuthState()
+    data class Authenticated(val state: Boolean) : AuthState()
     data class Error(val message: String) : AuthState()
 }

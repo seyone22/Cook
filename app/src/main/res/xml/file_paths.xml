@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
+    <!-- Allow access to files in the app's "files" directory -->
+    <files-path
+        name="internal_files"
+        path="." />
+
+    <!-- Allow access to cache directory, if needed -->
     <cache-path
         name="cache"
         path="." />

@@ -44,7 +44,7 @@ class CookingViewModel(
                 recipeIngredients = recipeIngredients,
                 measures = measures,
                 ingredients = ingredients,
-                variants = variants
+                variants = variants,
             )
         }
     }

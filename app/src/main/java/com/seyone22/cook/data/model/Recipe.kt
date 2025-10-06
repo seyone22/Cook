@@ -2,9 +2,11 @@ package com.seyone22.cook.data.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.seyone22.cook.data.converters.InstantSerializer
 import com.seyone22.cook.helper.UuidSerializer
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
+import java.time.Instant
 import java.util.UUID
 
 @Serializable
@@ -19,8 +21,20 @@ data class Recipe(
     val cookTime: Int,
     val servingSize: Int,
     val reference: String?,
-    val timesMade: Int = 0
-)
+    val timesMade: Int = 0,
+    val author: String? = null,
+    val videoUrl: String? = null,
+
+    @Serializable(with = InstantSerializer::class)
+    val dateCreated: Instant = Instant.now(),
+
+    @Serializable(with = InstantSerializer::class)
+    val dateModified: Instant = Instant.now(),
+
+    @Serializable(with = InstantSerializer::class)
+    val dateAccessed: Instant = Instant.now()
+
+    )
 
 data class RecipeDetails(
     val id: UUID = UUID.randomUUID(),
@@ -30,7 +44,12 @@ data class RecipeDetails(
     val cookTime: String,
     val servingSize: String,
     val reference: String,
-    val timesMade: String
+    val timesMade: String,
+    val author: String = "",
+    val videoUrl: String? = null,
+    val dateCreated: Instant = Instant.now(),
+    val dateModified: Instant = Instant.now(),
+    val dateAccessed: Instant = Instant.now(),
 )
 
 fun RecipeDetails.toRecipe(): Recipe = Recipe(
@@ -41,7 +60,12 @@ fun RecipeDetails.toRecipe(): Recipe = Recipe(
     cookTime = cookTime.toInt(),
     servingSize = servingSize.toInt(),
     reference = reference,
-    timesMade = timesMade.toInt()
+    timesMade = timesMade.toInt(),
+    author = author,
+    videoUrl = videoUrl,
+    dateCreated = dateCreated,
+    dateModified = dateModified,
+    dateAccessed = dateAccessed,
 )
 
 fun Recipe.toRecipeDetails(): RecipeDetails = RecipeDetails(
@@ -52,5 +76,10 @@ fun Recipe.toRecipeDetails(): RecipeDetails = RecipeDetails(
     cookTime = cookTime.toString(),
     servingSize = servingSize.toString(),
     reference = reference ?: "",
-    timesMade = timesMade.toString()
+    timesMade = timesMade.toString(),
+    author = author ?: "",
+    videoUrl = videoUrl,
+    dateCreated = dateCreated,
+    dateModified = dateModified,
+    dateAccessed = dateAccessed,
 )

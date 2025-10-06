@@ -69,10 +69,6 @@ fun ShoppingListScreen(
         CookTopBar(
             currentActivity = ShoppingListDestination.route, navController = navController
         )
-    }, floatingActionButton = {
-        CookFAB(currentActivity = "newlist", action = {
-            showNewDialog = true
-        })
     }) {
         LazyColumn(modifier = Modifier.padding(it)) {
             item {

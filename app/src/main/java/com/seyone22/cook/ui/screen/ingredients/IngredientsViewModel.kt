@@ -1,7 +1,7 @@
 package com.seyone22.cook.ui.screen.ingredients
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.seyone22.cook.BaseViewModel
 import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.model.IngredientVariantDetails
 import com.seyone22.cook.data.model.ShoppingListItem
@@ -26,7 +26,7 @@ class IngredientsViewModel(
     private val recipeIngredientRepository: RecipeIngredientRepository,
     private val measureRepository: MeasureRepository,
     private val shoppingListRepository: ShoppingListRepository
-) : ViewModel() {
+) : BaseViewModel() {
     // Create a StateFlow to emit the combined data
     private val _ingredientsViewState = MutableStateFlow(ViewState())
     val ingredientsViewState: StateFlow<ViewState> get() = _ingredientsViewState
@@ -42,11 +42,11 @@ class IngredientsViewModel(
             val shoppingLists = shoppingListRepository.getAllShoppingLists().first()
             _ingredientsViewState.value =
                 ViewState(
-                    ingredients = ingredients,
-                    variants = variants,
                     ingredientImages = images,
                     measures = measures,
-                    shoppingLists = shoppingLists
+                    ingredients = ingredients,
+                    variants = variants,
+                    shoppingLists = shoppingLists,
                 )
         }
     }

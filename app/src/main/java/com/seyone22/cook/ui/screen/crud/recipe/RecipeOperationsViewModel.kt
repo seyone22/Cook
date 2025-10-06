@@ -1,13 +1,16 @@
 package com.seyone22.cook.ui.screen.crud.recipe
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.model.Instruction
+import com.seyone22.cook.data.model.InstructionSection
 import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.model.Recipe
 import com.seyone22.cook.data.model.RecipeImage
@@ -16,6 +19,7 @@ import com.seyone22.cook.data.model.RecipeTag
 import com.seyone22.cook.data.model.Tag
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
 import com.seyone22.cook.data.repository.instruction.InstructionRepository
+import com.seyone22.cook.data.repository.instructionsection.InstructionSectionRepository
 import com.seyone22.cook.data.repository.measure.MeasureRepository
 import com.seyone22.cook.data.repository.recipe.RecipeRepository
 import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
@@ -24,12 +28,16 @@ import com.seyone22.cook.data.repository.recipeTag.RecipeTagRepository
 import com.seyone22.cook.data.repository.tag.TagRepository
 import com.seyone22.cook.helper.RecipeFileHandler.compressImageFile
 import com.seyone22.cook.helper.ImageStorageHelper
+import com.seyone22.cook.helper.loadBitmapFromUrl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URL
 import java.util.UUID
 
 class RecipeOperationsViewModel(
@@ -37,6 +45,7 @@ class RecipeOperationsViewModel(
     private val recipeImageRepository: RecipeImageRepository,
     private val measureRepository: MeasureRepository,
     private val instructionRepository: InstructionRepository,
+    private val instructionSectionRepository: InstructionSectionRepository,
     private val ingredientRepository: IngredientRepository,
     private val recipeIngredientRepository: RecipeIngredientRepository,
     private val tagRepository: TagRepository,
@@ -69,64 +78,74 @@ class RecipeOperationsViewModel(
         }
     }
 
-    fun saveRecipe(
+    suspend fun saveRecipe(
         recipe: Recipe,
         images: List<Uri>?,
         instructions: List<Instruction>,
         recipeIngredients: List<RecipeIngredient>,
         recipeTags: List<Tag>,
-        context: Context
+        context: Context,
+        instructionSections: SnapshotStateList<InstructionSection>
     ) {
-        viewModelScope.launch {
-            try {
-                // Insert the recipe into the database
-                recipeRepository.insertRecipe(recipe)
+        try {
+            recipeRepository.insertRecipe(recipe)
 
-                // Update the recipeId for each instruction and insert them into the database
-                val updatedInstructions = instructions.map { instruction ->
-                    instruction.copy(recipeId = recipe.id)
+            instructions.filterNotNull().forEach {
+                instructionRepository.insertInstruction(it.copy(recipeId = recipe.id))
+            }
+
+            for (section in instructionSections.filterNotNull()) {
+                instructionSectionRepository.insertSection(section.copy(recipeId = recipe.id))
+            }
+
+            recipeIngredients.filterNotNull().forEach {
+                recipeIngredientRepository.insertRecipeIngredient(it.copy(recipeId = recipe.id))
+            }
+
+            // ✅ Handle tags properly
+            for (tag in recipeTags) {
+                val finalTag = if (tag.id == 0L || tag.id == null) {
+                    // Try to find existing tag by name
+                    val existingTag = tagRepository.getTagByName(tag.name).firstOrNull()
+                    if (existingTag != null) {
+                        existingTag
+                    } else {
+                        // Insert new tag
+                        val newId = tagRepository.insertTag(tag)
+                        tag.copy(id = newId)
+                    }
+                } else {
+                    tag
                 }
-                updatedInstructions.forEach { instruction ->
-                    instructionRepository.insertInstruction(instruction)
+
+                recipeTagRepository.insertRecipeTag(
+                    RecipeTag(recipeId = recipe.id, tagId = finalTag.id)
+                )
+            }
+
+            val imageHelper = ImageStorageHelper(context)
+            images?.forEach { image ->
+                val bitmap: Bitmap? = withContext(Dispatchers.IO) {
+                    if (image.toString().startsWith("http")) loadBitmapFromUrl(image.toString())
+                    else loadImage(context, image)
                 }
 
-                // Update the recipeId for each recipeIngredient and insert them into the database
-                val updatedRecipeIngredients = recipeIngredients.map { recipeIngredient ->
-                    recipeIngredient.copy(recipeId = recipe.id)
-                }
-                updatedRecipeIngredients.forEach { recipeIngredient ->
-                    recipeIngredientRepository.insertRecipeIngredient(recipeIngredient)
-                }
-
-                // Save the recipe tag info
-                recipeTags.forEach {
-                    recipeTagRepository.insertRecipeTag(RecipeTag(recipeId = recipe.id, tagId = it.id))
-                }
-
-                // Save the images
-                val imageHelper = ImageStorageHelper(context)
-                images?.forEach { image ->
-                    Log.d("TAG", "saveRecipe: $image")
-
-
-                    val imageBitmap = imageHelper.loadImageFromUri(image)!!
-                    val compressedImageBytes = compressImageFile(imageBitmap, 60)
-
-                    val imagePath = imageHelper.saveImageToInternalStorage(
-                        BitmapFactory.decodeByteArray(compressedImageBytes, 0, compressedImageBytes.size),
+                bitmap?.let {
+                    val compressedBytes = compressImageFile(it, 60)
+                    val savedPath = imageHelper.saveImageToInternalStorage(
+                        BitmapFactory.decodeByteArray(compressedBytes, 0, compressedBytes.size),
                         "recipe_${recipe.id}_${System.currentTimeMillis()}.jpg"
                     )
-                    val recipeImage =
-                        RecipeImage(recipeId = recipe.id, imagePath = imagePath ?: "NULL")
-
-                    recipeImageRepository.insertRecipeImage(recipeImage)
+                    recipeImageRepository.insertRecipeImage(
+                        RecipeImage(recipeId = recipe.id, imagePath = savedPath ?: "NULL")
+                    )
                 }
-            } catch (e: Exception) {
-                // Handle any errors that might occur during the database operations
-                e.printStackTrace()
             }
+        } catch (e: Exception) {
+            Log.e("TAG", "saveRecipe error: $e")
         }
     }
+
 
     suspend fun updateRecipe(
         recipe: Recipe,
@@ -243,6 +262,35 @@ class RecipeOperationsViewModel(
                 return false
             }
     }
+
+    suspend fun loadImage(context: Context, imageUri: Uri): Bitmap? {
+        return withContext(Dispatchers.IO) {
+            try {
+                when (imageUri.scheme) {
+                    "content", "file" -> {
+                        // Local file or content URI
+                        context.contentResolver.openInputStream(imageUri)?.use {
+                            BitmapFactory.decodeStream(it)
+                        }
+                    }
+                    "http", "https" -> {
+                        // Web URL
+                        val connection = URL(imageUri.toString()).openConnection() as HttpURLConnection
+                        connection.doInput = true
+                        connection.connect()
+                        connection.inputStream.use { BitmapFactory.decodeStream(it) }
+                    }
+                    else -> null
+                }
+            } catch (e: Exception) {
+                Log.e("ImageHelper", "Failed to load image: $imageUri", e)
+                null
+            }
+        }
+    }
+
+
+
 }
 
 // Define a data class to hold the list of measures

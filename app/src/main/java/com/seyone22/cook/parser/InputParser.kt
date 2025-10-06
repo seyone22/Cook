@@ -1,5 +1,7 @@
 package com.seyone22.cook.parser
 
+import androidx.core.text.HtmlCompat
+
 fun parseItemString(input: String):  Triple<String, Int, String> {
     val regex = Regex("""(\d+)\s*([a-zA-Z]+)\s*(.+)?|(.+?)\s*(\d+)\s*([a-zA-Z]+)?""")
 
@@ -31,4 +33,9 @@ fun parseItemString(input: String):  Triple<String, Int, String> {
         }
     }
     throw IllegalArgumentException("Unable to parse input")
+}
+
+
+fun decodeHtmlEntities(input: String): String {
+    return HtmlCompat.fromHtml(input, HtmlCompat.FROM_HTML_MODE_LEGACY).toString()
 }
