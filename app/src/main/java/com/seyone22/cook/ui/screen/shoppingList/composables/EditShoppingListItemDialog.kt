@@ -50,11 +50,11 @@ fun EditShoppingListItemDialog(
     AlertDialog(onDismissRequest = { onDismiss() }, title = { Text(text = "Edit Item") }, text = {
         var ingredientFilter by remember {
             mutableStateOf(
-                ingredients.find { i -> i?.id == item.ingredientId }?.nameEn ?: ""
+                ingredients.find { i -> i?.id == item.ingredientId }?.name ?: ""
             )
         }
         val filteredIngredients = ingredients.filter {
-            (it?.nameEn ?: "").contains(
+            (it?.name ?: "").contains(
                 ingredientFilter, true
             )
         }
@@ -88,8 +88,8 @@ fun EditShoppingListItemDialog(
                         if (filteredIngredients.isNotEmpty()) {
                             filteredIngredients.forEach { ingredient ->
                                 ingredient?.let {
-                                    DropdownMenuItem(text = { Text(ingredient.nameEn) }, onClick = {
-                                        ingredientFilter = ingredient.nameEn
+                                    DropdownMenuItem(text = { Text(ingredient.name) }, onClick = {
+                                        ingredientFilter = ingredient.name
                                         shoppingListItemDetails =
                                             shoppingListItemDetails.copy(ingredientId = ingredient.id)
                                         ingredientExpanded = false

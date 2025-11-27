@@ -1,6 +1,7 @@
 package com.seyone22.cook.ui.screen.ingredients.detail
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -21,8 +22,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.AlternateEmail
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material3.AlertDialog
@@ -72,8 +71,8 @@ import coil.compose.AsyncImage
 import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.model.IngredientImage
-import com.seyone22.cook.data.model.IngredientVariant
-import com.seyone22.cook.data.model.IngredientVariantDetails
+import com.seyone22.cook.data.model.IngredientProduct
+import com.seyone22.cook.data.model.IngredientProductDetails
 import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.model.ShoppingList
 import com.seyone22.cook.data.model.ShoppingListItem
@@ -112,7 +111,7 @@ fun IngredientDetailScreen(
     val ingredientsViewState by viewModel.ingredientsViewState.collectAsState()
 
     val ingredient =
-        ingredientsViewState.ingredients.find { i -> i?.id.toString() == backStackEntry }
+        ingredientsViewState.ingredients.find { i -> i?.foodDbId.toString() == backStackEntry }
     val images =
         ingredientsViewState.ingredientImages.filter { i -> i?.ingredientId.toString() == backStackEntry }
     val variants =
@@ -122,7 +121,7 @@ fun IngredientDetailScreen(
     Scaffold(topBar = {
         TopAppBar(
             modifier = Modifier.padding(0.dp),
-            title = { Text(text = ingredient?.nameEn ?: "") },
+            title = { Text(text = ingredient?.name ?: "") },
             navigationIcon = {
                 Icon(
                     modifier = Modifier
@@ -160,10 +159,17 @@ fun IngredientDetailScreen(
                     DropdownMenuItem(text = { Text("Delete") }, onClick = {
                         viewModel.showDialog(
                             DeleteDialogAction(
-                                itemName = ingredient?.nameEn ?: "", onDelete = {
+                                itemName = ingredient?.name ?: "", onDelete = {
 
                                 })
                         )
+                    })
+                    DropdownMenuItem(text = { Text("Update") }, onClick = {
+                        if (ingredient != null) {
+                            viewModel.updateIngredient(ingredient.foodDbId)
+                        } else {
+                            Toast.makeText(context, "Ingredient not found", Toast.LENGTH_SHORT).show()
+                        }
                     })
                 }
             },
@@ -210,7 +216,7 @@ fun IngredientOptionRow(
     ingredient: Ingredient,
     measures: List<Measure?>
 ) {
-    var x: Boolean by remember { mutableStateOf(ingredient.stocked) }
+    var x: Boolean by remember { mutableStateOf(true) }
 
     var showSubstituteDialog by remember { mutableStateOf(false) }
     var showVariantDialog by remember { mutableStateOf(false) }
@@ -218,7 +224,7 @@ fun IngredientOptionRow(
 
     if (showVariantDialog) {
         NewVariantDialog(measures = measures, onConfirm = {
-            viewModel.addVariant(ingredient.id, variant = it)
+            viewModel.addVariant(ingredient.foodDbId, variant = it)
             showVariantDialog = false
             viewModel.fetchData()
         }, onDismiss = { showVariantDialog = false })
@@ -241,30 +247,6 @@ fun IngredientOptionRow(
     }
 
     LazyRow {
-        if (x) {
-            item {
-                AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp), onClick = {
-                    x = false
-                    viewModel.updateStock(ingredient.copy(stocked = false))
-                }, label = { Text("Mark Ran Out") }, leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.NotificationsNone, contentDescription = null
-                    )
-                })
-            }
-        } else {
-            item {
-                AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp), onClick = {
-                    x = true
-                    viewModel.updateStock(ingredient.copy(stocked = true))
-
-                }, label = { Text("Mark Restocked") }, leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Notifications, contentDescription = null
-                    )
-                })
-            }
-        }
         item {
             AssistChip(modifier = Modifier.padding(0.dp, 0.dp, 8.dp, 0.dp), onClick = {
                 showAddShoppingListDialog = true
@@ -302,18 +284,15 @@ fun IngredientDetails(ingredient: Ingredient) {
     Column(
         modifier = Modifier.padding(8.dp, 0.dp, 8.dp, 16.dp)
     ) {
-        Text(text = ingredient.nameSi, style = MaterialTheme.typography.headlineSmall)
-        Text(text = ingredient.nameTa, style = MaterialTheme.typography.headlineSmall)
-
-        if ((ingredient.description != null) and (ingredient.description?.isNotBlank() == true)) {
-            Text(text = ingredient.description!!)
+        if ((ingredient.comment != null) and (ingredient.comment?.isNotBlank() == true)) {
+            Text(text = ingredient.comment!!)
         } else {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     modifier = Modifier
                         .padding(8.dp)
                         .align(Alignment.CenterHorizontally),
-                    text = "No description given.",
+                    text = "No comment given.",
                     fontStyle = FontStyle.Italic,
                     color = Color.Gray
                 )
@@ -366,7 +345,7 @@ fun HeaderImage(images: List<IngredientImage?>) {
 }
 
 @Composable
-fun VariantsList(list: List<IngredientVariant?>, measures: List<Measure?>) {
+fun VariantsList(list: List<IngredientProduct?>, measures: List<Measure?>) {
     Column {
         Text(
             modifier = Modifier.padding(8.dp),
@@ -375,7 +354,7 @@ fun VariantsList(list: List<IngredientVariant?>, measures: List<Measure?>) {
             color = MaterialTheme.colorScheme.primary
         )
         list.forEach { variant ->
-            if (variant?.variantName?.isNotBlank()!!) {
+            if (variant?.productName?.isNotBlank()!!) {
                 VariantCard(variant = variant, measures = measures)
             }
         }
@@ -395,7 +374,7 @@ fun VariantsList(list: List<IngredientVariant?>, measures: List<Measure?>) {
 }
 
 @Composable
-fun VariantCard(variant: IngredientVariant, measures: List<Measure?>) {
+fun VariantCard(variant: IngredientProduct, measures: List<Measure?>) {
     OutlinedCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -410,7 +389,7 @@ fun VariantCard(variant: IngredientVariant, measures: List<Measure?>) {
                         .padding(0.dp, 0.dp, 16.dp, 0.dp)
                         .align(Alignment.CenterHorizontally)
                         .width(160.dp),
-                    text = variant.variantName,
+                    text = variant.productName,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -420,7 +399,7 @@ fun VariantCard(variant: IngredientVariant, measures: List<Measure?>) {
                         .padding(0.dp, 0.dp, 16.dp, 0.dp)
                         .align(Alignment.CenterHorizontally)
                         .width(160.dp),
-                    text = "${variant.type} | ${variant.brand}",
+                    text = "${variant.item_unit} | ${variant.source}",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -432,7 +411,7 @@ fun VariantCard(variant: IngredientVariant, measures: List<Measure?>) {
                     modifier = Modifier
                         .padding(0.dp, 0.dp, 16.dp, 0.dp)
                         .align(Alignment.End),
-                    text = ("Rs.${variant.price} per ${variant.quantity}${measures.find { m -> m?.id == variant.unitId }?.abbreviation}"),
+                    text = ("Rs.${variant.price} per ${variant.quantity}${variant.item_unit}"),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -444,9 +423,9 @@ fun VariantCard(variant: IngredientVariant, measures: List<Measure?>) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewVariantDialog(
-    measures: List<Measure?>, onConfirm: (IngredientVariantDetails) -> Unit, onDismiss: () -> Unit
+    measures: List<Measure?>, onConfirm: (IngredientProductDetails) -> Unit, onDismiss: () -> Unit
 ) {
-    var variant by remember { mutableStateOf(IngredientVariantDetails()) }
+    var variant by remember { mutableStateOf(IngredientProductDetails()) }
 
     AlertDialog(
         onDismissRequest = { onDismiss() },
@@ -513,42 +492,7 @@ fun NewVariantDialog(
                                     imeAction = ImeAction.Done, keyboardType = KeyboardType.Number
                                 )
                             )
-                            ExposedDropdownMenuBox(expanded = measuresExpanded, onExpandedChange = {
-                                measuresExpanded = !measuresExpanded
-                            }) {
-                                OutlinedTextField(
-                                    modifier = Modifier
-                                        .menuAnchor(
-                                            MenuAnchorType.PrimaryEditable, true
-                                        )
-                                        .clickable(enabled = true) {
-                                            measuresExpanded = true
-                                        },
-                                    value = measures.find { m -> m?.id?.toInt() == variant.unitId.toInt() }?.abbreviation
-                                        ?: "",
-                                    readOnly = true,
-                                    onValueChange = { },
-                                    label = { Text("") },
-                                    singleLine = true,
-                                    trailingIcon = {
-                                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = measuresExpanded)
-                                    })
 
-                                ExposedDropdownMenu(
-                                    expanded = measuresExpanded,
-                                    onDismissRequest = { measuresExpanded = false }) {
-                                    measures.forEach { measure ->
-                                        measure?.let {
-                                            DropdownMenuItem(
-                                                text = { Text(measure.abbreviation) },
-                                                onClick = {
-                                                    variant = variant.copy(unitId = measure.id)
-                                                    measuresExpanded = false
-                                                })
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
                 }

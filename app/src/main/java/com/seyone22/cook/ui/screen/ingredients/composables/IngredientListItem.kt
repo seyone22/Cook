@@ -33,7 +33,7 @@ fun IngredientListItem(modifier: Modifier, ingredient: Ingredient, image: Ingred
                 )
             }
             Text(
-                text = ingredient.nameEn,
+                text = ingredient.name,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = modifier.padding(8.dp),

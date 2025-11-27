@@ -15,6 +15,15 @@ class RoomConverters {
         return value.name
     }
 
+    // --- Optional List<String> if you store tags, cuisines, etc ---
+    @TypeConverter
+    fun fromStringList(value: List<String>?): String? =
+        value?.let { json.encodeToString(it) }
+
+    @TypeConverter
+    fun toStringList(value: String?): List<String>? =
+        value?.let { json.decodeFromString(it) }
+
     @TypeConverter
     fun toMeasureType(value: String): MeasureType {
         return enumValueOf<MeasureType>(value)

@@ -48,14 +48,15 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.seyone22.cook.R
-import com.seyone22.cook.helper.PriceHelper
 import com.seyone22.cook.helper.RecipeFileHandler
+import com.seyone22.cook.provider.KtorClientProvider.client
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.common.CookToolbar
 import com.seyone22.cook.ui.common.dialog.action.AddAllToShoppingListDialogAction
 import com.seyone22.cook.ui.common.dialog.action.DeleteDialogAction
 import com.seyone22.cook.ui.common.dialog.action.ScaleRecipeDialogAction
 import com.seyone22.cook.ui.navigation.NavigationDestination
+import com.seyone22.cook.ui.screen.crud.recipe.EditRecipeDestination
 import com.seyone22.cook.ui.screen.home.HomeViewModel
 import com.seyone22.cook.ui.screen.home.composables.ExpandableDescription
 import com.seyone22.cook.ui.screen.home.composables.HeaderImage
@@ -115,7 +116,7 @@ fun RecipeDetailScreen(
         scaleFactor = recipe?.servingSize?.toDouble() ?: -1.0
     }
     LaunchedEffect(key1 = scaleFactor) {
-        cost = PriceHelper.getCostOfRecipe(recipeIngredients, variants, scaleFactor)
+        cost = viewModel.fetchPriceForRecipe(recipeIngredients, scaleFactor)
     }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -126,121 +127,121 @@ fun RecipeDetailScreen(
         modifier = Modifier
             .nestedScroll(scrollBehavior.nestedScrollConnection)
             .nestedScroll(floatingToolbarScrollBehavior), floatingActionButton = {
-            CookToolbar(
-                recipeLink = recipe?.reference,
-                scrollBehavior = floatingToolbarScrollBehavior,
-                onMadeItClicked = {
-                    viewModel.incrementMakeCounter(recipe?.id!!)
-                    viewModel.fetchData()
-                    Toast.makeText(context, "You made it another time!", Toast.LENGTH_SHORT).show()
-                },
-                onScaleRecipeClicked = {
-                    viewModel.showDialog(
-                        ScaleRecipeDialogAction(
-                            onAdd = { sF ->
-                                scaleFactor = sF
-                            }, initialEntry = scaleFactor, itemName = "Scale Factor"
-                        )
+        CookToolbar(
+            recipeLink = recipe?.reference,
+            scrollBehavior = floatingToolbarScrollBehavior,
+            onMadeItClicked = {
+                viewModel.incrementMakeCounter(recipe?.id!!)
+                viewModel.fetchData()
+                Toast.makeText(context, "You made it another time!", Toast.LENGTH_SHORT).show()
+            },
+            onScaleRecipeClicked = {
+                viewModel.showDialog(
+                    ScaleRecipeDialogAction(
+                        onAdd = { sF ->
+                            scaleFactor = sF
+                        }, initialEntry = scaleFactor, itemName = "Scale Factor"
                     )
-                },
-                onCookingModeClicked = {
-                    navController.navigate("Cooking/${recipe?.id!!}")
-                },
-                onAddToShoppingListClicked = {
-                    viewModel.showDialog(
-                        AddAllToShoppingListDialogAction(
-                            onAdd = {
-                                viewModel.addAllToShoppingList(recipeIngredients, it.toLong())
-                            },
-                            shoppingLists = homeViewState.shoppingLists,
-                            itemName = "Shopping List"
-                        )
+                )
+            },
+            onCookingModeClicked = {
+                navController.navigate("Cooking/${recipe?.id!!}")
+            },
+            onAddToShoppingListClicked = {
+                viewModel.showDialog(
+                    AddAllToShoppingListDialogAction(
+                        onAdd = {
+                            viewModel.addAllToShoppingList(recipeIngredients, it.toLong())
+                        },
+                        shoppingLists = homeViewState.shoppingLists,
+                        itemName = "Shopping List"
                     )
-                },
-                context = context
-            )
-        }, topBar = {
-            MediumTopAppBar(
-                modifier = Modifier.padding(0.dp),
-                title = { Text(text = recipe?.name ?: "") },
-                scrollBehavior = scrollBehavior,
-                navigationIcon = {
-                    Icon(
-                        modifier = Modifier
-                            .padding(16.dp, 0.dp, 24.dp, 0.dp)
-                            .clickable { navController.popBackStack() },
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = null,
-                    )
-                },
-                actions = @Composable {
-                    // Share button
-                    IconButton(onClick = {
-                        // Handle share action
-                        CoroutineScope(Dispatchers.Main).launch {
-                            val recipeIngredientIds =
-                                recipeIngredients.map { it?.ingredientId } // Get a list of ingredient IDs from recipeIngredients
+                )
+            },
+            context = context
+        )
+    }, topBar = {
+        MediumTopAppBar(
+            modifier = Modifier.padding(0.dp),
+            title = { Text(text = recipe?.name ?: "") },
+            scrollBehavior = scrollBehavior,
+            navigationIcon = {
+                Icon(
+                    modifier = Modifier
+                        .padding(16.dp, 0.dp, 24.dp, 0.dp)
+                        .clickable { navController.popBackStack() },
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = null,
+                )
+            },
+            actions = @Composable {
+                // Share button
+                IconButton(onClick = {
+                    // Handle share action
+                    CoroutineScope(Dispatchers.Main).launch {
+                        val recipeIngredientIds =
+                            recipeIngredients.map { it?.ingredientId } // Get a list of ingredient IDs from recipeIngredients
 
-                            val ingredientsWithMatchingIds = ingredients.filter { ingredient ->
-                                recipeIngredientIds.contains(ingredient?.id)
-                            }
-
-                            val zipFile = RecipeFileHandler.exportRecipe(
-                                context,
-                                recipe!!,
-                                instructions,
-                                recipeIngredients,
-                                ingredientsWithMatchingIds,
-                                images
-                            )
-                            val uri = FileProvider.getUriForFile(
-                                context, "${context.packageName}.provider", zipFile
-                            )
-
-                            val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                                putExtra(Intent.EXTRA_STREAM, uri)
-                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                type = "application/zip"
-                            }
-                            val shareIntent = Intent.createChooser(sendIntent, null)
-
-                            context.startActivity(Intent.createChooser(shareIntent, "Share Recipe"))
+                        val ingredientsWithMatchingIds = ingredients.filter { ingredient ->
+                            recipeIngredientIds.contains(ingredient?.id)
                         }
-                    }) {
-                        Icon(imageVector = Icons.Default.Share, contentDescription = "Share")
-                    }
 
-                    // Overflow menu
-                    var expanded by remember { mutableStateOf(false) }
-
-                    IconButton(onClick = { expanded = true }) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "More options"
+                        val zipFile = RecipeFileHandler.exportRecipe(
+                            context,
+                            recipe!!,
+                            instructions,
+                            recipeIngredients,
+                            ingredientsWithMatchingIds,
+                            images
                         )
-                    }
+                        val uri = FileProvider.getUriForFile(
+                            context, "${context.packageName}.provider", zipFile
+                        )
 
-                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                        DropdownMenuItem(text = { Text("Edit") }, onClick = {
-                            expanded = false
-                            // Handle edit action
-                            if (recipe != null) {
-                                navController.navigate("Edit Recipe/${recipe.id}")
-                            }
-                        })
-                        DropdownMenuItem(text = { Text("Delete") }, onClick = {
-                            viewModel.showDialog(
-                                DeleteDialogAction(
-                                    itemName = recipe?.name ?: "", onDelete = {
-                                        if (recipe != null) viewModel.deleteRecipe(recipe)
-                                        navController.popBackStack()
-                                    })
-                            )
-                        })
+                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            type = "application/zip"
+                        }
+                        val shareIntent = Intent.createChooser(sendIntent, null)
+
+                        context.startActivity(Intent.createChooser(shareIntent, "Share Recipe"))
                     }
-                },
-            )
-        }) {
+                }) {
+                    Icon(imageVector = Icons.Default.Share, contentDescription = "Share")
+                }
+
+                // Overflow menu
+                var expanded by remember { mutableStateOf(false) }
+
+                IconButton(onClick = { expanded = true }) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "More options"
+                    )
+                }
+
+                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    DropdownMenuItem(text = { Text("Edit") }, onClick = {
+                        expanded = false
+                        // Handle edit action
+                        if (recipe != null) {
+                            navController.navigate("${EditRecipeDestination.route}/${recipe.id}")
+                        }
+                    })
+                    DropdownMenuItem(text = { Text("Delete") }, onClick = {
+                        viewModel.showDialog(
+                            DeleteDialogAction(
+                                itemName = recipe?.name ?: "", onDelete = {
+                                    if (recipe != null) viewModel.deleteRecipe(recipe)
+                                    navController.popBackStack()
+                                })
+                        )
+                    })
+                }
+            },
+        )
+    }) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -248,13 +249,24 @@ fun RecipeDetailScreen(
         ) {
             if (recipe != null) {
                 item {
-                    HeaderImage(images = images, title = recipe.name, modifier = Modifier.padding(16.dp, 0.dp))
+                    HeaderImage(
+                        images = images,
+                        title = recipe.name,
+                        modifier = Modifier.padding(16.dp, 0.dp)
+                    )
                 }
                 item {
-                    ExpandableDescription(text = recipe.description, modifier = Modifier.padding(16.dp, 0.dp))
+                    ExpandableDescription(
+                        text = recipe.description, modifier = Modifier.padding(16.dp, 0.dp)
+                    )
                 }
                 item {
-                    RecipeStats(recipe = recipe, cost = cost, scaleFactor = scaleFactor, modifier = Modifier.padding(16.dp, 0.dp))
+                    RecipeStats(
+                        recipe = recipe,
+                        cost = cost,
+                        scaleFactor = scaleFactor,
+                        modifier = Modifier.padding(16.dp, 0.dp)
+                    )
                 }
             }
 
@@ -270,14 +282,10 @@ fun RecipeDetailScreen(
                     TabRowDefaults.primaryContentColor,
                 ) {
                     tabs.forEachIndexed { index, title ->
-                        Tab(
-                            text = { Text(title) },
-                            selected = state == index,
-                            onClick = {
-                                state = index
-                                coroutineScope.launch { pagerState.animateScrollToPage(index) }
-                            }
-                        )
+                        Tab(text = { Text(title) }, selected = state == index, onClick = {
+                            state = index
+                            coroutineScope.launch { pagerState.animateScrollToPage(index) }
+                        })
                     }
                 }
 
@@ -285,7 +293,9 @@ fun RecipeDetailScreen(
                 HorizontalPager(
                     state = pagerState,
                     verticalAlignment = Alignment.Top,
-                    modifier = Modifier.fillMaxHeight().padding(top = 16.dp)
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(top = 16.dp)
                 ) { page ->
                     state = page
                     when (page) {
@@ -299,7 +309,8 @@ fun RecipeDetailScreen(
                                 serves = recipe?.servingSize ?: 1,
                                 variants = variants,
                                 navController = navController,
-                                modifier = Modifier.padding(16.dp, 0.dp)
+                                modifier = Modifier.padding(16.dp, 0.dp),
+                                viewModel = viewModel
                             )
                         }
 

@@ -1,13 +1,13 @@
 package com.seyone22.cook.ui.screen.home.composables
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -16,26 +16,20 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.PriceCheck
 import androidx.compose.material.icons.filled.RiceBowl
 import androidx.compose.material.icons.outlined.Timer
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -44,23 +38,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import com.seyone22.cook.data.model.Ingredient
-import com.seyone22.cook.data.model.IngredientVariant
 import com.seyone22.cook.data.model.Instruction
 import com.seyone22.cook.data.model.InstructionSection
-import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.model.Recipe
-import com.seyone22.cook.data.model.RecipeIngredient
-import com.seyone22.cook.helper.PriceHelper
 import com.seyone22.cook.parser.decodeHtmlEntities
-import com.seyone22.cook.ui.screen.ingredients.detail.IngredientDetailDestination
 
 @Composable
 fun ExpandableDescription(
@@ -177,126 +167,11 @@ fun RecipeStat(
 }
 
 @Composable
-fun IngredientsList(
-    navController: NavController,
-    list: List<RecipeIngredient?>,
-    measures: List<Measure?>,
-    ingredients: List<Ingredient?>,
-    variants: List<IngredientVariant?>,
-    scaleFactor: Double,
-    serves: Int,
-    modifier: Modifier
-) {
-    var qtySelected by remember { mutableStateOf(true) }
-
-    Column {
-        Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .defaultMinSize(minHeight = 100.dp),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            IconButton(onClick = { qtySelected = !qtySelected }) {
-                Icon(
-                    imageVector = Icons.Default.AttachMoney,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = if (!qtySelected) MaterialTheme.colorScheme.primary else Color.Gray
-                )
-            }
-        }
-
-        Card(
-            modifier = modifier
-                .padding(bottom = 8.dp)
-                .width(340.dp),
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp, 16.dp)
-            ) {
-                list.forEach { recipeIngredient ->
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        val checked = remember {
-                            mutableStateOf(
-                                ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.stocked
-                                    ?: false
-                            )
-                        }
-                        val quantity: Double =
-                            ((recipeIngredient?.quantity?.div(serves))?.times(scaleFactor)) ?: 0.0
-                        var price by remember { mutableDoubleStateOf(0.0) }
-
-                        LaunchedEffect(key1 = quantity) {
-                            price = PriceHelper.getCheapestPrice(
-                                recipeIngredient?.ingredientId, variants, quantity
-                            )
-                        }
-
-                        Row {
-                            Checkbox(
-                                modifier = Modifier.height(32.dp),
-                                enabled = !(ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.stocked
-                                    ?: false),
-                                checked = checked.value,
-                                onCheckedChange = { checked.value = !checked.value })
-                            Text(
-                                modifier = Modifier
-                                    .padding(0.dp, 0.dp, 16.dp, 0.dp)
-                                    .align(Alignment.CenterVertically)
-                                    .width(120.dp)
-                                    .clickable {
-                                        navController.navigate("${IngredientDetailDestination.route}/${recipeIngredient?.ingredientId}")
-                                    },
-                                text = ingredients.find { i -> i?.id == recipeIngredient?.ingredientId }?.nameEn
-                                    ?: "",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-
-                        if (qtySelected) {
-                            Text(
-                                modifier = Modifier
-                                    .padding(4.dp, 0.dp, 16.dp, 0.dp)
-                                    .align(Alignment.CenterVertically),
-                                text = buildString {
-                                    append(
-                                        String.format(
-                                            "%.2f", quantity
-                                        )
-                                    )
-                                    append(measures.find { m -> m?.id == recipeIngredient?.measureId }?.abbreviation)
-                                },
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        } else {
-                            Text(
-                                modifier = Modifier
-                                    .padding(4.dp, 0.dp, 16.dp, 0.dp)
-                                    .align(Alignment.CenterVertically),
-                                text = buildString {
-                                    append("Rs.")
-                                    append(String.format("%.2f", price))
-                                },
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun InstructionList(
     list: List<Instruction?>, sections: List<InstructionSection?>, modifier: Modifier = Modifier
 ) {
+    val clipboardManager: ClipboardManager = LocalClipboardManager.current
+
     Column(modifier = modifier.padding(0.dp)) {
         sections.forEach { section ->
             // Filter instructions for this section
@@ -312,11 +187,17 @@ fun InstructionList(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         // Section title
-                        Text(
-                            text = section?.name ?: "",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = section?.name ?: "",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(8.dp))
                         Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
@@ -326,21 +207,24 @@ fun InstructionList(
                         sectionInstructions.forEachIndexed { index, instruction ->
                             Row(
                                 verticalAlignment = Alignment.Top,
+                                horizontalArrangement = Arrangement.SpaceBetween,
                                 modifier = Modifier.padding(vertical = 8.dp)
                             ) {
                                 // Step number in a circle
-                                Surface(
-                                    shape = CircleShape,
-                                    color = MaterialTheme.colorScheme.secondaryContainer,
-                                    modifier = Modifier.size(32.dp),
-                                    tonalElevation = 2.dp
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Text(
-                                            text = "${(instruction?.stepNumber ?: 0) + 1}",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                                        )
+                                if (sectionInstructions.size > 1) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = MaterialTheme.colorScheme.secondaryContainer,
+                                        modifier = Modifier.size(32.dp),
+                                        tonalElevation = 2.dp
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Text(
+                                                text = "${(instruction?.stepNumber ?: 0) + 1}",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            )
+                                        }
                                     }
                                 }
 
@@ -350,7 +234,17 @@ fun InstructionList(
                                 Text(
                                     text = instruction?.description ?: "",
                                     style = MaterialTheme.typography.bodyLarge,
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .combinedClickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = null, // remove ripple on long click
+                                            onClick = { /* optional single-click behavior */ },
+                                            onLongClick = {
+                                                clipboardManager.setText(
+                                                    AnnotatedString(instruction?.description ?: "")
+                                                )
+                                            })
                                 )
                             }
                         }
@@ -360,8 +254,3 @@ fun InstructionList(
         }
     }
 }
-
-
-// TODO: View .recipe files, before importing
-// TODO: Cooking view, TTS and STT capability
-// TODO: Ingredient Substitutes

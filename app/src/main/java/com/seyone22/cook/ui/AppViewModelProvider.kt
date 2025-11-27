@@ -83,6 +83,7 @@ object AppViewModelProvider {
                 recipeIngredientRepository = cookApplication().container.recipeIngredientRepository,
                 ingredientRepository = cookApplication().container.ingredientRepository,
                 tagRepository = cookApplication().container.tagRepository,
+                ingredientProductRepository = cookApplication().container.ingredientVariantRepository
             )
         }
         initializer {
@@ -107,6 +108,8 @@ object AppViewModelProvider {
         }
         initializer {
             SharedViewModel(
+                ingredientRepository = cookApplication().container.ingredientRepository,
+                ingredientProductRepository = cookApplication().container.ingredientVariantRepository
             )
         }
     }

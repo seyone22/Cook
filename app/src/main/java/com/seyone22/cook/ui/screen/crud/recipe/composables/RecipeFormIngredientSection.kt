@@ -60,12 +60,12 @@ fun RecipeFormIngredientSection(
 
             var ingredientFilter by remember {
                 mutableStateOf(
-                    allIngredients.find { it?.id == recipeIngredient.ingredientId }?.nameEn ?: ""
+                    allIngredients.find { it?.id == recipeIngredient.ingredientId }?.name ?: ""
                 )
             }
 
             val filteredIngredients = allIngredients.filter {
-                (it?.nameEn ?: "").contains(ingredientFilter, true)
+                (it?.name ?: "").contains(ingredientFilter, true)
             }
 
             Column {
@@ -111,9 +111,9 @@ fun RecipeFormIngredientSection(
                                     filteredIngredients.forEach { ingredient ->
                                         ingredient?.let {
                                             DropdownMenuItem(
-                                                text = { Text(ingredient.nameEn) },
+                                                text = { Text(ingredient.name) },
                                                 onClick = {
-                                                    ingredientFilter = ingredient.nameEn
+                                                    ingredientFilter = ingredient.name
                                                     onUpdateRecipeIngredient(
                                                         index, recipeIngredient.copy(
                                                             ingredientId = ingredient.id
@@ -164,8 +164,7 @@ fun RecipeFormIngredientSection(
                                     .clickable(enabled = true) {
                                         measuresExpanded = true
                                     },
-                                value = allMeasures.find { m -> m?.id == recipeIngredient.measureId }?.abbreviation
-                                    ?: "",
+                                value = recipeIngredient.unit,
                                 readOnly = true,
                                 onValueChange = { },
                                 label = { Text("Unit") }, // Changed label to "Unit"
@@ -182,10 +181,7 @@ fun RecipeFormIngredientSection(
                                         DropdownMenuItem(
                                             text = { Text(measure.abbreviation) },
                                             onClick = {
-                                                onUpdateRecipeIngredient(
-                                                    index,
-                                                    recipeIngredient.copy(measureId = measure.id)
-                                                )
+
                                                 measuresExpanded = false
                                             })
                                     }
@@ -215,9 +211,12 @@ fun RecipeFormIngredientSection(
                 onAddRecipeIngredient(
                     RecipeIngredientDetails(
                         ingredientId = UUID.randomUUID(), // Temporarily random, will be updated when selected
-                        measureId = -1, // No measure selected initially
                         quantity = "",
-                        recipeId = UUID.randomUUID() // Temporarily random, will be updated on save
+                        recipeId = UUID.randomUUID(), // Temporarily random, will be updated on save
+                        unit = "",
+                        foodDbId = "",
+                        name = "",
+                        notes = null
                     )
                 )
             }) {

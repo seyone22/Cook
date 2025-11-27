@@ -48,7 +48,7 @@ fun NewShoppingListItemDialog(
     AlertDialog(onDismissRequest = { onDismiss() }, title = { Text(text = "Add Item") }, text = {
         var ingredientFilter by remember { mutableStateOf("") }
         val filteredIngredients = ingredients.filter {
-            (it?.nameEn ?: "").contains(
+            (it?.name ?: "").contains(
                 ingredientFilter, true
             )
         }
@@ -82,8 +82,8 @@ fun NewShoppingListItemDialog(
                         if (filteredIngredients.isNotEmpty()) {
                             filteredIngredients.forEach { ingredient ->
                                 ingredient?.let {
-                                    DropdownMenuItem(text = { Text(ingredient.nameEn) }, onClick = {
-                                        ingredientFilter = ingredient.nameEn
+                                    DropdownMenuItem(text = { Text(ingredient.name) }, onClick = {
+                                        ingredientFilter = ingredient.name
                                         shoppingListItemDetails =
                                             shoppingListItemDetails.copy(ingredientId = ingredient.id)
                                         ingredientExpanded = false

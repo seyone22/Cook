@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.model.IngredientImage
-import com.seyone22.cook.data.model.IngredientVariant
+import com.seyone22.cook.data.model.IngredientProduct
 import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
 import com.seyone22.cook.data.repository.ingredientImage.IngredientImageRepository
@@ -36,7 +36,7 @@ class IngredientOperationsViewModel(
         viewModelScope.launch {
             val measures = measureRepository.getAllMeasures().first()
             var ingredient: Ingredient? = null
-            var variants: List<IngredientVariant?> = emptyList()
+            var variants: List<IngredientProduct?> = emptyList()
             var photos: List<IngredientImage?> = emptyList()
             if (id != null) {
                 ingredient = ingredientRepository.getIngredientById(id).first()
@@ -50,7 +50,7 @@ class IngredientOperationsViewModel(
 
     fun saveIngredient(
         ingredient: Ingredient,
-        ingredientVariantList: List<IngredientVariant>,
+        ingredientProductList: List<IngredientProduct>,
         images: List<Uri>?,
         context: Context
     ) {
@@ -60,8 +60,8 @@ class IngredientOperationsViewModel(
                 val ingredientId = ingredientRepository.insertIngredient(ingredient)
 
                 // Update the ingredientId for each variant and insert them into the database
-                val updatedVariants = ingredientVariantList.map { variant ->
-                    variant.copy(ingredientId = UUID.fromString(ingredientId.toString()))
+                val updatedVariants = ingredientProductList.map { variant ->
+                    variant.copy(ingredientId = ingredientId.toString())
                 }
                 updatedVariants.forEach { variant ->
                     ingredientVariantRepository.insertIngredientVariant(variant)
@@ -88,7 +88,7 @@ class IngredientOperationsViewModel(
 
     suspend fun updateIngredient(
         ingredient: Ingredient,
-        newVariants: List<IngredientVariant?>,
+        newVariants: List<IngredientProduct?>,
         newImages: List<IngredientImage?>,
         context: Context
     ) : Boolean {
@@ -214,6 +214,6 @@ class IngredientOperationsViewModel(
 data class AddIngredientViewState(
     val measures: List<Measure?> = emptyList(),
     val ingredient: Ingredient? = null,
-    val variants: List<IngredientVariant?> = emptyList(),
+    val variants: List<IngredientProduct?> = emptyList(),
     val photos: List<IngredientImage?> = emptyList()
 )

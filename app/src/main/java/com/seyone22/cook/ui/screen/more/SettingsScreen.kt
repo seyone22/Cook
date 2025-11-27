@@ -52,7 +52,6 @@ import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.seyone22.cook.R
 import com.seyone22.cook.SharedViewModel
-import com.seyone22.cook.service.RecipeImportService
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.common.dialog.action.ImportRecipeUrlDialogAction
 import com.seyone22.cook.ui.navigation.NavigationDestination
@@ -77,6 +76,8 @@ fun SettingsDetailScreen(
     viewModel: MoreViewModel = viewModel(factory = AppViewModelProvider.Factory),
     sharedViewModel: SharedViewModel
 ) {
+
+
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
@@ -272,10 +273,17 @@ fun DataSettingsList(
                         sharedViewModel = sharedViewModel,
                         navigateToScreen = navigateToScreen,
                         context = context,
-                        onDismiss = { }
-                    )
+                        onDismiss = { })
                 )
             })
+
+        SettingsListItem(
+            settingName = "Refresh Ingredient Data",
+            settingSubtext = "Fetch latest ingredient data from the database",
+            action = {
+                viewModel.updateIngredients(context)
+            }
+        )
 
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.padding(16.dp))

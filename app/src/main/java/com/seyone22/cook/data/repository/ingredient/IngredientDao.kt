@@ -24,20 +24,27 @@ interface IngredientDao {
     @Query(
         "SELECT * FROM ingredients" +
                 "   WHERE id = :ingredientId" +
-                "   ORDER BY nameEn ASC"
+                "   ORDER BY name ASC"
     )
     fun getIngredientById(ingredientId: UUID): Flow<Ingredient?>
 
     @Query(
         "SELECT * FROM ingredients" +
-                "   ORDER BY nameEn ASC"
+                "   ORDER BY name ASC"
     )
     fun getAllIngredients(): Flow<List<Ingredient>>
 
     @Query(
         "SELECT * FROM ingredients" +
-                "   WHERE nameEn = :nameEn" +
-                "   ORDER BY nameEn ASC"
+                "   WHERE name = :name" +
+                "   ORDER BY name ASC"
     )
-    fun getIngredientByName(nameEn: String): Flow<Ingredient?>
+    fun getIngredientByName(name: String): Flow<Ingredient?>
+
+    @Query(
+        "SELECT * FROM ingredients" +
+                "   WHERE foodDbId = :foodDbId" +
+                "   ORDER BY name ASC"
+    )
+    fun getIngredientByFoodDbId(foodDbId: String): Flow<Ingredient?>
 }

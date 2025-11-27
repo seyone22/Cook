@@ -75,7 +75,7 @@ fun ShoppingItemList(
             modifier = Modifier
                 .padding(4.dp, 0.dp, 16.dp, 0.dp)
                 .width(120.dp),
-            text = ingredients.find { i -> i?.id == item.ingredientId }?.nameEn ?: "",
+            text = ingredients.find { i -> i?.id == item.ingredientId }?.name ?: "",
             style = MaterialTheme.typography.bodyLarge.copy(
                 textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None
             ),

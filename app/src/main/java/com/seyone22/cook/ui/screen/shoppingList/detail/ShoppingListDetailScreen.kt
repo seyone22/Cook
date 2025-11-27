@@ -92,7 +92,7 @@ fun ShoppingListDetailScreen(
         var textFieldValue by remember { mutableStateOf("") }
 
         val filteredIngredients = data.ingredients.filter {
-            it?.nameEn?.contains(textFieldValue, ignoreCase = true) == true
+            it?.name?.contains(textFieldValue, ignoreCase = true) == true
         }
 
         ModalBottomSheet(
@@ -130,7 +130,7 @@ fun ShoppingListDetailScreen(
                                 textFieldValue = "" // Clear the text field
                                 viewModel.fetchData() // Fetch updated data
                             },
-                                label = { Text(ingredient?.nameEn ?: "") },
+                                label = { Text(ingredient?.name ?: "") },
                                 selected = false,
                                 modifier = Modifier.padding(4.dp)
                             )

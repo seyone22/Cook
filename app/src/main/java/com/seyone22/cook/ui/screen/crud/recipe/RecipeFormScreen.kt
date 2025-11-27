@@ -1,27 +1,19 @@
 package com.seyone22.cook.ui.screen.crud.recipe
 
-import android.R.attr.description
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -34,9 +26,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -64,7 +56,6 @@ import recipeimporter.model.HowToStep
 import java.util.UUID
 
 // ------------------------- Navigation Destinations -------------------------
-
 object AddRecipeDestination : NavigationDestination {
     override val route = "add_recipe"
     override val titleRes = R.string.add_recipe
@@ -85,13 +76,9 @@ object ImportRecipeDestination : NavigationDestination {
     override val routeId = 12
 }
 
-
-// ------------------------- Mode Enum -------------------------
-
 enum class RecipeFormMode { ADD, IMPORT, EDIT }
 
 // ------------------------- State Holder -------------------------
-
 data class RecipeFormState(
     var name: String = "",
     var description: String = "",
@@ -119,8 +106,6 @@ data class RecipeFormState(
         )
 }
 
-// ------------------------- Unified Screen -------------------------
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeFormScreen(
@@ -136,6 +121,7 @@ fun RecipeFormScreen(
     // Shared ViewState
     val data by viewModel.addRecipeViewState.collectAsState()
     val prefillRecipe by sharedViewModel.importedRecipe.collectAsState()
+    val ingredients by sharedViewModel.ingredients.collectAsState()
     val stringData by sharedViewModel.valueString.collectAsState()
 
     // Local state
@@ -150,6 +136,10 @@ fun RecipeFormScreen(
 
             RecipeFormMode.IMPORT -> {
                 prefillRecipe?.let { recipe ->
+                    // Convert AI-parsed ingredients to SnapshotStateList
+                    val parsedIngredients: List<RecipeIngredientDetails> = sharedViewModel.ingredients.value
+                        .map { it.toRecipeIngredientDetails() }
+
                     formState.value = RecipeFormState(
                         name = recipe.title,
                         description = recipe.description ?: "",
@@ -160,24 +150,18 @@ fun RecipeFormScreen(
                         photos = recipe.imageUrls.map { it.toUri() },
                         instructions = mutableStateListOf(),
                         instructionSections = mutableStateListOf(),
-                        recipeIngredients = mutableStateListOf(),
+                        recipeIngredients = parsedIngredients.toMutableStateList(),
                         recipeTags = mutableStateListOf<Tag>().apply {
                             recipe.cuisine.forEach {
-                                add(
-                                    Tag(
-                                        name = it, category = TagType.CUISINE
-                                    )
-                                )
+                                add(Tag(name = it, category = TagType.CUISINE))
                             }
                             recipe.categories.forEach {
-                                add(
-                                    Tag(
-                                        name = it, category = TagType.CATEGORY
-                                    )
-                                )
+                                add(Tag(name = it, category = TagType.CATEGORY))
                             }
-                        })
+                        }
+                    )
 
+                    // Instructions
                     var sectionCounter = 0
                     recipe.recipeInstructions.forEach { instruction ->
                         when (instruction) {
@@ -201,7 +185,6 @@ fun RecipeFormScreen(
                                     )
                                 }
                             }
-
                             is HowToStep -> {
                                 sectionCounter++
                                 val section = InstructionSection(
@@ -225,12 +208,8 @@ fun RecipeFormScreen(
                 }
 
                 stringData?.let { str ->
-                    formState.value = RecipeFormState(
-                        description = str
-                    )
+                    formState.value.description = str
                 }
-
-
             }
 
             RecipeFormMode.EDIT -> {

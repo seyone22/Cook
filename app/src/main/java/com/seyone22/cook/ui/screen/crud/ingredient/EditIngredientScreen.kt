@@ -58,7 +58,7 @@ import com.seyone22.cook.R
 import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.model.IngredientDetails
 import com.seyone22.cook.data.model.IngredientImage
-import com.seyone22.cook.data.model.IngredientVariantDetails
+import com.seyone22.cook.data.model.IngredientProductDetails
 import com.seyone22.cook.data.model.toIngredientVariant
 import com.seyone22.cook.data.model.toIngredientVariantDetails
 import com.seyone22.cook.helper.ImageStorageHelper
@@ -94,23 +94,21 @@ fun EditIngredientScreen(
     val dataPhotos = data.photos
 
 
-    var nameEn by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
     var nameSi by remember { mutableStateOf("") }
     var nameTa by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
+    var comment by remember { mutableStateOf("") }
     var showAltNames by remember { mutableStateOf(false) }
     var photos by remember { mutableStateOf(listOf<IngredientImage>()) }
-    var variants by remember { mutableStateOf(listOf<IngredientVariantDetails>()) }
+    var variants by remember { mutableStateOf(listOf<IngredientProductDetails>()) }
     var ingredient by remember { mutableStateOf<IngredientDetails>(IngredientDetails()) }
 
     // Populate fields with existing data when ingredient data is loaded
     LaunchedEffect(dataIngredient) {
         dataIngredient.let {
             if (it != null) {
-                nameEn = it.nameEn
-                nameSi = it.nameSi
-                nameTa = it.nameTa
-                description = it.description ?: ""
+                name = it.name
+                comment = it.comment ?: ""
             }
         }
         photos = dataPhotos.map { i -> i!! }
@@ -149,13 +147,11 @@ fun EditIngredientScreen(
                                 val success = viewModel.updateIngredient(
                                     Ingredient(
                                         id = ingredientId,
-                                        description = description,
-                                        nameEn = nameEn,
-                                        nameSi = nameSi,
-                                        nameTa = nameTa,
+                                        comment = comment,
+                                        name = name,
                                     ),
                                     variants.map { i ->
-                                        i.copy(ingredientId = ingredientId).toIngredientVariant()
+                                        i.copy(ingredientId = "").toIngredientVariant()
                                     },
                                     photos,
                                     context
@@ -243,8 +239,8 @@ fun EditIngredientScreen(
                         }
                         OutlinedTextField(
                             modifier = Modifier.width(310.dp),
-                            value = nameEn,
-                            onValueChange = { nameEn = it },
+                            value = name,
+                            onValueChange = { name = it },
                             label = { Text("Name") },
                             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
                         )
@@ -297,9 +293,9 @@ fun EditIngredientScreen(
                             .padding(36.dp, 0.dp, 0.dp, 0.dp)
                     ) {
                         OutlinedTextField(
-                            value = description,
-                            onValueChange = { description = it },
-                            label = { Text("Description") },
+                            value = comment,
+                            onValueChange = { comment = it },
+                            label = { Text("comment") },
                             modifier = Modifier.fillMaxWidth(),
                             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
                         )
@@ -426,59 +422,12 @@ fun EditIngredientScreen(
                                             keyboardType = KeyboardType.Number
                                         )
                                     )
-                                    ExposedDropdownMenuBox(
-                                        expanded = measuresExpanded,
-                                        onExpandedChange = { measuresExpanded = !measuresExpanded }
-                                    ) {
-                                        OutlinedTextField(
-                                            modifier = Modifier
-                                                .menuAnchor(MenuAnchorType.PrimaryEditable, true)
-                                                .clickable(enabled = true) {
-                                                    measuresExpanded = true
-                                                },
-                                            value = data.measures.find { m -> m?.id?.toInt() == variant.unitId.toInt() }?.abbreviation
-                                                ?: "",
-                                            readOnly = true,
-                                            onValueChange = { },
-                                            label = { Text("") },
-                                            singleLine = true,
-                                            trailingIcon = {
-                                                ExposedDropdownMenuDefaults.TrailingIcon(
-                                                    expanded = measuresExpanded
-                                                )
-                                            }
-                                        )
-
-                                        ExposedDropdownMenu(
-                                            expanded = measuresExpanded,
-                                            onDismissRequest = { measuresExpanded = false }
-                                        ) {
-                                            data.measures.forEach { measure ->
-                                                measure?.let {
-                                                    DropdownMenuItem(
-                                                        text = { Text(measure.abbreviation) },
-                                                        onClick = {
-                                                            variants =
-                                                                variants.mapIndexed { i, variant ->
-                                                                    if (i == index) {
-                                                                        variant.copy(unitId = measure.id)
-                                                                    } else {
-                                                                        variant
-                                                                    }
-                                                                }
-                                                            measuresExpanded = false
-                                                        }
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
                                 }
                             }
                         }
                     }
                     TextButton(onClick = {
-                        val newVariant = IngredientVariantDetails()
+                        val newVariant = IngredientProductDetails()
                         variants = variants + newVariant
                     }) {
                         Icon(imageVector = Icons.Filled.Add, contentDescription = null)

@@ -3,7 +3,7 @@ package com.seyone22.cook.ui.screen.ingredients
 import androidx.lifecycle.viewModelScope
 import com.seyone22.cook.BaseViewModel
 import com.seyone22.cook.data.model.Ingredient
-import com.seyone22.cook.data.model.IngredientVariantDetails
+import com.seyone22.cook.data.model.IngredientProductDetails
 import com.seyone22.cook.data.model.ShoppingListItem
 import com.seyone22.cook.data.model.toIngredientVariant
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
@@ -40,14 +40,13 @@ class IngredientsViewModel(
             val images = ingredientImageRepository.getAllIngredientImages().first()
             val measures = measureRepository.getAllMeasures().first()
             val shoppingLists = shoppingListRepository.getAllShoppingLists().first()
-            _ingredientsViewState.value =
-                ViewState(
-                    ingredientImages = images,
-                    measures = measures,
-                    ingredients = ingredients,
-                    variants = variants,
-                    shoppingLists = shoppingLists,
-                )
+            _ingredientsViewState.value = ViewState(
+                ingredientImages = images,
+                measures = measures,
+                ingredients = ingredients,
+                variants = variants,
+                shoppingLists = shoppingLists,
+            )
         }
     }
 
@@ -67,7 +66,7 @@ class IngredientsViewModel(
         }
     }
 
-    fun addVariant(ingredientId: UUID, variant: IngredientVariantDetails) {
+    fun addVariant(ingredientId: String, variant: IngredientProductDetails) {
         viewModelScope.launch {
             ingredientVariantRepository.insertIngredientVariant(
                 variant.toIngredientVariant().copy(ingredientId = ingredientId)
@@ -78,6 +77,14 @@ class IngredientsViewModel(
     fun addToShoppingList(it: ShoppingListItem) {
         viewModelScope.launch {
             shoppingListRepository.insertItem(it)
+        }
+    }
+
+    fun updateIngredient(foodDbId: String) {
+        viewModelScope.launch {
+            com.seyone22.cook.service.updateIngredient(
+                foodDbId, ingredientRepository, ingredientVariantRepository
+            )
         }
     }
 }

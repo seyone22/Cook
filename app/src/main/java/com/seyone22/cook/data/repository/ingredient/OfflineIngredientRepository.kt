@@ -19,4 +19,7 @@ class OfflineIngredientRepository(private val ingredientDao: IngredientDao) : In
 
     override suspend fun getIngredientByName(nameEn: String): Flow<Ingredient?> =
         ingredientDao.getIngredientByName(nameEn)
+
+    override suspend fun getIngredientByFoodDbId(foodDbId: String): Flow<Ingredient?> =
+        ingredientDao.getIngredientByFoodDbId(foodDbId)
 }

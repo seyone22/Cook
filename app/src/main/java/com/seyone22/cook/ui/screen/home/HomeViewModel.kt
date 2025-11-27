@@ -1,7 +1,11 @@
 package com.seyone22.cook.ui.screen.home
 
+import android.util.Log
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.lifecycle.viewModelScope
 import com.seyone22.cook.BaseViewModel
+import com.seyone22.cook.data.model.IngredientProduct
 import com.seyone22.cook.data.model.Recipe
 import com.seyone22.cook.data.model.RecipeIngredient
 import com.seyone22.cook.data.model.ShoppingListItem
@@ -17,9 +21,11 @@ import com.seyone22.cook.data.repository.recipeTag.RecipeTagRepository
 import com.seyone22.cook.data.repository.shoppingList.ShoppingListRepository
 import com.seyone22.cook.data.repository.tag.TagRepository
 import com.seyone22.cook.ui.common.ViewState
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -36,8 +42,12 @@ class HomeViewModel(
     private val tagRepository: TagRepository,
     private val recipeTagRepository: RecipeTagRepository
 ) : BaseViewModel() {
+
     private val _homeViewState = MutableStateFlow(ViewState())
     val homeViewState: StateFlow<ViewState> get() = _homeViewState
+
+    // Prices map: ingredientId -> price
+    val prices: SnapshotStateMap<String, IngredientProduct?> = mutableStateMapOf()
 
     fun fetchData() {
         viewModelScope.launch {
@@ -66,30 +76,63 @@ class HomeViewModel(
                 tags = tags,
                 recipeTags = recipeTags
             )
+
+            // Fetch prices for all ingredients
+            fetchAllPrices(recipeIngredients)
         }
+    }
+
+    private fun fetchAllPrices(recipeIngredients: List<RecipeIngredient?>) {
+        viewModelScope.launch {
+            recipeIngredients.forEach { ri ->
+                val ingredientId = ri?.foodDbId ?: return@forEach
+                val quantity = ri.quantity
+                try {
+                    val product =
+                        ingredientVariantRepository.getCheapestPriceForIngredient(ingredientId)
+
+                    prices[ingredientId] = product.firstOrNull()
+                } catch (e: Exception) {
+                    Log.e("fetchAllPrices", "Failed to fetch price for $ingredientId", e)
+                }
+            }
+        }
+    }
+
+    suspend fun fetchPriceForRecipe(
+        recipeIngredients: List<RecipeIngredient?>,
+        scaleFactor: Double,
+    ): Double {
+        var price = 0.0
+
+        for (ri in recipeIngredients) {
+            if (ri == null) continue
+
+            val product = ingredientVariantRepository.getCheapestPriceForIngredient(ri.foodDbId)
+                .firstOrNull()
+
+            price += product?.price ?: 0.0
+        }
+        return price
     }
 
     fun deleteRecipe(recipe: Recipe) {
-        viewModelScope.launch {
-            recipeRepository.deleteRecipe(recipe)
-        }
+        viewModelScope.launch { recipeRepository.deleteRecipe(recipe) }
     }
 
     fun incrementMakeCounter(recipeId: UUID) {
-        viewModelScope.launch {
-            recipeRepository.incrementTimesMade(recipeId)
-        }
+        viewModelScope.launch { recipeRepository.incrementTimesMade(recipeId) }
     }
 
-    fun addAllToShoppingList(ingredients: List<RecipeIngredient?>, it: Long) {
+    fun addAllToShoppingList(ingredients: List<RecipeIngredient?>, shoppingListId: Long) {
         viewModelScope.launch {
             ingredients.forEach { ingredient ->
                 shoppingListRepository.insertItem(
                     ShoppingListItem(
-                        ingredientId = (ingredient?.ingredientId ?: UUID.randomUUID()),
+                        ingredientId = ingredient?.ingredientId ?: UUID.randomUUID(),
                         quantity = ingredient?.quantity ?: 0.0,
-                        measureId = (ingredient?.measureId?.toInt() ?: 0).toLong(),
-                        shoppingListId = it
+                        measureId = -1,
+                        shoppingListId = shoppingListId
                     )
                 )
             }

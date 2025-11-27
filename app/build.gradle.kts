@@ -47,6 +47,7 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         }
     }
 }
@@ -137,22 +138,29 @@ dependencies {
 
     implementation(project(":atproto-auth2"))
 
+    implementation("io.ktor:ktor-client-core:2.3.5") // core client
+    implementation("io.ktor:ktor-client-cio:2.3.5")  // CIO engine
 
     implementation(libs.ktor.client.android) // For Android-specific support
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
 
     // The compose calendar library for Android
-    implementation("com.kizitonwose.calendar:compose:2.9.0")
+    implementation(libs.compose)
 
-    implementation("com.github.seyone22:recipe-importer:v2.0.3")
+    implementation(libs.recipe.importer)
 
     // To recognize Latin script
-    implementation("com.google.mlkit:text-recognition:16.0.1")
+    implementation(libs.text.recognition)
 
     // …
-    implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
+    implementation(libs.play.services.mlkit.document.scanner)
 
     // Task.await() helpers to await Play Services Tasks
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.1")
+    implementation(libs.kotlinx.coroutines.play.services)
+
+    implementation(libs.generativeai)
+
+    implementation(libs.openai.client)
+// Google Gemini API
 }
