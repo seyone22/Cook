@@ -165,7 +165,7 @@ fun IngredientDetailScreen(
                         )
                     })
                     DropdownMenuItem(text = { Text("Update") }, onClick = {
-                        if (ingredient != null) {
+                        if (ingredient != null && ingredient.foodDbId != null) {
                             viewModel.updateIngredient(ingredient.foodDbId)
                         } else {
                             Toast.makeText(context, "Ingredient not found", Toast.LENGTH_SHORT).show()
@@ -222,7 +222,7 @@ fun IngredientOptionRow(
     var showVariantDialog by remember { mutableStateOf(false) }
     var showAddShoppingListDialog by remember { mutableStateOf(false) }
 
-    if (showVariantDialog) {
+    if (showVariantDialog && ingredient.foodDbId != null) {
         NewVariantDialog(measures = measures, onConfirm = {
             viewModel.addVariant(ingredient.foodDbId, variant = it)
             showVariantDialog = false

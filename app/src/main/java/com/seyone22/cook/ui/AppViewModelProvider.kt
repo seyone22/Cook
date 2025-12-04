@@ -107,7 +107,8 @@ object AppViewModelProvider {
         initializer {
             SharedViewModel(
                 ingredientRepository = cookApplication().container.ingredientRepository,
-                ingredientProductRepository = cookApplication().container.ingredientVariantRepository
+                ingredientProductRepository = cookApplication().container.ingredientVariantRepository,
+                geminiService = cookApplication().container.geminiService
             )
         }
         initializer {

@@ -1,13 +1,13 @@
+import java.util.Properties
+
 plugins {
-        alias(libs.plugins.androidApplication)
-        alias(libs.plugins.jetbrainsKotlinAndroid)
-        alias(libs.plugins.compose.compiler)
-
-        id("com.google.devtools.ksp")
-        id("org.jetbrains.kotlin.plugin.serialization") version "2.2.20"
-
-        id("com.google.gms.google-services")
-    }
+    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.jetbrainsKotlinAndroid)
+    alias(libs.plugins.compose.compiler)
+    id("com.google.devtools.ksp")
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.2.20"
+    id("com.google.gms.google-services")
+}
 
 android {
     namespace = "com.seyone22.cook"
@@ -24,6 +24,24 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // --- MERGED: Gemini API Key Logic ---
+        // This safely reads the key or defaults to an empty string if missing
+        val geminiApiKey: String = try {
+            val propertiesFile = project.rootProject.file("local.properties")
+            if (propertiesFile.exists()) {
+                propertiesFile.inputStream().use { stream ->
+                    Properties().apply { load(stream) }.getProperty("GEMINI_API_KEY")
+                } ?: ""
+            } else {
+                ""
+            }
+        } catch (e: Exception) {
+            ""
+        }
+
+        // Exposes BuildConfig.GEMINI_API_KEY to your Kotlin code
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
     buildTypes {
@@ -34,16 +52,22 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
+    // --- MERGED: Build Features ---
     buildFeatures {
         compose = true
+        buildConfig = true // Required for BuildConfig.GEMINI_API_KEY to work
     }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -72,6 +96,7 @@ dependencies {
     // AndroidX Compose Material3
     implementation(libs.androidx.material3)
     implementation(libs.material)
+    implementation(libs.androidx.compose.material3)
 
     // JUnit
     testImplementation(libs.junit)

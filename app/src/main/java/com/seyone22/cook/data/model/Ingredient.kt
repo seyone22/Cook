@@ -13,7 +13,7 @@ import java.util.UUID
 data class Ingredient(
     @Serializable(with = UuidSerializer::class) @Contextual @PrimaryKey val id: UUID = UUID.randomUUID(),
 
-    val foodDbId: String = "",
+    val foodDbId: String? = null,
 
     val name: String = "",
     val country: List<String> = listOf<String>(),
@@ -32,7 +32,7 @@ data class Ingredient(
 
 data class IngredientDetails(
     val id: UUID = UUID.randomUUID(),
-    val foodDbId: String = "",
+    val foodDbId: String? = null,
     val name: String = "",
     val country: List<String> = listOf<String>(),
     val region: List<String> = listOf<String>(),

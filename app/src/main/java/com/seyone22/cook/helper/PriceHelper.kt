@@ -32,7 +32,7 @@ object PriceHelper {
     ): Double {
         var total = 0.0
         for (ingredient in recipeIngredients) {
-            if (ingredient == null) continue
+            if (ingredient == null || ingredient.foodDbId.isNullOrBlank()) continue
 
             val id = ingredient.foodDbId
             val qty = ingredient.quantity * scaleFactor

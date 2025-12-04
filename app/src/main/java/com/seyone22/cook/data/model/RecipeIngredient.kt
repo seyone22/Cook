@@ -27,7 +27,7 @@ data class RecipeIngredient(
     @Serializable(with = UuidSerializer::class)
     val ingredientId: UUID,
 
-    val foodDbId: String,
+    val foodDbId: String?,
     val name: String,
     val quantity: Double,
     val unit: String,
@@ -39,7 +39,7 @@ data class RecipeIngredientDetails(
     val recipeId: UUID,
     val ingredientId: UUID,
 
-    val foodDbId: String,
+    val foodDbId: String?,
     val name: String,
     val quantity: String,
     val unit: String,

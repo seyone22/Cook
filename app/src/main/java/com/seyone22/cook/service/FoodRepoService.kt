@@ -126,6 +126,11 @@ suspend fun matchCanonicalIngredient(
                 image = "",
                 foodDbId = foodDbId
             )
+
+            if (newIngredient.foodDbId === null) {
+                throw Exception("FUUUUUUUUCK")
+            }
+
             val newIngredientProduct = IngredientProduct(
                 ingredientId = newIngredient.foodDbId,
                 productName = productName,
@@ -163,6 +168,89 @@ suspend fun matchCanonicalIngredient(
     }.onFailure { e ->
         Log.e("matchCanonicalIngredient", "Error matching ingredient: ${e.localizedMessage}", e)
     }.getOrNull()
+}
+
+suspend fun resolveAndSaveIngredient(
+    parsed: ParsedIngredient,
+    client: HttpClient,
+    ingredientRepository: IngredientRepository,
+    ingredientProductRepository: IngredientVariantRepository
+): RecipeIngredient {
+
+    // --- 1. Network Match (Attempt to find the "Tag") ---
+    val matchResult = try {
+        if (parsed.ingredient.isBlank()) null else {
+            val response = client.get("https://ingredient-database-api.vercel.app/api/ingredients/vector") {
+                parameter("query", parsed.ingredient)
+                parameter("includeProducts", true)
+                parameter("limit", 1)
+                accept(ContentType.Application.Json)
+            }
+            val root = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+            root["results"]?.jsonArray?.firstOrNull()?.jsonObject
+        }
+    } catch (e: Exception) {
+        Log.w("IngredientResolution", "Network match failed: ${e.localizedMessage}")
+        null
+    }
+
+    // --- 2. Determine Identifiers ---
+    val localIngredientId: UUID
+    val remoteId: String?
+
+    if (matchResult != null) {
+        // --- MATCH FOUND ---
+        remoteId = matchResult["_id"]?.jsonPrimitive?.contentOrNull
+
+        // This is the name from the DB (e.g. "Wheat Flour, White")
+        val canonicalName = matchResult["name"]?.jsonPrimitive?.contentOrNull ?: parsed.ingredient
+
+        // Check if we already have this canonical item in our library
+        val existing = remoteId?.let { ingredientRepository.getIngredientByFoodDbId(it).firstOrNull() }
+
+        if (existing != null) {
+            localIngredientId = existing.id
+        } else {
+            // New Canonical Item: Save it using the DB's official name
+            localIngredientId = UUID.randomUUID()
+            val newIngredient = Ingredient(
+                id = localIngredientId,
+                name = canonicalName, // DB Name
+                foodDbId = remoteId,
+                country = emptyList(), region = emptyList(), cuisine = emptyList(),
+                flavor_profile = emptyList(), dietary_flags = emptyList(), comment = "", image = ""
+            )
+            ingredientRepository.insertIngredient(newIngredient)
+        }
+    } else {
+        // --- NO MATCH (Provisional) ---
+        // Create a placeholder. We use the recipe name as the DB name since we have nothing else.
+        remoteId = null
+        localIngredientId = UUID.randomUUID()
+
+        val provisionalIngredient = Ingredient(
+            id = localIngredientId,
+            name = parsed.ingredient, // Fallback to recipe name
+            foodDbId = null,
+            country = emptyList(), region = emptyList(), cuisine = emptyList(),
+            flavor_profile = emptyList(), dietary_flags = emptyList(), comment = "", image = ""
+        )
+        ingredientRepository.insertIngredient(provisionalIngredient)
+    }
+
+    // --- 3. Create Recipe Ingredient (PRESERVE PROVISIONAL DATA) ---
+    return RecipeIngredient(
+        id = 0,
+        recipeId = UUID.randomUUID(), // To be set by ViewModel
+        ingredientId = localIngredientId, // Link to the DB item (Reference)
+        foodDbId = remoteId,              // Link to the DB item (Reference)
+
+        // HERE IS THE FIX: Always use the parsed name/qty/unit for the RecipeIngredient entry
+        name = parsed.ingredient,
+        quantity = parsed.quantity ?: 0.0,
+        unit = parsed.unit ?: "pcs",
+        notes = parsed.notes
+    )
 }
 
 suspend fun getIngredient(id: String, client: HttpClient): Ingredient? {
@@ -348,6 +436,10 @@ suspend fun updateIngredient(
                 val source = prod["source"]?.jsonPrimitive?.contentOrNull ?: ""
                 val url = prod["url"]?.jsonPrimitive?.contentOrNull
                 val imageUrl = prod["image"]?.jsonPrimitive?.contentOrNull ?: ""
+
+                if (updatedIngredient.foodDbId === null) {
+                    throw Exception("FUUUUUUUUCK")
+                }
 
                 val existingVariant = ingredientProductRepository.getIngredientProductByUniqueId(uniqueId).firstOrNull()
                 val productEntity = IngredientProduct(

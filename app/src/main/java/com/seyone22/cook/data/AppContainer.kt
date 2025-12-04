@@ -29,9 +29,12 @@ import com.seyone22.cook.data.repository.shoppingList.OfflineShoppingListReposit
 import com.seyone22.cook.data.repository.shoppingList.ShoppingListRepository
 import com.seyone22.cook.data.repository.tag.OfflineTagRepository
 import com.seyone22.cook.data.repository.tag.TagRepository
+import com.seyone22.cook.service.GeminiService
 import kotlinx.coroutines.CoroutineScope
 
 interface AppContainer {
+    val geminiService: GeminiService
+
     val ingredientRepository: IngredientRepository
     val ingredientVariantRepository: IngredientVariantRepository
     val ingredientImageRepository: IngredientImageRepository
@@ -53,6 +56,11 @@ interface AppContainer {
  */
 class AppDataContainer(private val context: Context, private val scope: CoroutineScope) :
     AppContainer {
+    override val geminiService: GeminiService by lazy {
+        // BuildConfig is generated from the setup in build.gradle.kts
+        GeminiService(apiKey = com.seyone22.cook.BuildConfig.GEMINI_API_KEY)
+    }
+
     override val ingredientRepository: IngredientRepository by lazy {
         OfflineIngredientRepository(CookDatabase.getDatabase(context, scope).ingredientDao())
     }

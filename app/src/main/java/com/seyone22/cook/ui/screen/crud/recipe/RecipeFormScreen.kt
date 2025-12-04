@@ -1,6 +1,7 @@
 package com.seyone22.cook.ui.screen.crud.recipe
 
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -14,17 +15,21 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
@@ -127,8 +132,14 @@ fun RecipeFormScreen(
     // Local state
     val formState = remember { mutableStateOf(RecipeFormState()) }
 
+    // --- SEARCH STATE ---
+    var showSearchSheet by remember { mutableStateOf(false) }
+    var activeIngredientIndex by remember { mutableIntStateOf(-1) }
+    var searchInitialQuery by remember { mutableStateOf("") }
+    val sheetState = rememberModalBottomSheetState()
+
     // ----------------- Initialize State -----------------
-    LaunchedEffect(mode, recipeId, prefillRecipe, stringData, data.recipe) {
+    LaunchedEffect(mode, recipeId, prefillRecipe, stringData, data.recipe, ingredients) {
         when (mode) {
             RecipeFormMode.ADD -> {
                 // nothing, defaults
@@ -136,9 +147,12 @@ fun RecipeFormScreen(
 
             RecipeFormMode.IMPORT -> {
                 prefillRecipe?.let { recipe ->
-                    // Convert AI-parsed ingredients to SnapshotStateList
-                    val parsedIngredients: List<RecipeIngredientDetails> = sharedViewModel.ingredients.value
-                        .map { it.toRecipeIngredientDetails() }
+                    val currentIngredients = ingredients
+
+                    // Map to your UI model
+                    val parsedIngredients = currentIngredients.map { it.toRecipeIngredientDetails() }
+
+                    Log.d("RecipeFormScreen", "Populating Form with ${parsedIngredients.size} ingredients")
 
                     formState.value = RecipeFormState(
                         name = recipe.title,
@@ -208,7 +222,7 @@ fun RecipeFormScreen(
                 }
 
                 stringData?.let { str ->
-                    formState.value.description = str
+                    formState.value = formState.value.copy(description = str)
                 }
             }
 
@@ -309,11 +323,13 @@ fun RecipeFormScreen(
                 // --- UI (shared for all modes) ---
                 Column(modifier = Modifier.padding(12.dp, 0.dp)) {
                     RecipeFormImageCarousel(
-                        imageUris = formState.value.photos, onAddImage = {
+                        imageUris = formState.value.photos,
+                        onAddImage = {
                             imagePickerLauncher.launch(
                                 PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                             )
-                        }, onRemoveImage = { uri ->
+                        },
+                        onRemoveImage = { uri ->
                             formState.value = formState.value.copy(
                                 photos = formState.value.photos.toMutableList()
                                     .also { it.remove(uri) })
@@ -325,15 +341,13 @@ fun RecipeFormScreen(
                     RecipeFormFieldsSection(
                         formState = formState.value,
                         onFormStateChange = { formState.value = it },
-                        allTags = listOf(), // pass your tags from DB if available
+                        allTags = data.tags.filterNotNull(),
                         navController = navController
                     )
 
-
                     RecipeFormIngredientSection(
                         recipeIngredients = formState.value.recipeIngredients,
-                        allIngredients = listOf(), // TODO: supply DB ingredients
-                        allMeasures = listOf(),    // TODO: supply DB measures
+                        allMeasures = data.measures, // Passed real measures
                         onAddRecipeIngredient = { newIngredient ->
                             formState.value.recipeIngredients.add(newIngredient)
                         },
@@ -343,8 +357,10 @@ fun RecipeFormScreen(
                         onRemoveRecipeIngredient = { ingredient ->
                             formState.value.recipeIngredients.remove(ingredient)
                         },
-                        onNavigateToAddIngredient = {
-                            navController.navigate("add_ingredient")
+                        onTriggerIngredientSearch = { index, currentName ->
+                            activeIngredientIndex = index
+                            searchInitialQuery = currentName
+                            showSearchSheet = true
                         },
                         modifier = Modifier
                     )
@@ -356,13 +372,12 @@ fun RecipeFormScreen(
                             formState.value.instructions.remove(instr)
                         },
                         onAddInstruction = {
-                            // Example: add a new instruction to the last section (or default section 1)
                             val lastSectionId =
                                 formState.value.instructionSections.lastOrNull()?.sectionNumber ?: 1
                             formState.value.instructions.add(
                                 Instruction(
                                     id = 0L,
-                                    description = "New Step",
+                                    description = "",
                                     stepNumber = formState.value.instructions.count { it.sectionId == lastSectionId },
                                     sectionId = lastSectionId,
                                     recipeId = UUID.randomUUID()
@@ -373,6 +388,36 @@ fun RecipeFormScreen(
                             formState.value.instructions[index] = updatedInstr
                         })
                 }
+            }
+        }
+
+        // Search Bottom Sheet
+        if (showSearchSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showSearchSheet = false },
+                sheetState = sheetState
+            ) {
+                // Placeholder for future "IngredientSearchBottomSheet"
+                Text(
+                    text = "Search Database for '${searchInitialQuery}'",
+                    modifier = Modifier.padding(16.dp),
+                    style = androidx.compose.material3.MaterialTheme.typography.titleMedium
+                )
+
+                // Example of how you will update the selected row when a result is clicked:
+                /*
+                Button(onClick = {
+                    if (activeIngredientIndex != -1) {
+                        val currentItem = formState.value.recipeIngredients[activeIngredientIndex]
+                        formState.value.recipeIngredients[activeIngredientIndex] = currentItem.copy(
+                            // Update fields based on search result
+                            foodDbId = "new_db_id",
+                            // Keep original name or overwrite based on user choice
+                        )
+                    }
+                    showSearchSheet = false
+                }) { Text("Select Match") }
+                */
             }
         }
     }

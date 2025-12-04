@@ -48,14 +48,6 @@ fun RecipeFormInstructionSection(
                         .fillMaxWidth()
                         .padding(start = 36.dp)
                 ) {
-                    Column(modifier = Modifier.align(Alignment.CenterVertically)) {
-                        Text(
-                            modifier = Modifier.padding(8.dp, 0.dp, 16.dp, 0.dp),
-                            text = (index + 1).toString(), // Step number from index
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
                     OutlinedTextField(
                         modifier = Modifier.width(310.dp),
                         value = instruction.description,

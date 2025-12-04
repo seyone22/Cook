@@ -120,6 +120,10 @@ class RecipeDetailViewModel(
         var cost = 0.0
 
         rData.ingredients.forEach { ri ->
+            if (ri.foodDbId.isNullOrBlank()) {
+                throw Exception("CYKA BLYAT")
+            }
+
             val price = ingredientVariantRepository.getCheapestPriceForIngredient(ri.foodDbId)
                 .firstOrNull()?.price ?: 0.0
 

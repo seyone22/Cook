@@ -1,14 +1,19 @@
 package com.seyone22.cook.service
 
 import android.util.Log
-import com.seyone22.cook.data.model.GenerativeAiResult
 import com.seyone22.cook.data.model.RecipeIngredient
-import com.seyone22.cook.helper.GeminiClient
-import com.seyone22.cook.helper.GenerativeAiClient
-import com.seyone22.cook.helper.OpenAiGeminiClient
+import com.seyone22.cook.provider.KtorClientProvider
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.UUID
+
+// --- Data Models ---
 
 @Serializable
 data class ParsedIngredient(
@@ -17,7 +22,6 @@ data class ParsedIngredient(
     val unit: String? = null,
     val notes: String? = null
 )
-
 
 fun ParsedIngredient.toRecipeIngredient(
     recipeId: UUID = UUID.randomUUID(),
@@ -35,116 +39,156 @@ fun ParsedIngredient.toRecipeIngredient(
     )
 }
 
-object GeminiService {
+@Serializable
+private data class GeminiRequest(
+    val contents: List<Content>,
+    val generationConfig: GenerationConfig? = null
+)
 
-    // --- Configuration ---
-    private const val TAG = "GeminiService"
-    private const val API_KEY = "AIzaSyCwItB3gLOHXKMTnW0aY8i-jLJ6IJY-ZaQ"
-    private const val MODEL_NAME = "gemini-2.5-flash"
-    private const val PROVIDER = "OpenAI-Gemini"
+@Serializable
+private data class Content(
+    val role: String = "user",
+    val parts: List<Part>
+)
 
-    // --- Client Initialization ---
-    private val client: GenerativeAiClient? by lazy {
-        when (PROVIDER) {
-            "Gemini" -> GeminiClient(API_KEY, MODEL_NAME)
-            "OpenAI-Gemini" -> OpenAiGeminiClient(API_KEY, MODEL_NAME)
-            else -> null
-        }
+@Serializable
+private data class Part(
+    val text: String
+)
+
+@Serializable
+private data class GenerationConfig(
+    val responseMimeType: String? = null
+)
+
+@Serializable
+private data class GeminiResponse(
+    val candidates: List<Candidate>? = null,
+    val error: GeminiError? = null // Added Error field to catch failures
+)
+
+@Serializable
+private data class GeminiError(
+    val code: Int? = null,
+    val message: String? = null,
+    val status: String? = null
+)
+
+@Serializable
+private data class Candidate(
+    val content: Content?,
+    val finishReason: String? = null
+)
+
+// --- Service ---
+
+class GeminiService(private val apiKey: String) {
+
+    private val TAG = "GeminiService"
+
+    // JSON Parser with lenient settings
+    private val jsonParser = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        encodeDefaults = true
     }
 
-    // --- Utilities ---
-    private fun cleanAiResponse(raw: String): String =
-        raw.trim().removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
+    // Endpoint: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent
+    private val baseUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
-    private inline fun <reified T> parseJsonSafe(json: String): T? = try {
-        Json { ignoreUnknownKeys = true }.decodeFromString(json)
-    } catch (e: Exception) {
-        Log.e(TAG, "JSON parse error: ${e.message}")
-        null
-    }
-
-    // --- 1️⃣ Structured Recipe Generation ---
     suspend fun generateStructuredRecipe(rawText: String): String? {
         val prompt = """
-            Convert the following raw recipe text into a valid JSON-LD Recipe object.
-            Follow the schema at https://schema.org/Recipe strictly.
-
-            Requirements:
-            - Output must be a single valid JSON object.
-            - Do not include explanations, commentary, markdown, or code fences.
-            - Do NOT reword, correct, or alter any ingredient quantities or instructions.
-            - Include at least: "@context", "@type", "name", "description", "recipeIngredient", "recipeInstructions".
-            - Include "prepTime", "cookTime", "totalTime", and "recipeYield" if available or inferable.
-            - Use ISO 8601 durations (e.g., "PT30M" for 30 minutes).
-
-            Raw recipe text:
+            You are a recipe parsing assistant. Convert the raw text below into a valid JSON-LD Recipe object (https://schema.org/Recipe).
+            Strict Requirements:
+            - Use ISO 8601 durations for times (e.g., "PT30M").
+            - Do not include explanations or markdown.
+            - Output raw JSON only.
+            
+            Raw Text:
             $rawText
         """.trimIndent()
 
-        val response = client?.generateContent(prompt)
-        return when (response) {
-            is GenerativeAiResult.Success -> cleanAiResponse(response.data)
-            is GenerativeAiResult.Error -> {
-                Log.e(TAG, "Structured recipe generation failed: ${response.message}")
-                null
-            }
-
-            else -> null
-        }
+        return callGeminiApi(prompt, jsonMode = true)
     }
 
-    // --- 2️⃣ Ingredient Parsing ---
     suspend fun parseIngredients(ingredientList: List<String>): List<ParsedIngredient> {
         if (ingredientList.isEmpty()) return emptyList()
 
         val prompt = """
-            Parse the following list of recipe ingredients into structured JSON.
-            
-            For each ingredient, extract:
-            - "ingredient": canonical name (no quantity or unit)
-            - "quantity": number (may be fractional or range; pick the lower value)
-            - "unit": normalized to the singular, short form (see below)
-            - "notes": preparation, size, or other descriptors (optional)
-            
-            Use these standard short units:
-            - teaspoon / teaspoons / tsp / tsps → tsp
-            - tablespoon / tablespoons / tbsp / tbsps / tbl / tbls → tbsp
-            - cup / cups → cup
-            - gram / grams / g → g
-            - kilogram / kilograms / kg / kgs → kg
-            - milliliter / milliliters / ml / mls → ml
-            - liter / liters / l / ls → l
-            - ounce / ounces / oz / ozs → oz
-            - pound / pounds / lb / lbs → lb
-            - pinch / pinches → pinch
-            - clove / cloves → clove
-            - slice / slices → slice
-            - piece / pieces → piece
-            
-            If no unit is present, leave it as null.
-            
-            Output **only** a valid JSON array of objects with these fields:
-            `ingredient`, `quantity`, `unit`, `notes`.
+            Extract structured data from this ingredient list. Return a JSON Array of objects.
+            Fields: "ingredient" (string), "quantity" (number, 0.0 if missing), "unit" (string, null if missing), "notes" (string, null if missing).
             
             Ingredients:
             ${ingredientList.joinToString("\n")}
-            """.trimIndent()
+        """.trimIndent()
 
+        val jsonString = callGeminiApi(prompt, jsonMode = true) ?: return emptyList()
 
-        val response = client?.generateContent(prompt)
-        return when (response) {
-            is GenerativeAiResult.Success -> {
-                val cleaned = cleanAiResponse(response.data)
-                Log.d(TAG, "parseIngredients: $cleaned")
-                parseJsonSafe<List<ParsedIngredient>>(cleaned) ?: emptyList()
+        return try {
+            jsonParser.decodeFromString<List<ParsedIngredient>>(jsonString)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to parse final ingredient list JSON: ${e.message}")
+            Log.d(TAG, "Bad JSON Content: $jsonString")
+            emptyList()
+        }
+    }
+
+    private suspend fun callGeminiApi(prompt: String, jsonMode: Boolean): String? {
+        return try {
+            // 1. Prepare Request
+            val requestBody = GeminiRequest(
+                contents = listOf(Content(parts = listOf(Part(text = prompt)))),
+                generationConfig = if (jsonMode) GenerationConfig(responseMimeType = "application/json") else null
+            )
+
+            // 2. Execute Request
+            val httpResponse = KtorClientProvider.client.post("$baseUrl?key=$apiKey") {
+                contentType(ContentType.Application.Json)
+                setBody(requestBody) // Ktor will serialize this using its own plugin, or we could send string directly
             }
 
-            is GenerativeAiResult.Error -> {
-                Log.e(TAG, "Ingredient parsing failed: ${response.message}")
-                emptyList()
+            // 3. Read Raw Response
+            val responseStatus = httpResponse.status
+            val rawResponseBody = httpResponse.bodyAsText()
+
+            if (responseStatus.value !in 200..299) {
+                Log.e(TAG, "API Error: $responseStatus - $rawResponseBody")
+                return null
             }
 
-            else -> emptyList()
+            // 4. Parse Response
+            val geminiResponse = try {
+                jsonParser.decodeFromString<GeminiResponse>(rawResponseBody)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to deserialize GeminiResponse: ${e.message}")
+                return null
+            }
+
+            // 5. Handle Errors returned in JSON (even with 200 OK sometimes)
+            if (geminiResponse.error != null) {
+                Log.e(TAG, "Gemini Logical Error: ${geminiResponse.error}")
+                return null
+            }
+
+            val text = geminiResponse.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
+
+            if (text == null) {
+                Log.e(TAG, "No candidates found in response. FinishReason: ${geminiResponse.candidates?.firstOrNull()?.finishReason}")
+                return null
+            }
+
+            // 6. Cleanup Markdown
+            val cleanedText = text.trim()
+                .removePrefix("```json")
+                .removePrefix("```")
+                .removeSuffix("```")
+                .trim()
+
+            return cleanedText
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Network or System Error: ${e.message}", e)
+            return null
         }
     }
 }

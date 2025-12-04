@@ -7,7 +7,7 @@ import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantRepo
 import com.seyone22.cook.provider.KtorClientProvider.client
 import com.seyone22.cook.service.GeminiService
 import com.seyone22.cook.service.ParsedIngredient
-import com.seyone22.cook.service.matchCanonicalIngredient
+import com.seyone22.cook.service.resolveAndSaveIngredient
 import com.seyone22.cook.service.toRecipeIngredient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,9 +18,9 @@ import java.util.UUID
 
 class SharedViewModel(
     private val ingredientRepository: IngredientRepository,
-    private val ingredientProductRepository: IngredientVariantRepository
+    private val ingredientProductRepository: IngredientVariantRepository,
+    private val geminiService: GeminiService // Injected Dependency
 ) : BaseViewModel() {
-
     private val _importedRecipe = MutableStateFlow<Recipe?>(null)
     val importedRecipe: StateFlow<Recipe?> = _importedRecipe.asStateFlow()
 
@@ -37,45 +37,37 @@ class SharedViewModel(
         _isLoading.value = value
     }
 
-    /** Clear imported recipe data (optional, if user cancels import) */
     fun clearImportedRecipe() {
         _importedRecipe.value = null
+        _ingredients.value = emptyList()
     }
 
-    /** Save imported recipe (stub, integrate with your database logic) */
     suspend fun saveImportedRecipe(recipe: Recipe?) {
         recipe?.let {
-            _importedRecipe.value = it
-            Log.d("SharedViewModel", "Imported recipe: ${_importedRecipe.value}")
-
-            // --- Parse ingredients separately ---
+            // 1. Parse ingredients (Raw Text -> Structured Object)
             val parsedIngredients: List<ParsedIngredient> =
-                GeminiService.parseIngredients(recipe.ingredients)
+                geminiService.parseIngredients(recipe.ingredients)
 
-            Log.d("TAG", "saveImportedRecipe: $parsedIngredients")
-
-            // --- Match to canonical ingredients ---
-            val matchedIngredients = mutableListOf<RecipeIngredient>()
-            for (parsed in parsedIngredients) {
-                matchCanonicalIngredient(
+            // 2. Match OR Fallback (Structured Object -> Domain Model)
+            // If matching fails (returns null), we create a fresh Ingredient from the parsed data.
+            val processedIngredients = parsedIngredients.map { parsed ->
+                resolveAndSaveIngredient(
                     parsed, client, ingredientRepository, ingredientProductRepository
-                )?.let { matchedIngredients.add(it) }
+                )
             }
 
-            Log.d("TAG", "saveImportedRecipe: $matchedIngredients")
-
-            // --- Update state ---
-            _ingredients.value = matchedIngredients
+            // 3. Update State ATOMICALY (or close to it) at the end
+            // Updating ingredients first ensures they are ready when the UI sees the recipe
+            _ingredients.value = processedIngredients
+            _importedRecipe.value = it
         }
     }
 
-    /**
-     * Helper function to import a recipe from a URL and immediately save it
-     * Returns true if successful, false otherwise
-     */
     suspend fun importAndSaveRecipe(url: String): Boolean {
         _isLoading.value = true
+        // Run IO operation
         val recipeJson: Recipe? = importRecipeFromUrl(url)
+
         return if (recipeJson != null) {
             saveImportedRecipe(recipeJson)
             _isLoading.value = false
@@ -88,7 +80,8 @@ class SharedViewModel(
 
     suspend fun saveImportedRecipeByCamera(rawText: String) {
         setLoading(true)
-        val ldJson = GeminiService.generateStructuredRecipe(rawText) ?: return setLoading(false)
+        // Use injected service
+        val ldJson = geminiService.generateStructuredRecipe(rawText) ?: return setLoading(false)
 
         try {
             val recipe = recipeimporter.RecipeImporter.parseLdJson(ldJson)
@@ -99,20 +92,19 @@ class SharedViewModel(
                 return  // exit early
             }
 
-            // --- Parse ingredients separately ---
+            // --- Parse ingredients using injected service ---
             val parsedIngredients: List<ParsedIngredient> =
-                GeminiService.parseIngredients(recipe.ingredients)
+                geminiService.parseIngredients(recipe.ingredients)
 
             val recipeIngredients: List<RecipeIngredient> = parsedIngredients.map { parsed ->
                 parsed.toRecipeIngredient(recipeId = UUID.randomUUID())
             }
 
-
-            // --- Match to canonical ingredients ---
-//            val matchedIngredients: List<RecipeIngredient> =
-//                recipeIngredients.mapNotNull { parsed: RecipeIngredient ->
-//                    matchCanonicalIngredient(parsed, client)
-//                }
+            // --- Match to canonical ingredients (Commented out in original, kept consistent) ---
+            // val matchedIngredients: List<RecipeIngredient> =
+            //     recipeIngredients.mapNotNull { parsed: RecipeIngredient ->
+            //         matchCanonicalIngredient(parsed, client)
+            //     }
 
             // --- Update state ---
             _ingredients.value = recipeIngredients
@@ -126,8 +118,11 @@ class SharedViewModel(
     }
 
     suspend fun importRecipeFromUrl(url: String): Recipe? {
-        return importFromUrl(url)
+        return try {
+            importFromUrl(url)
+        } catch (e: Exception) {
+            Log.e("SharedViewModel", "Import failed", e)
+            null
+        }
     }
-
-
 }
