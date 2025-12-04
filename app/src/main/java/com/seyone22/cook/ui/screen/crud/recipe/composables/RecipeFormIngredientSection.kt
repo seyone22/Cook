@@ -1,5 +1,6 @@
 package com.seyone22.cook.ui.screen.crud.recipe.composables
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -32,7 +34,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.seyone22.cook.data.model.Ingredient
+import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.model.RecipeIngredientDetails
 import java.util.UUID
 
@@ -48,6 +53,9 @@ fun RecipeFormIngredientSection(
     onNavigateToAddIngredient: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    Log.d("RecipeFormIngredientSection", "recipeIngredients: $recipeIngredients")
+
+
     Column(modifier = modifier) {
         Text(
             text = "Ingredients",
@@ -74,13 +82,6 @@ fun RecipeFormIngredientSection(
                         .fillMaxWidth()
                         .padding(start = 36.dp)
                 ) {
-                    Column(modifier = Modifier.align(Alignment.CenterVertically)) {
-                        Icon(
-                            modifier = Modifier.padding(0.dp, 0.dp, 12.dp, 0.dp),
-                            imageVector = Icons.Outlined.Tag,
-                            contentDescription = null,
-                        )
-                    }
                     Row {
                         ExposedDropdownMenuBox(
                             expanded = ingredientExpanded, onExpandedChange = {
@@ -224,4 +225,72 @@ fun RecipeFormIngredientSection(
             Text(text = "Add Ingredient")
         }
     }
+}
+
+
+
+@Preview(showBackground = true)
+@Composable
+fun RecipeFormIngredientSectionPreview() {
+    val sampleIngredients = listOf(
+        Ingredient(id = UUID.randomUUID(), name = "Red Apple"),
+        Ingredient(id = UUID.randomUUID(), name = "Lemon Juice"),
+        Ingredient(id = UUID.randomUUID(), name = "Granulated Sugar"),
+        Ingredient(id = UUID.randomUUID(), name = "Butter"),
+        Ingredient(id = UUID.randomUUID(), name = "Flour")
+    )
+
+    val sampleMeasures = listOf(
+        Measure(id = 3, abbreviation = "g", name = "gram", type = "weight"),
+        Measure(id = 4, abbreviation = "kg", name = "kilogram", type = "weight"),
+        Measure(id = 5, abbreviation = "cup", type = "volume", name = "cup"),
+        Measure(id = 6, abbreviation = "tbsp", name = "tablespoon", type = "volume"),
+        Measure(id = 7, abbreviation = "tsp", name = "teaspoon", type = "volume"),
+        Measure(id = 8, abbreviation = "lb", name = "pound", type = "weight")
+    )
+
+    val sampleRecipeIngredients =remember{mutableStateListOf(
+        RecipeIngredientDetails(
+            id = 0,
+            recipeId = UUID.randomUUID(),
+            ingredientId = sampleIngredients[0].id,
+            foodDbId = UUID.randomUUID().toString(),
+            name = "Red Apple",
+            quantity = "3.0",
+            unit = "lb",
+            notes = "peeled, cored, thinly sliced"
+        ),
+        RecipeIngredientDetails(
+            id = 1,
+            recipeId = UUID.randomUUID(),
+            ingredientId = sampleIngredients[1].id,
+            foodDbId = UUID.randomUUID().toString(),
+            name = "Lemon Juice",
+            quantity = "2.0",
+            unit = "tbsp",
+            notes = null
+        ),
+        RecipeIngredientDetails(
+            id = 2,
+            recipeId = UUID.randomUUID(),
+            ingredientId = sampleIngredients[2].id,
+            foodDbId = UUID.randomUUID().toString(),
+            name = "Granulated Sugar",
+            quantity = "1.0",
+            unit = "cup",
+            notes = null
+        )
+    )}
+
+    RecipeFormIngredientSection(
+        recipeIngredients = sampleRecipeIngredients,
+        allIngredients = sampleIngredients,
+        allMeasures = sampleMeasures,
+        onAddRecipeIngredient = { sampleRecipeIngredients.add(it) },
+        onUpdateRecipeIngredient = { index, updated ->
+            sampleRecipeIngredients[index] = updated
+        },
+        onRemoveRecipeIngredient = { sampleRecipeIngredients.remove(it) },
+        onNavigateToAddIngredient = { name -> println("Navigate to add ingredient: $name") }
+    )
 }
