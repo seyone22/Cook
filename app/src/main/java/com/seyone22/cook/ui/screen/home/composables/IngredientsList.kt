@@ -39,19 +39,20 @@ import com.seyone22.cook.data.model.IngredientProduct
 import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.model.RecipeIngredient
 import com.seyone22.cook.ui.screen.home.HomeViewModel
+import com.seyone22.cook.ui.screen.home.detail.RecipeDetailViewModel
 import com.seyone22.cook.ui.screen.ingredients.detail.IngredientDetailDestination
 
 @Composable
 fun IngredientsList(
     navController: NavController,
-    list: List<RecipeIngredient?>,
-    measures: List<Measure?>,
-    ingredients: List<Ingredient?>,
+    list: List<RecipeIngredient>,
+    measures: List<Measure>,
+    ingredients: List<Ingredient>,
     variants: List<IngredientProduct?>,
     scaleFactor: Double,
     serves: Int,
     modifier: Modifier = Modifier,
-    viewModel: HomeViewModel
+    ingredientPrices: Map<String, Double>, // <--- ADD THIS
 ) {
     var qtySelected by remember { mutableStateOf(true) }
 
@@ -85,17 +86,15 @@ fun IngredientsList(
 
                     val checked = remember {
                         mutableStateOf(
-false
+                            false
                         )
                     }
 
-                    val quantity =
-                        ((recipeIngredient?.quantity?.div(serves))?.times(scaleFactor)) ?: 0.0
+                    val safeServes = if (serves == 0) 1 else serves
+                    val quantity = (recipeIngredient.quantity / safeServes) * scaleFactor
 
-                    // Read price from ViewModel state
-                    val price = recipeIngredient?.foodDbId?.let {
-                        viewModel.prices[it]?.price ?: 0.0
-                    } ?: 0.0
+                    // Read directly from the passed map
+                    val price = ingredientPrices[recipeIngredient.foodDbId] ?: 0.0
 
                     Row(
                         modifier = Modifier
@@ -127,9 +126,9 @@ false
 
                                 Text(
                                     modifier = Modifier.clickable {
-                                        navController.navigate("${IngredientDetailDestination.route}/${recipeIngredient?.foodDbId}")
+                                        navController.navigate("${IngredientDetailDestination.route}/${recipeIngredient.foodDbId}")
                                     },
-                                    text = recipeIngredient?.name ?: "",
+                                    text = recipeIngredient.name,
                                     style = MaterialTheme.typography.bodyLarge.copy(
                                         textDecoration = if (checked.value) TextDecoration.LineThrough else TextDecoration.None
                                     ),
@@ -180,7 +179,7 @@ false
                                         String.format(
                                             "%.2f", quantity
                                         )
-                                    }${recipeIngredient?.unit ?: ""}"
+                                    }${recipeIngredient.unit}"
                                 } else {
                                     "Rs.${String.format("%.2f", price)}"
                                 },

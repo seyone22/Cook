@@ -26,7 +26,7 @@ interface RecipeDao {
     fun getAllRecipes(): Flow<List<Recipe>>
 
     @Query("UPDATE recipes SET timesMade = timesMade + 1 WHERE id = :recipeId")
-    suspend fun incrementTimesMade(recipeId: UUID)
+    fun incrementTimesMade(recipeId: UUID)
 
     /**
      * Update a recipe with automatic dateModified update.

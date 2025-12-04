@@ -80,7 +80,7 @@ import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.common.dialog.action.DeleteDialogAction
 import com.seyone22.cook.ui.navigation.NavigationDestination
 import com.seyone22.cook.ui.screen.ingredients.IngredientsViewModel
-import com.seyone22.expensetracker.ui.common.dialogs.GenericDialog
+import com.seyone22.cook.ui.common.dialog.GenericDialog
 import kotlinx.coroutines.CoroutineScope
 import java.util.UUID
 

@@ -1,218 +1,155 @@
 package com.seyone22.cook.ui.screen.home
 
-import android.content.Context
 import android.util.Log
-import android.widget.Toast
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import com.seyone22.cook.R
-import com.seyone22.cook.SharedViewModel
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.snapshots.SnapshotStateMap
+import androidx.lifecycle.viewModelScope
+import com.seyone22.cook.BaseViewModel
+import com.seyone22.cook.data.model.IngredientProduct
+import com.seyone22.cook.data.model.Recipe
+import com.seyone22.cook.data.model.RecipeImage
+import com.seyone22.cook.data.model.RecipeIngredient
+import com.seyone22.cook.data.model.RecipeTag
+import com.seyone22.cook.data.model.ShoppingListItem
 import com.seyone22.cook.data.model.Tag
-import com.seyone22.cook.ui.AppViewModelProvider
-import com.seyone22.cook.ui.common.CookTopBar
-import com.seyone22.cook.ui.navigation.NavigationDestination
-import com.seyone22.cook.ui.screen.crud.recipe.ImportRecipeDestination
-import com.seyone22.cook.ui.screen.home.composables.RecipeCard
-import com.seyone22.cook.ui.screen.home.detail.RecipeDetailDestination
+import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantRepository
+import com.seyone22.cook.data.repository.recipe.RecipeRepository
+import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
+import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientRepository
+import com.seyone22.cook.data.repository.recipeTag.RecipeTagRepository
+import com.seyone22.cook.data.repository.shoppingList.ShoppingListRepository
+import com.seyone22.cook.data.repository.tag.TagRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import java.util.UUID
 
-object HomeDestination : NavigationDestination {
-    override val route = "Recipes"
-    override val titleRes = R.string.app_name
-    override val routeId = 0
-}
+// Define a clean UI state for the screen
+data class HomeUiState(
+    val filteredRecipes: List<Recipe> = emptyList(),
+    val allRecipes: List<Recipe> = emptyList(),
+    val tags: List<Tag> = emptyList(),
+    val recipeTags: List<RecipeTag> = emptyList(),
+    val images: List<RecipeImage> = emptyList(),
+    val selectedFilters: Set<Tag> = emptySet(),
+    val isLoading: Boolean = true
+)
 
-@Composable
-fun HomeScreen(
-    modifier: Modifier,
-    viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    sharedViewModel: SharedViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    context: Context = LocalContext.current,
-    navController: NavController,
-    navigateToScreen: (String) -> Unit,
-    setOverlayStatus: (Boolean) -> Unit = {},
-    snackbarHostState: SnackbarHostState,
-) {
-    LaunchedEffect(Unit) {
-        viewModel.fetchData()
+class HomeViewModel(
+    private val recipeRepository: RecipeRepository,
+    private val recipeImageRepository: RecipeImageRepository,
+    private val recipeIngredientRepository: RecipeIngredientRepository,
+    private val ingredientVariantRepository: IngredientVariantRepository,
+    private val shoppingListRepository: ShoppingListRepository,
+    private val tagRepository: TagRepository,
+    private val recipeTagRepository: RecipeTagRepository,
+    // Unused repositories removed for clarity, inject them back if needed for specific logic
+) : BaseViewModel() {
+
+    // Internal state for filters
+    private val _selectedFilters = MutableStateFlow<Set<Tag>>(emptySet())
+
+    // -------------------------------------------------------------------
+    // Core Logic: Combine streams to produce the UI State automatically
+    // -------------------------------------------------------------------
+    val uiState: StateFlow<HomeUiState> = combine(
+        recipeRepository.getAllRecipes(),
+        tagRepository.getAllTags(),
+        recipeTagRepository.getAllRecipeTags(),
+        recipeImageRepository.getAllRecipeImages(),
+        _selectedFilters
+    ) { recipes, tags, recipeTags, images, filters ->
+
+        // 1. Filter Logic (Moved from UI)
+        val filteredList = if (filters.isEmpty()) {
+            recipes.filterNotNull()
+        } else {
+            recipes.filterNotNull().filter { recipe ->
+                // Get all tag IDs for this specific recipe
+                val thisRecipeTagIds = recipeTags
+                    .filter { it?.recipeId == recipe.id }
+                    .map { it?.tagId }
+
+                // Check if the recipe has ANY of the selected filter tags
+                thisRecipeTagIds.any { tagId ->
+                    filters.any { filterTag -> filterTag.id == tagId }
+                }
+            }
+        }
+
+        HomeUiState(
+            filteredRecipes = filteredList,
+            allRecipes = recipes.filterNotNull(),
+            tags = tags.filterNotNull(),
+            recipeTags = recipeTags.filterNotNull(),
+            images = images.filterNotNull(),
+            selectedFilters = filters,
+            isLoading = false
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = HomeUiState(isLoading = true)
+    )
+
+    // Prices map: ingredientId -> price
+    // Note: Kept as SnapshotStateMap for now, but ideally should be part of the flow above.
+    val prices: SnapshotStateMap<String, IngredientProduct?> = mutableStateMapOf()
+
+    init {
+        // Trigger price fetching whenever the recipe list changes
+        viewModelScope.launch {
+            recipeIngredientRepository.getAllRecipeIngredients().collect { ingredients ->
+                fetchAllPrices(ingredients)
+            }
+        }
     }
 
-    val clipboardManager = LocalClipboardManager.current
-    val homeViewState by viewModel.homeViewState.collectAsState()
-    val recipes = homeViewState.recipes
-    var filteredRecipes by remember { mutableStateOf(homeViewState.recipes) }
-    val images = homeViewState.images
-    var filters by remember { mutableStateOf<List<Tag>>(emptyList()) }
-
-    LaunchedEffect(homeViewState) {
-        filteredRecipes = homeViewState.recipes
+    fun toggleFilter(tag: Tag) {
+        val current = _selectedFilters.value
+        if (current.contains(tag)) {
+            _selectedFilters.value = current - tag
+        } else {
+            _selectedFilters.value = current + tag
+        }
     }
 
-    // ----------------------------
-// Clipboard auto-detect
-// ----------------------------
-    var lastCheckedUrl by remember { mutableStateOf<String?>(null) }
-    val isImporting by sharedViewModel.isLoading.collectAsState()
+    private fun fetchAllPrices(recipeIngredients: List<RecipeIngredient?>) {
+        viewModelScope.launch {
+            recipeIngredients.forEach { ri ->
+                val ingredientId = ri?.foodDbId ?: return@forEach
+                // Avoid re-fetching if we already have it
+                if (prices.containsKey(ingredientId)) return@forEach
 
-
-    LaunchedEffect(Unit) {
-        val clipText = clipboardManager.getText()?.text
-
-        if (!clipText.isNullOrBlank() && clipText.startsWith("http") && clipText != lastCheckedUrl) {
-            lastCheckedUrl = clipText
-
-            val result = snackbarHostState.showSnackbar(
-                message = "Found a recipe URL in clipboard", actionLabel = "Import", duration = SnackbarDuration.Short
-            )
-
-            if (result == SnackbarResult.ActionPerformed) {
-                // User tapped Import
-                sharedViewModel.setLoading(true)
-                val success = sharedViewModel.importAndSaveRecipe(clipText)
-                sharedViewModel.setLoading(false)
-
-                if (success) {
-                    navigateToScreen(ImportRecipeDestination.route)
-                } else {
-                    Toast.makeText(context, "Failed to fetch recipe", Toast.LENGTH_SHORT).show()
+                try {
+                    val product = ingredientVariantRepository.getCheapestPriceForIngredient(ingredientId)
+                    prices[ingredientId] = product.firstOrNull()
+                } catch (e: Exception) {
+                    Log.e("HomeViewModel", "Failed to fetch price for $ingredientId", e)
                 }
             }
         }
     }
 
+    fun deleteRecipe(recipe: Recipe) {
+        viewModelScope.launch { recipeRepository.deleteRecipe(recipe) }
+    }
 
-    Scaffold(topBar = {
-        CookTopBar(
-            navController = navController,
-            currentActivity = "search",
-            recipeList = recipes,
-            tagList = homeViewState.tags,
-            recipeTags = homeViewState.recipeTags,
-            setOverlayStatus = setOverlayStatus
-        )
-    }, snackbarHost = { androidx.compose.material3.SnackbarHost(hostState = snackbarHostState) }) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(it)
-            ) {
-                // ----------------------------
-                // Tag filter chips
-                // ----------------------------
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(start = 16.dp, top = 0.dp, end = 16.dp),
-                ) {
-                    homeViewState.tags.forEach { tag ->
-                        if (homeViewState.recipeTags.any { t -> t?.tagId == tag?.id }) {
-                            item {
-                                var isSelected by remember { mutableStateOf(false) }
-                                FilterChip(selected = isSelected, onClick = {
-                                    isSelected = !isSelected
-                                    filters = if (isSelected) filters + tag!! else filters - tag!!
-                                    filteredRecipes = if (filters.isNotEmpty()) {
-                                        recipes.filter { recipe ->
-                                            val recipeTagIds =
-                                                homeViewState.recipeTags.filter { it?.recipeId == recipe?.id }
-                                                    .map { it?.tagId }
-                                            recipeTagIds.any { tagId -> filters.any { filterTag -> filterTag.id == tagId } }
-                                        }
-                                    } else recipes
-                                }, label = { Text(text = tag?.name ?: "") }, trailingIcon = {
-                                    if (isSelected) {
-                                        Icon(
-                                            imageVector = Icons.Default.Close,
-                                            contentDescription = "Remove Tag"
-                                        )
-                                    }
-                                })
-                            }
-                        }
-                    }
-                }
-
-                // ----------------------------
-                // Recipes grid
-                // ----------------------------
-                if (filteredRecipes.isNotEmpty()) {
-                    LazyVerticalStaggeredGrid(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .padding(start = 16.dp, top = 0.dp, end = 16.dp),
-                        verticalItemSpacing = 16.dp,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        columns = StaggeredGridCells.Adaptive(minSize = 180.dp),
-                        content = {
-                            items(filteredRecipes.size) { index ->
-                                RecipeCard(
-                                    recipe = filteredRecipes[index]!!,
-                                    image = images.find { it!!.recipeId == filteredRecipes[index]!!.id },
-                                    modifier = Modifier.clickable {
-                                        navController.navigate("${RecipeDetailDestination.route}/${filteredRecipes[index]?.id}")
-                                    })
-                            }
-                            item { Spacer(modifier = Modifier.padding(bottom = 84.dp)) }
-                        })
-                } else {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(start = 16.dp, top = 0.dp, end = 16.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        TextButton(onClick = { navController.navigate("Settings/Data") }) {
-                            Text(text = "Import Recipe")
-                        }
-                    }
-                }
-            }
-
-            if (isImporting) {
-                // Fullscreen semi-transparent overlay
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+    fun addAllToShoppingList(ingredients: List<RecipeIngredient?>, shoppingListId: Long) {
+        viewModelScope.launch {
+            ingredients.forEach { ingredient ->
+                shoppingListRepository.insertItem(
+                    ShoppingListItem(
+                        ingredientId = ingredient?.ingredientId ?: UUID.randomUUID(),
+                        quantity = ingredient?.quantity ?: 0.0,
+                        measureId = -1,
+                        shoppingListId = shoppingListId
+                    )
+                )
             }
         }
     }

@@ -14,7 +14,7 @@ class OfflineRecipeRepository(private val recipeDao: RecipeDao) : RecipeReposito
 
     override suspend fun updateRecipe(recipe: Recipe) = recipeDao.updateWithModified(recipe)
 
-    override suspend fun getRecipeById(recipeId: UUID): Flow<Recipe?> {
+    override fun getRecipeById(recipeId: UUID): Flow<Recipe?> {
         return recipeDao.getRecipeByIdFlow(recipeId)
             .onEach { recipe ->
                 recipe?.let {
@@ -24,7 +24,7 @@ class OfflineRecipeRepository(private val recipeDao: RecipeDao) : RecipeReposito
             }
     }
 
-    override suspend fun getAllRecipes(): Flow<List<Recipe>> = recipeDao.getAllRecipes()
+    override fun getAllRecipes(): Flow<List<Recipe>> = recipeDao.getAllRecipes()
 
-    override suspend fun incrementTimesMade(recipeId: UUID) = recipeDao.incrementTimesMade(recipeId)
+    override fun incrementTimesMade(recipeId: UUID) = recipeDao.incrementTimesMade(recipeId)
 }

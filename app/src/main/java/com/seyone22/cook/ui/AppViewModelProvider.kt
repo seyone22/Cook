@@ -1,6 +1,7 @@
 package com.seyone22.cook.ui
 
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -10,6 +11,7 @@ import com.seyone22.cook.ui.screen.cooking.CookingViewModel
 import com.seyone22.cook.ui.screen.crud.ingredient.IngredientOperationsViewModel
 import com.seyone22.cook.ui.screen.crud.recipe.RecipeOperationsViewModel
 import com.seyone22.cook.ui.screen.home.HomeViewModel
+import com.seyone22.cook.ui.screen.home.detail.RecipeDetailViewModel
 import com.seyone22.cook.ui.screen.ingredients.IngredientsViewModel
 import com.seyone22.cook.ui.screen.meals.MealsViewModel
 import com.seyone22.cook.ui.screen.more.MoreViewModel
@@ -22,15 +24,11 @@ object AppViewModelProvider {
             HomeViewModel(
                 recipeRepository = cookApplication().container.recipeRepository,
                 recipeImageRepository = cookApplication().container.recipeImageRepository,
-                instructionRepository = cookApplication().container.instructionRepository,
                 recipeIngredientRepository = cookApplication().container.recipeIngredientRepository,
-                measureRepository = cookApplication().container.measureRepository,
-                ingredientRepository = cookApplication().container.ingredientRepository,
                 ingredientVariantRepository = cookApplication().container.ingredientVariantRepository,
                 shoppingListRepository = cookApplication().container.shoppingListRepository,
                 tagRepository = cookApplication().container.tagRepository,
                 recipeTagRepository = cookApplication().container.recipeTagRepository,
-                instructionSectionRepository = cookApplication().container.instructionSectionRepository
             )
         }
         initializer {
@@ -110,6 +108,20 @@ object AppViewModelProvider {
             SharedViewModel(
                 ingredientRepository = cookApplication().container.ingredientRepository,
                 ingredientProductRepository = cookApplication().container.ingredientVariantRepository
+            )
+        }
+        initializer {
+            RecipeDetailViewModel(
+                this.createSavedStateHandle(),
+                cookApplication().container.recipeRepository,
+                cookApplication().container.recipeImageRepository,
+                cookApplication().container.instructionRepository,
+                cookApplication().container.instructionSectionRepository,
+                cookApplication().container.recipeIngredientRepository,
+                cookApplication().container.ingredientRepository,
+                cookApplication().container.measureRepository,
+                cookApplication().container.shoppingListRepository,
+                cookApplication().container.ingredientVariantRepository
             )
         }
     }

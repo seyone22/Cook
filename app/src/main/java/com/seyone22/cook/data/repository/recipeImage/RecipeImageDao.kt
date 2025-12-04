@@ -42,5 +42,5 @@ interface RecipeImageDao {
     fun getAllRecipeImages(): Flow<List<RecipeImage>>
 
     @Query("DELETE FROM recipe_images WHERE recipeId = :recipeId")
-    suspend fun deleteImagesForRecipe(recipeId: UUID)
+    fun deleteImagesForRecipe(recipeId: UUID)
 }

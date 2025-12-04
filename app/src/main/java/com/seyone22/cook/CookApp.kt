@@ -33,7 +33,7 @@ import com.seyone22.cook.ui.common.CookFAB
 import com.seyone22.cook.ui.common.CookNavBar
 import com.seyone22.cook.ui.navigation.CookNavHost
 import com.seyone22.cook.ui.screen.crud.recipe.ImportRecipeDestination
-import com.seyone22.expensetracker.ui.common.dialogs.GenericDialog
+import com.seyone22.cook.ui.common.dialog.GenericDialog
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable

@@ -39,7 +39,7 @@ object GeminiService {
 
     // --- Configuration ---
     private const val TAG = "GeminiService"
-    private const val API_KEY = "AIzaSyCEZHUovxE72WE-L_fAvoLILDUvq5flwqw"
+    private const val API_KEY = "AIzaSyCwItB3gLOHXKMTnW0aY8i-jLJ6IJY-ZaQ"
     private const val MODEL_NAME = "gemini-2.5-flash"
     private const val PROVIDER = "OpenAI-Gemini"
 

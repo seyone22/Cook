@@ -159,12 +159,11 @@ fun CookNavHost(
             )
         }
         composable(
-            route = RecipeDetailDestination.route + "/{id}",
-            arguments = listOf(navArgument("id") { type = NavType.StringType })
+            route = RecipeDetailDestination.route + "/{recipeId}",
+            arguments = listOf(navArgument("recipeId") { type = NavType.StringType })
         ) {
             RecipeDetailScreen(
                 navController = navController,
-                backStackEntry = it.arguments?.getString("id") ?: "-1"
             )
         }
 

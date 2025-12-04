@@ -1,4 +1,4 @@
-package com.seyone22.expensetracker.ui.common.dialogs
+package com.seyone22.cook.ui.common.dialog
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.AlertDialog
