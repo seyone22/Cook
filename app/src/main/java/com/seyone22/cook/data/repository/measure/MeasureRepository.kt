@@ -8,8 +8,8 @@ interface MeasureRepository {
     suspend fun deleteMeasure(measure: Measure)
     suspend fun updateMeasure(measure: Measure)
 
-    suspend fun getMeasureById(measureId: Int): Flow<Measure?>
-    suspend fun getAllMeasures(): Flow<List<Measure?>>
-    suspend fun getMeasureByName(name: String): Flow<Measure?>
+    fun getMeasureById(measureId: Int): Flow<Measure?>
+    fun getAllMeasures(): Flow<List<Measure?>>
+    fun getMeasureByName(name: String): Flow<Measure?>
 
 }

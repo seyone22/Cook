@@ -9,7 +9,7 @@ interface RecipeRepository {
     suspend fun deleteRecipe(recipe: Recipe)
     suspend fun updateRecipe(recipe: Recipe)
 
-    suspend fun getRecipeById(recipeId: UUID): Flow<Recipe?>
-    suspend fun getAllRecipes(): Flow<List<Recipe?>>
-    suspend fun incrementTimesMade(recipeId: UUID)
+    fun getRecipeById(recipeId: UUID): Flow<Recipe?>
+    fun getAllRecipes(): Flow<List<Recipe?>>
+    fun incrementTimesMade(recipeId: UUID)
 }

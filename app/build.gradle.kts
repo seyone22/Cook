@@ -1,54 +1,81 @@
+import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
-
+    alias(libs.plugins.compose.compiler)
     id("com.google.devtools.ksp")
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.21"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.10"
+    id("com.google.gms.google-services")
 }
 
 android {
     namespace = "com.seyone22.cook"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.seyone22.cook"
         minSdk = 30
-        targetSdk = 34
-        versionCode = 3
-        versionName = "Cook v3.0.0-beta2"
+        targetSdk = 36
+        versionCode = 5
+        versionName = "v5.0.0-beta3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // --- MERGED: Gemini API Key Logic ---
+        // This safely reads the key or defaults to an empty string if missing
+        val geminiApiKey: String = try {
+            val propertiesFile = project.rootProject.file("local.properties")
+            if (propertiesFile.exists()) {
+                propertiesFile.inputStream().use { stream ->
+                    Properties().apply { load(stream) }.getProperty("GEMINI_API_KEY")
+                } ?: ""
+            } else {
+                ""
+            }
+        } catch (e: Exception) {
+            ""
+        }
+
+        // Exposes BuildConfig.GEMINI_API_KEY to your Kotlin code
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
+
+    // --- MERGED: Build Features ---
     buildFeatures {
         compose = true
+        buildConfig = true // Required for BuildConfig.GEMINI_API_KEY to work
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
-    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
     }
 }
 
@@ -71,6 +98,7 @@ dependencies {
 
     // AndroidX Compose Material3
     implementation(libs.androidx.material3)
+    implementation(libs.material)
 
     // JUnit
     testImplementation(libs.junit)
@@ -123,7 +151,6 @@ dependencies {
 
     // For `compose`. Creates a `ChartStyle` based on an M3 Material Theme.
     implementation(libs.vico.compose.m3)
-    implementation(libs.vico.compose.m3.alpha)
 
     // Workers
     implementation(libs.androidx.work.runtime.ktx)
@@ -132,7 +159,35 @@ dependencies {
     implementation(libs.androidx.biometric.ktx)
 
     // Permission handling with accompanist
-    implementation("com.google.accompanist:accompanist-permissions:0.35.0-alpha")
+    implementation(libs.accompanist.permissions)
 
-    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation(libs.coil.compose)
+
+    implementation(project(":atproto-auth2"))
+
+    implementation(libs.ktor.client.core.v235) // core client
+    implementation(libs.ktor.client.cio.v235)  // CIO engine
+
+    implementation(libs.ktor.client.android) // For Android-specific support
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+
+    // The compose calendar library for Android
+    implementation(libs.compose)
+
+    implementation(libs.recipe.importer)
+
+    // To recognize Latin script
+    implementation(libs.text.recognition)
+
+    // …
+    implementation(libs.play.services.mlkit.document.scanner)
+
+    // Task.await() helpers to await Play Services Tasks
+    implementation(libs.kotlinx.coroutines.play.services)
+
+    implementation(libs.generativeai)
+
+    implementation(libs.openai.client)
+// Google Gemini API
 }

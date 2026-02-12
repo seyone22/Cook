@@ -1,17 +1,21 @@
 package com.seyone22.cook.ui
 
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.seyone22.cook.CookApplication
+import com.seyone22.cook.SharedViewModel
 import com.seyone22.cook.ui.screen.cooking.CookingViewModel
 import com.seyone22.cook.ui.screen.crud.ingredient.IngredientOperationsViewModel
 import com.seyone22.cook.ui.screen.crud.recipe.RecipeOperationsViewModel
 import com.seyone22.cook.ui.screen.home.HomeViewModel
+import com.seyone22.cook.ui.screen.home.detail.RecipeDetailViewModel
 import com.seyone22.cook.ui.screen.ingredients.IngredientsViewModel
+import com.seyone22.cook.ui.screen.meals.MealsViewModel
 import com.seyone22.cook.ui.screen.more.MoreViewModel
-import com.seyone22.cook.ui.screen.search.SearchViewModel
+import com.seyone22.cook.ui.screen.more.account.AuthViewModel
 import com.seyone22.cook.ui.screen.shoppingList.ShoppingListViewModel
 
 object AppViewModelProvider {
@@ -20,12 +24,11 @@ object AppViewModelProvider {
             HomeViewModel(
                 recipeRepository = cookApplication().container.recipeRepository,
                 recipeImageRepository = cookApplication().container.recipeImageRepository,
-                instructionRepository = cookApplication().container.instructionRepository,
                 recipeIngredientRepository = cookApplication().container.recipeIngredientRepository,
-                measureRepository = cookApplication().container.measureRepository,
-                ingredientRepository = cookApplication().container.ingredientRepository,
                 ingredientVariantRepository = cookApplication().container.ingredientVariantRepository,
-                shoppingListRepository = cookApplication().container.shoppingListRepository
+                shoppingListRepository = cookApplication().container.shoppingListRepository,
+                tagRepository = cookApplication().container.tagRepository,
+                recipeTagRepository = cookApplication().container.recipeTagRepository,
             )
         }
         initializer {
@@ -53,7 +56,11 @@ object AppViewModelProvider {
                 measureRepository = cookApplication().container.measureRepository,
                 instructionRepository = cookApplication().container.instructionRepository,
                 ingredientRepository = cookApplication().container.ingredientRepository,
-                recipeIngredientRepository = cookApplication().container.recipeIngredientRepository
+                recipeIngredientRepository = cookApplication().container.recipeIngredientRepository,
+                tagRepository = cookApplication().container.tagRepository,
+                recipeTagRepository = cookApplication().container.recipeTagRepository,
+                instructionSectionRepository = cookApplication().container.instructionSectionRepository,
+                ingredientProductRepository = cookApplication().container.ingredientVariantRepository
             )
         }
         initializer {
@@ -74,12 +81,8 @@ object AppViewModelProvider {
                 instructionRepository = cookApplication().container.instructionRepository,
                 recipeIngredientRepository = cookApplication().container.recipeIngredientRepository,
                 ingredientRepository = cookApplication().container.ingredientRepository,
-            )
-        }
-        initializer {
-            SearchViewModel(
-                recipeRepository = cookApplication().container.recipeRepository,
-                recipeImageRepository = cookApplication().container.recipeImageRepository,
+                tagRepository = cookApplication().container.tagRepository,
+                ingredientProductRepository = cookApplication().container.ingredientVariantRepository
             )
         }
         initializer {
@@ -92,6 +95,35 @@ object AppViewModelProvider {
                 ingredientRepository = cookApplication().container.ingredientRepository,
                 ingredientVariantRepository = cookApplication().container.ingredientVariantRepository,
                 shoppingListRepository = cookApplication().container.shoppingListRepository
+            )
+        }
+        initializer {
+            AuthViewModel()
+        }
+        initializer {
+            MealsViewModel(
+                mealEntryRepository = cookApplication().container.mealEntryRepository,
+            )
+        }
+        initializer {
+            SharedViewModel(
+                ingredientRepository = cookApplication().container.ingredientRepository,
+                ingredientProductRepository = cookApplication().container.ingredientVariantRepository,
+                geminiService = cookApplication().container.geminiService
+            )
+        }
+        initializer {
+            RecipeDetailViewModel(
+                this.createSavedStateHandle(),
+                cookApplication().container.recipeRepository,
+                cookApplication().container.recipeImageRepository,
+                cookApplication().container.instructionRepository,
+                cookApplication().container.instructionSectionRepository,
+                cookApplication().container.recipeIngredientRepository,
+                cookApplication().container.ingredientRepository,
+                cookApplication().container.measureRepository,
+                cookApplication().container.shoppingListRepository,
+                cookApplication().container.ingredientVariantRepository
             )
         }
     }

@@ -7,19 +7,20 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.model.IngredientImage
-import com.seyone22.cook.data.model.IngredientVariant
+import com.seyone22.cook.data.model.IngredientProduct
 import com.seyone22.cook.data.model.Measure
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
 import com.seyone22.cook.data.repository.ingredientImage.IngredientImageRepository
 import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantRepository
 import com.seyone22.cook.data.repository.measure.MeasureRepository
-import com.seyone22.cook.helper.ImageHelper
+import com.seyone22.cook.helper.ImageStorageHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
 
 class IngredientOperationsViewModel(
@@ -31,16 +32,16 @@ class IngredientOperationsViewModel(
     private val _addIngredientViewState = MutableStateFlow(AddIngredientViewState())
     val addIngredientViewState: StateFlow<AddIngredientViewState> get() = _addIngredientViewState
 
-    fun fetchData(id: Long = -1) {
+    fun fetchData(id: UUID? = null) {
         viewModelScope.launch {
             val measures = measureRepository.getAllMeasures().first()
             var ingredient: Ingredient? = null
-            var variants: List<IngredientVariant?> = emptyList()
+            var variants: List<IngredientProduct?> = emptyList()
             var photos: List<IngredientImage?> = emptyList()
-            if (id.toInt() != -1) {
-                ingredient = ingredientRepository.getIngredientById(id.toInt()).first()
-                variants = ingredientVariantRepository.getVariantsForIngredient(id.toInt()).first()
-                photos = ingredientImageRepository.getImagesForIngredient(id.toInt()).first()
+            if (id != null) {
+                ingredient = ingredientRepository.getIngredientById(id).first()
+                variants = ingredientVariantRepository.getVariantsForIngredient(id).first()
+                photos = ingredientImageRepository.getImagesForIngredient(id).first()
             }
             _addIngredientViewState.value =
                 AddIngredientViewState(measures, ingredient, variants, photos)
@@ -49,7 +50,7 @@ class IngredientOperationsViewModel(
 
     fun saveIngredient(
         ingredient: Ingredient,
-        ingredientVariantList: List<IngredientVariant>,
+        ingredientProductList: List<IngredientProduct>,
         images: List<Uri>?,
         context: Context
     ) {
@@ -59,14 +60,14 @@ class IngredientOperationsViewModel(
                 val ingredientId = ingredientRepository.insertIngredient(ingredient)
 
                 // Update the ingredientId for each variant and insert them into the database
-                val updatedVariants = ingredientVariantList.map { variant ->
-                    variant.copy(ingredientId = ingredientId)
+                val updatedVariants = ingredientProductList.map { variant ->
+                    variant.copy(ingredientId = ingredientId.toString())
                 }
                 updatedVariants.forEach { variant ->
                     ingredientVariantRepository.insertIngredientVariant(variant)
                 }
                 // Save the images
-                val imageHelper = ImageHelper(context)
+                val imageHelper = ImageStorageHelper(context)
                 images?.forEachIndexed { index, image ->
                     val imageBitmap = imageHelper.loadImageFromUri(image)!!
                     val imagePath = imageHelper.saveImageToInternalStorage(
@@ -74,7 +75,7 @@ class IngredientOperationsViewModel(
                         "ingredient_${ingredientId}_${index}_${System.currentTimeMillis()}.jpg"
                     )
                     val ingredientImage = IngredientImage(
-                        ingredientId = ingredientId, imagePath = imagePath ?: "NULL"
+                        ingredientId = UUID.fromString(ingredientId.toString()), imagePath = imagePath ?: "NULL"
                     )
                     ingredientImageRepository.insertIngredientImage(ingredientImage)
                 }
@@ -85,13 +86,12 @@ class IngredientOperationsViewModel(
         }
     }
 
-    fun updateIngredient(
+    suspend fun updateIngredient(
         ingredient: Ingredient,
-        newVariants: List<IngredientVariant?>,
+        newVariants: List<IngredientProduct?>,
         newImages: List<IngredientImage?>,
         context: Context
-    ) {
-        viewModelScope.launch {
+    ) : Boolean {
             try {
                 withContext(Dispatchers.IO) {
                     Log.d("TAG", "updateIngredient: Start")
@@ -102,10 +102,10 @@ class IngredientOperationsViewModel(
 
                     // Fetch the current variants and images from the database
                     val currentVariants =
-                        ingredientVariantRepository.getVariantsForIngredient(ingredient.id.toInt())
+                        ingredientVariantRepository.getVariantsForIngredient(ingredient.id)
                             .first()
                     val currentImages =
-                        ingredientImageRepository.getImagesForIngredient(ingredient.id.toInt())
+                        ingredientImageRepository.getImagesForIngredient(ingredient.id)
                             .first()
                     Log.d("TAG", "updateIngredient: Fetched current variants and images")
 
@@ -151,7 +151,7 @@ class IngredientOperationsViewModel(
                     Log.d("TAG", "updateIngredient: imagesToUpdate = $imagesToUpdate")
                     Log.d("TAG", "updateIngredient: imagesToDelete = $imagesToDelete")
 
-                    val imageHelper = ImageHelper(context)
+                    val imageHelper = ImageStorageHelper(context)
 
                     // Perform image operations
                     imagesToAdd.forEachIndexed { index, image ->
@@ -196,22 +196,24 @@ class IngredientOperationsViewModel(
                     }
 
                     Log.d("TAG", "updateIngredient: Completed successfully")
+                    fetchData(ingredient.id)
                 }
+                return true
             } catch (e: CancellationException) {
                 Log.e("TAG", "updateIngredient: Job was cancelled", e)
+                return false
             } catch (e: Exception) {
                 e.printStackTrace()
                 Log.e("TAG", "updateIngredient: Error occurred", e)
+                return false
             }
         }
-    }
-
 }
 
 // Define a data class to hold the list of measures
 data class AddIngredientViewState(
     val measures: List<Measure?> = emptyList(),
     val ingredient: Ingredient? = null,
-    val variants: List<IngredientVariant?> = emptyList(),
+    val variants: List<IngredientProduct?> = emptyList(),
     val photos: List<IngredientImage?> = emptyList()
 )

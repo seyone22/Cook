@@ -1,9 +1,9 @@
 package com.seyone22.cook.ui.screen.ingredients
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.seyone22.cook.BaseViewModel
 import com.seyone22.cook.data.model.Ingredient
-import com.seyone22.cook.data.model.IngredientVariantDetails
+import com.seyone22.cook.data.model.IngredientProductDetails
 import com.seyone22.cook.data.model.ShoppingListItem
 import com.seyone22.cook.data.model.toIngredientVariant
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 class IngredientsViewModel(
     private val ingredientRepository: IngredientRepository,
@@ -25,7 +26,7 @@ class IngredientsViewModel(
     private val recipeIngredientRepository: RecipeIngredientRepository,
     private val measureRepository: MeasureRepository,
     private val shoppingListRepository: ShoppingListRepository
-) : ViewModel() {
+) : BaseViewModel() {
     // Create a StateFlow to emit the combined data
     private val _ingredientsViewState = MutableStateFlow(ViewState())
     val ingredientsViewState: StateFlow<ViewState> get() = _ingredientsViewState
@@ -39,19 +40,18 @@ class IngredientsViewModel(
             val images = ingredientImageRepository.getAllIngredientImages().first()
             val measures = measureRepository.getAllMeasures().first()
             val shoppingLists = shoppingListRepository.getAllShoppingLists().first()
-            _ingredientsViewState.value =
-                ViewState(
-                    ingredients = ingredients,
-                    variants = variants,
-                    ingredientImages = images,
-                    measures = measures,
-                    shoppingLists = shoppingLists
-                )
+            _ingredientsViewState.value = ViewState(
+                ingredientImages = images,
+                measures = measures,
+                ingredients = ingredients,
+                variants = variants,
+                shoppingLists = shoppingLists,
+            )
         }
     }
 
     suspend fun deleteIngredient(ingredient: Ingredient): Boolean {
-        val usedCount = recipeIngredientRepository.ingredientIsUsed(ingredient.id.toInt())
+        val usedCount = recipeIngredientRepository.ingredientIsUsed(ingredient.id)
         if (usedCount == 0) {
             ingredientRepository.deleteIngredient(ingredient)
             return true
@@ -66,7 +66,7 @@ class IngredientsViewModel(
         }
     }
 
-    fun addVariant(ingredientId: Long, variant: IngredientVariantDetails) {
+    fun addVariant(ingredientId: String, variant: IngredientProductDetails) {
         viewModelScope.launch {
             ingredientVariantRepository.insertIngredientVariant(
                 variant.toIngredientVariant().copy(ingredientId = ingredientId)
@@ -77,6 +77,14 @@ class IngredientsViewModel(
     fun addToShoppingList(it: ShoppingListItem) {
         viewModelScope.launch {
             shoppingListRepository.insertItem(it)
+        }
+    }
+
+    fun updateIngredient(foodDbId: String) {
+        viewModelScope.launch {
+            com.seyone22.cook.service.updateIngredient(
+                foodDbId, ingredientRepository, ingredientVariantRepository
+            )
         }
     }
 }

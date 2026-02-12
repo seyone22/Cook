@@ -3,7 +3,6 @@ package com.seyone22.cook.ui.screen.ingredients
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
@@ -27,6 +26,7 @@ import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.model.IngredientImage
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.navigation.NavigationDestination
+import com.seyone22.cook.ui.screen.ingredients.composables.IngredientListItem
 import com.seyone22.cook.ui.screen.ingredients.detail.IngredientDetailDestination
 
 object IngredientsDestination : NavigationDestination {
@@ -52,37 +52,12 @@ fun IngredientsScreen(
 
     // Implement the UI for the Ingredients screen using Jetpack Compose
     LazyVerticalStaggeredGrid(modifier = modifier.padding(8.dp),
-        columns = StaggeredGridCells.Adaptive(minSize = 140.dp),
+        columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
         content = {
             items(count = ingredients.size, itemContent = {
-                IngredientItem(ingredient = ingredients[it]!!,
+                IngredientListItem(ingredient = ingredients[it]!!,
                     image = images.find { img -> img!!.ingredientId == ingredients[it]!!.id },
                     modifier = Modifier.clickable { navController.navigate("${IngredientDetailDestination.route}/${ingredients[it]?.id}") })
             })
         })
-}
-
-@Composable
-fun IngredientItem(modifier: Modifier, ingredient: Ingredient, image: IngredientImage?) {
-    Card(modifier = modifier.padding(4.dp)) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            if (image != null) {
-                AsyncImage(
-                    model = image.imagePath,
-                    contentScale = ContentScale.Crop,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f) // Maintain aspect ratio
-                        .clip(RoundedCornerShape(12.dp))
-                )
-            }
-            Text(
-                text = ingredient.nameEn,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(8.dp),
-            )
-        }
-    }
 }

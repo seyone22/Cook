@@ -1,5 +1,6 @@
 package com.seyone22.cook.data
 
+import OfflineMealEntryRepository
 import android.content.Context
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
 import com.seyone22.cook.data.repository.ingredient.OfflineIngredientRepository
@@ -9,6 +10,9 @@ import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantRepo
 import com.seyone22.cook.data.repository.ingredientVariant.OfflineIngredientVariantRepository
 import com.seyone22.cook.data.repository.instruction.InstructionRepository
 import com.seyone22.cook.data.repository.instruction.OfflineInstructionRepository
+import com.seyone22.cook.data.repository.instructionsection.InstructionSectionRepository
+import com.seyone22.cook.data.repository.instructionsection.OfflineInstructionSectionRepository
+import com.seyone22.cook.data.repository.mealEntry.MealEntryRepository
 import com.seyone22.cook.data.repository.measure.MeasureRepository
 import com.seyone22.cook.data.repository.measure.OfflineMeasureRepository
 import com.seyone22.cook.data.repository.measureConversion.MeasureConversionRepository
@@ -19,11 +23,18 @@ import com.seyone22.cook.data.repository.recipeImage.OfflineRecipeImageRepositor
 import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
 import com.seyone22.cook.data.repository.recipeIngredient.OfflineRecipeIngredientRepository
 import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientRepository
+import com.seyone22.cook.data.repository.recipeTag.OfflineRecipeTagRepository
+import com.seyone22.cook.data.repository.recipeTag.RecipeTagRepository
 import com.seyone22.cook.data.repository.shoppingList.OfflineShoppingListRepository
 import com.seyone22.cook.data.repository.shoppingList.ShoppingListRepository
+import com.seyone22.cook.data.repository.tag.OfflineTagRepository
+import com.seyone22.cook.data.repository.tag.TagRepository
+import com.seyone22.cook.service.GeminiService
 import kotlinx.coroutines.CoroutineScope
 
 interface AppContainer {
+    val geminiService: GeminiService
+
     val ingredientRepository: IngredientRepository
     val ingredientVariantRepository: IngredientVariantRepository
     val ingredientImageRepository: IngredientImageRepository
@@ -32,8 +43,12 @@ interface AppContainer {
     val measureConversionRepository: MeasureConversionRepository
     val recipeRepository: RecipeRepository
     val instructionRepository: InstructionRepository
+    val instructionSectionRepository: InstructionSectionRepository
     val recipeIngredientRepository: RecipeIngredientRepository
     val shoppingListRepository: ShoppingListRepository
+    val tagRepository: TagRepository
+    val recipeTagRepository: RecipeTagRepository
+    val mealEntryRepository: MealEntryRepository
 }
 
 /**
@@ -41,6 +56,11 @@ interface AppContainer {
  */
 class AppDataContainer(private val context: Context, private val scope: CoroutineScope) :
     AppContainer {
+    override val geminiService: GeminiService by lazy {
+        // BuildConfig is generated from the setup in build.gradle.kts
+        GeminiService(apiKey = com.seyone22.cook.BuildConfig.GEMINI_API_KEY)
+    }
+
     override val ingredientRepository: IngredientRepository by lazy {
         OfflineIngredientRepository(CookDatabase.getDatabase(context, scope).ingredientDao())
     }
@@ -71,6 +91,11 @@ class AppDataContainer(private val context: Context, private val scope: Coroutin
     override val instructionRepository: InstructionRepository by lazy {
         OfflineInstructionRepository(CookDatabase.getDatabase(context, scope).instructionDao())
     }
+    override val instructionSectionRepository: InstructionSectionRepository by lazy {
+        OfflineInstructionSectionRepository(
+            CookDatabase.getDatabase(context, scope).instructionSectionDao()
+        )
+    }
     override val recipeIngredientRepository: RecipeIngredientRepository by lazy {
         OfflineRecipeIngredientRepository(
             CookDatabase.getDatabase(context, scope).recipeIngredientDao()
@@ -78,5 +103,14 @@ class AppDataContainer(private val context: Context, private val scope: Coroutin
     }
     override val shoppingListRepository: ShoppingListRepository by lazy {
         OfflineShoppingListRepository(CookDatabase.getDatabase(context, scope).shoppingListDao())
+    }
+    override val tagRepository: TagRepository by lazy {
+        OfflineTagRepository(CookDatabase.getDatabase(context, scope).tagDao())
+    }
+    override val recipeTagRepository: RecipeTagRepository by lazy {
+        OfflineRecipeTagRepository(CookDatabase.getDatabase(context, scope).recipeTagDao())
+    }
+    override val mealEntryRepository: MealEntryRepository by lazy {
+        OfflineMealEntryRepository(CookDatabase.getDatabase(context, scope).mealEntryDao())
     }
 }

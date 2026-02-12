@@ -8,10 +8,10 @@ class OfflineMeasureRepository(private val measureDao: MeasureDao) : MeasureRepo
     override suspend fun deleteMeasure(measure: Measure) = measureDao.delete(measure)
     override suspend fun updateMeasure(measure: Measure) = measureDao.update(measure)
 
-    override suspend fun getMeasureById(measureId: Int): Flow<Measure?> =
+    override fun getMeasureById(measureId: Int): Flow<Measure?> =
         measureDao.getMeasureById(measureId)
 
-    override suspend fun getAllMeasures(): Flow<List<Measure?>> = measureDao.getAllMeasures()
-    override suspend fun getMeasureByName(name: String): Flow<Measure?> =
+    override fun getAllMeasures(): Flow<List<Measure?>> = measureDao.getAllMeasures()
+    override fun getMeasureByName(name: String): Flow<Measure?> =
         measureDao.getMeasureByName(name)
 }

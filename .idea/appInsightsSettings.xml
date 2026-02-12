@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.seyone22.cook" />
+                  <option name="mobileSdkAppId" value="1:662029970133:android:ca1d85ca66d101b447505c" />
+                  <option name="projectId" value="cook-2bde1" />
+                  <option name="projectNumber" value="662029970133" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

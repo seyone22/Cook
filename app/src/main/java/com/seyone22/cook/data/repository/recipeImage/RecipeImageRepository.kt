@@ -9,8 +9,8 @@ interface RecipeImageRepository {
     suspend fun deleteRecipeImage(recipeImage: RecipeImage)
     suspend fun updateRecipeImage(recipeImage: RecipeImage)
 
-    suspend fun getImageById(id: Int): Flow<RecipeImage?>
-    suspend fun getImagesForRecipe(recipeId: UUID): Flow<List<RecipeImage?>>
-    suspend fun getAllRecipeImages(): Flow<List<RecipeImage?>>
-    suspend fun deleteImagesForRecipe(recipeId: UUID)
+    fun getImageById(id: Int): Flow<RecipeImage?>
+    fun getImagesForRecipe(recipeId: UUID): Flow<List<RecipeImage?>>
+    fun getAllRecipeImages(): Flow<List<RecipeImage?>>
+    fun deleteImagesForRecipe(recipeId: UUID)
 }
