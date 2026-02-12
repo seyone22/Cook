@@ -117,7 +117,8 @@ fun RecipeDetailScreen(
                         )
                     },
                     onCookingModeClicked = {
-                        navController.navigate("Cooking/${uiState.recipe!!.id}")
+                        // Pass the ID and the current scale factor
+                        navController.navigate("Cooking/${uiState.recipe!!.id}?scale=${uiState.scaleFactor}")
                     },
                     onAddToShoppingListClicked = {
                         activeDialogAction = AddAllToShoppingListDialogAction(

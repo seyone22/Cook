@@ -169,14 +169,28 @@ fun CookNavHost(
 
         // Destination for the Cooking Mode Screen
         composable(
-            route = CookingDestination.route + "/{id}",
-            arguments = listOf(navArgument("id") { type = NavType.StringType })
-        ) {
+            // 1. Update route to accept an optional 'scale' query parameter
+            route = CookingDestination.route + "/{id}?scale={scale}",
+            arguments = listOf(
+                navArgument("id") { type = NavType.StringType },
+                navArgument("scale") {
+                    type = NavType.FloatType // Using Float for the multiplier
+                    defaultValue = 1.0f      // Default to 1x if not provided
+                }
+            )
+        ) { backStackEntry ->
+            val recipeId = backStackEntry.arguments?.getString("id") ?: "-1"
+            val scaleFactor = backStackEntry.arguments?.getFloat("scale") ?: 1.0f
+
+            // 2. Pass the scale factor to the screen
             CookingScreen(
                 navController = navController,
-                backStackEntry = it.arguments?.getString("id") ?: "-1"
+                backStackEntry = recipeId,
+                // Pass the scale to the Composable (see Step 2 below)
+                initialScale = scaleFactor
             )
         }
+
         // Destination for the Shopping List Screen
         composable(
             route = ShoppingListDestination.route,

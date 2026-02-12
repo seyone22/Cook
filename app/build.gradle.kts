@@ -1,11 +1,12 @@
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.compose.compiler)
     id("com.google.devtools.ksp")
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.2.20"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.10"
     id("com.google.gms.google-services")
 }
 
@@ -17,8 +18,8 @@ android {
         applicationId = "com.seyone22.cook"
         minSdk = 30
         targetSdk = 36
-        versionCode = 4
-        versionName = "Cook v4.0.0-beta2"
+        versionCode = 5
+        versionName = "v5.0.0-beta3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -58,10 +59,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
-
     // --- MERGED: Build Features ---
     buildFeatures {
         compose = true
@@ -73,6 +70,12 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
     }
 }
 
@@ -96,7 +99,6 @@ dependencies {
     // AndroidX Compose Material3
     implementation(libs.androidx.material3)
     implementation(libs.material)
-    implementation(libs.androidx.compose.material3)
 
     // JUnit
     testImplementation(libs.junit)
@@ -163,8 +165,8 @@ dependencies {
 
     implementation(project(":atproto-auth2"))
 
-    implementation("io.ktor:ktor-client-core:2.3.5") // core client
-    implementation("io.ktor:ktor-client-cio:2.3.5")  // CIO engine
+    implementation(libs.ktor.client.core.v235) // core client
+    implementation(libs.ktor.client.cio.v235)  // CIO engine
 
     implementation(libs.ktor.client.android) // For Android-specific support
     implementation(libs.ktor.client.content.negotiation)

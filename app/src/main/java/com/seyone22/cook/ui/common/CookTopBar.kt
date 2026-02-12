@@ -243,7 +243,7 @@ fun CookTopBar(
     }
 
     if (currentActivity == CookingDestination.route) {
-        CenterAlignedTopAppBar(title = { Text(text = "") }, actions = {
+        CenterAlignedTopAppBar(title = { Text(text = title) }, actions = {
 
         }, navigationIcon = {
             IconButton(onClick = { navController.popBackStack() }) {

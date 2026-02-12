@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.seyone22.atproto_auth2"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 30

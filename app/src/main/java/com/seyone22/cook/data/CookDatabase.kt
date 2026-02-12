@@ -272,7 +272,9 @@ abstract class CookDatabase : RoomDatabase() {
                 initialTags.forEach { (name, category) ->
                     db.execSQL(
                         "INSERT INTO tags (name, category) VALUES (?, ?)",
-                        arrayOf(name, category)
+                        // FIX: Use 'category.name' to convert the Enum to a String explicitly.
+                        // This makes the array type arrayOf<String>, avoiding the intersection error.
+                        arrayOf(name, category.name)
                     )
                 }
             }
