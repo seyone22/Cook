@@ -9,8 +9,8 @@ interface InstructionRepository {
     suspend fun deleteInstruction(instruction: Instruction)
     suspend fun updateInstruction(instruction: Instruction)
 
-    suspend fun getInstructionById(id: Int): Flow<Instruction?>
-    suspend fun getInstructionsForRecipe(recipeId: UUID): Flow<List<Instruction?>>
-    suspend fun getAllInstructions(): Flow<List<Instruction?>>
+    fun getInstructionById(id: Int): Flow<Instruction?>
+    fun getInstructionsForRecipe(recipeId: UUID): Flow<List<Instruction?>>
+    fun getAllInstructions(): Flow<List<Instruction?>>
     suspend fun deleteInstructionsForRecipe(id: UUID)
 }

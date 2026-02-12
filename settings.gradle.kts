@@ -16,9 +16,11 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven(url = "https://jitpack.io")
     }
 }
 
 rootProject.name = "Cook"
 include(":app")
- 
+include(":ap")
+include(":atproto-auth2")

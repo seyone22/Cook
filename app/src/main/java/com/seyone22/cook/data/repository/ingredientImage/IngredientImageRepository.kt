@@ -2,6 +2,7 @@ package com.seyone22.cook.data.repository.ingredientImage
 
 import com.seyone22.cook.data.model.IngredientImage
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 interface IngredientImageRepository {
     suspend fun insertIngredientImage(ingredientImage: IngredientImage)
@@ -9,6 +10,6 @@ interface IngredientImageRepository {
     suspend fun updateIngredientImage(ingredientImage: IngredientImage)
 
     suspend fun getImageById(id: Int): Flow<IngredientImage?>
-    suspend fun getImagesForIngredient(ingredientId: Int): Flow<List<IngredientImage?>>
+    suspend fun getImagesForIngredient(ingredientId: UUID): Flow<List<IngredientImage?>>
     suspend fun getAllIngredientImages(): Flow<List<IngredientImage?>>
 }

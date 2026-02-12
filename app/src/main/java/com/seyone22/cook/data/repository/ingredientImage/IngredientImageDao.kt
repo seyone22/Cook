@@ -8,10 +8,11 @@ import androidx.room.Query
 import androidx.room.Update
 import com.seyone22.cook.data.model.IngredientImage
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 @Dao
 interface IngredientImageDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert()
     suspend fun insert(ingredientImage: IngredientImage)
 
     @Update
@@ -32,7 +33,7 @@ interface IngredientImageDao {
                 "   WHERE ingredientId = :ingredientId" +
                 "   ORDER BY id ASC"
     )
-    fun getImagesForIngredient(ingredientId: Int): Flow<List<IngredientImage>>
+    fun getImagesForIngredient(ingredientId: UUID): Flow<List<IngredientImage>>
 
     @Query(
         "SELECT * FROM ingredient_images" +

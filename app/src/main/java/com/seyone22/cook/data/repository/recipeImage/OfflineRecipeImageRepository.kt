@@ -15,13 +15,13 @@ class OfflineRecipeImageRepository(private val recipeImageDao: RecipeImageDao) :
     override suspend fun updateRecipeImage(recipeImage: RecipeImage) =
         recipeImageDao.update(recipeImage)
 
-    override suspend fun getImageById(id: Int): Flow<RecipeImage?> = recipeImageDao.getImageById(id)
-    override suspend fun getImagesForRecipe(recipeId: UUID): Flow<List<RecipeImage?>> =
+    override fun getImageById(id: Int): Flow<RecipeImage?> = recipeImageDao.getImageById(id)
+    override fun getImagesForRecipe(recipeId: UUID): Flow<List<RecipeImage?>> =
         recipeImageDao.getImagesForRecipe(recipeId)
 
-    override suspend fun getAllRecipeImages(): Flow<List<RecipeImage?>> =
+    override fun getAllRecipeImages(): Flow<List<RecipeImage?>> =
         recipeImageDao.getAllRecipeImages()
 
-    override suspend fun deleteImagesForRecipe(recipeId: UUID) =
+    override fun deleteImagesForRecipe(recipeId: UUID) =
         recipeImageDao.deleteImagesForRecipe(recipeId)
 }

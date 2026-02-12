@@ -39,10 +39,10 @@ class ShoppingListViewModel(
             val measures = measureRepository.getAllMeasures().first()
 
             _shoppingListViewState.value = ViewState(
+                measures = measures,
+                ingredients = ingredients,
                 shoppingLists = shoppingLists,
                 shoppingListItems = shoppingListItems,
-                ingredients = ingredients,
-                measures = measures
             )
         }
     }
@@ -56,6 +56,36 @@ class ShoppingListViewModel(
     fun addToShoppingList(shoppingListItem: ShoppingListItem) {
         viewModelScope.launch {
             shoppingListRepository.insertItem(shoppingListItem)
+        }
+    }
+
+    fun completeShoppingList(shoppingList: ShoppingList) {
+        viewModelScope.launch {
+            shoppingListRepository.updateList(shoppingList.copy(completed = true))
+        }
+    }
+
+    fun renameShoppingList(shoppingList: ShoppingList) {
+        viewModelScope.launch {
+            shoppingListRepository.updateList(shoppingList)
+        }
+    }
+
+    fun removeFromShoppingList(shoppingListItem: ShoppingListItem) {
+        viewModelScope.launch {
+            shoppingListRepository.deleteItem(shoppingListItem)
+        }
+    }
+
+    fun deleteShoppingList(shoppingList: ShoppingList) {
+        viewModelScope.launch {
+            shoppingListRepository.deleteList(shoppingList)
+        }
+    }
+
+    fun changePurchaseStatus(shoppingListItem: ShoppingListItem) {
+        viewModelScope.launch {
+            shoppingListRepository.updateItem(shoppingListItem.copy(checked = !shoppingListItem.checked))
         }
     }
 }
