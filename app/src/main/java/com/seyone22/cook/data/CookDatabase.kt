@@ -47,7 +47,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [Ingredient::class, IngredientProduct::class, IngredientImage::class, RecipeImage::class, Measure::class, MeasureConversion::class, Recipe::class, Instruction::class, InstructionSection::class, RecipeIngredient::class, ShoppingList::class, ShoppingListItem::class, Tag::class, RecipeTag::class, MealEntry::class, MealEntryTagCrossRef::class, MealEntryIngredientCrossRef::class],
-    version = 14,
+    version = 15,
     exportSchema = true
 )
 @TypeConverters(RoomConverters::class)
@@ -296,6 +296,12 @@ abstract class CookDatabase : RoomDatabase() {
             )
             """.trimIndent()
                 )
+            }
+        }
+
+        private val MIGRATION_14_15 = object: Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE ingredients ADD COLUMN category TEXT DEFAULT ''")
             }
         }
 

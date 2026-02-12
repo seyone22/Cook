@@ -6,11 +6,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -26,8 +31,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.seyone22.cook.R
 import com.seyone22.cook.ui.AppViewModelProvider
-import com.seyone22.cook.ui.common.CookFAB
-import com.seyone22.cook.ui.common.CookTopBar
 import com.seyone22.cook.ui.navigation.NavigationDestination
 import com.seyone22.cook.ui.screen.shoppingList.composables.NewShoppingListDialog
 import com.seyone22.cook.ui.screen.shoppingList.composables.ShoppingListCard
@@ -39,6 +42,7 @@ object ShoppingListDestination : NavigationDestination {
     override val routeId = 7
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShoppingListScreen(
     modifier: Modifier,
@@ -57,6 +61,7 @@ fun ShoppingListScreen(
 
 
     var showNewDialog by remember { mutableStateOf(false) }
+
     if (showNewDialog) {
         NewShoppingListDialog(onConfirm = {
             viewModel.addShoppingList(it)
@@ -65,12 +70,22 @@ fun ShoppingListScreen(
         }, onDismiss = { showNewDialog = false })
     }
 
-    Scaffold(topBar = {
-        CookTopBar(
-            currentActivity = ShoppingListDestination.route, navController = navController
-        )
-    }) {
-        LazyColumn(modifier = Modifier.padding(it)) {
+    Scaffold(
+        topBar = {
+            TopAppBar(title = { Text(text = "Shopping List") }, navigationIcon = {
+                IconButton(onClick = { navController.navigateUp() }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null
+                    )
+                }
+            }, actions = {
+                IconButton(onClick = { showNewDialog = true }) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                }
+            })
+        },
+    ) { paddingValues ->
+        LazyColumn(modifier = Modifier.padding(paddingValues)) {
             item {
                 Row(
                     modifier = Modifier.padding(start = 16.dp)
@@ -103,7 +118,7 @@ fun ShoppingListScreen(
                             textAlign = TextAlign.Center
                         )
                         Text(
-                            text = "Unfortunately for you, however, you are Shopping List-less. Without a plan or list, you are fated, it seems, to shop around aimlessly. To see all shopping lists, toggle the chip above.",
+                            text = "Unfortunately for you, however, you are Shopping List-less. Without a plan or list, you are fated, it seems, to shop around aimlessly. Tap the + button to create a list.",
                             textAlign = TextAlign.Center
                         )
                     }
@@ -112,7 +127,9 @@ fun ShoppingListScreen(
                 shoppingListViewState.shoppingLists.forEach { item ->
                     item {
                         if (item != null) {
-                            ShoppingListCard(item) { id -> navController.navigate("${ShoppingListDetailDestination.route}/$id") }
+                            ShoppingListCard(item) { id ->
+                                navController.navigate("${ShoppingListDetailDestination.route}/$id")
+                            }
                         }
                     }
                 }

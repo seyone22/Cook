@@ -141,7 +141,7 @@ fun CookingScreen(
         },
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
-            Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(horizontal = 16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 16.dp)) {
                 HorizontalFloatingToolbar(
                     expanded = true,
                     modifier = Modifier.padding(bottom = 16.dp),

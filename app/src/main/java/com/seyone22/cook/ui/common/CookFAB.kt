@@ -68,8 +68,7 @@ import recipeimporter.model.Recipe
 fun CookFAB(
     currentActivity: String?,
     navigateToScreen: (String) -> Unit = {},
-    // `action` parameter is not used in the original code, consider removing or integrating
-    // action: () -> Unit = {},
+    action: () -> Unit = {},
     visible: Boolean = true,
     viewModel: MealsViewModel = viewModel(factory = AppViewModelProvider.Factory),
     moreViewModel: MoreViewModel = viewModel(factory = AppViewModelProvider.Factory),

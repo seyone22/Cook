@@ -99,6 +99,7 @@ dependencies {
     // AndroidX Compose Material3
     implementation(libs.androidx.material3)
     implementation(libs.material)
+    implementation(libs.androidx.compose.runtime)
 
     // JUnit
     testImplementation(libs.junit)
