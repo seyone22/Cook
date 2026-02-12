@@ -1,6 +1,7 @@
 package com.seyone22.cook.ui.screen.ingredients.detail
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -117,6 +118,8 @@ fun IngredientDetailScreen(
     val variants =
         ingredientsViewState.variants.filter { i -> i?.ingredientId.toString() == backStackEntry }
     val measures = ingredientsViewState.measures
+
+    Log.d("TAG", "IngredientDetailScreen: $images")
 
     Scaffold(topBar = {
         TopAppBar(

@@ -8,13 +8,16 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -137,6 +140,8 @@ fun RecipeFormScreen(
     var activeIngredientIndex by remember { mutableIntStateOf(-1) }
     var searchInitialQuery by remember { mutableStateOf("") }
     val sheetState = rememberModalBottomSheetState()
+
+    var isSaving by remember { mutableStateOf(false) }
 
     // ----------------- Initialize State -----------------
     LaunchedEffect(mode, recipeId, prefillRecipe, stringData, data.recipe, ingredients) {
@@ -282,41 +287,64 @@ fun RecipeFormScreen(
                 },
                 actions = {
                     Button(
-                        modifier = Modifier.padding(24.dp, 0.dp, 16.dp, 0.dp), onClick = {
+                        modifier = Modifier.padding(24.dp, 0.dp, 16.dp, 0.dp),
+                        // Disable the button while saving is in progress
+                        enabled = !isSaving,
+                        onClick = {
                             coroutineScope.launch {
-                                if (mode == RecipeFormMode.EDIT) {
-                                    viewModel.updateRecipe(
-                                        formState.value.toRecipe(recipeId),
-                                        formState.value.photos.map { uri ->
-                                            RecipeImage(
-                                                imagePath = uri.toString(), recipeId = recipeId!!
-                                            )
-                                        },
-                                        formState.value.instructions.map { it.copy(recipeId = recipeId!!) },
-                                        formState.value.recipeIngredients.map {
-                                            it.copy(recipeId = recipeId!!).toRecipeIngredient()
-                                        },
-                                        formState.value.recipeTags,
-                                        context
-                                    )
-                                } else {
-                                    viewModel.saveRecipe(
-                                        formState.value.toRecipe(
-                                            author = prefillRecipe?.author ?: "Anonymous",
-                                            videoUrl = prefillRecipe?.videoUrl
-                                        ),
-                                        formState.value.photos,
-                                        formState.value.instructions,
-                                        formState.value.recipeIngredients.map { it.toRecipeIngredient() },
-                                        formState.value.recipeTags,
-                                        context,
-                                        formState.value.instructionSections
-                                    )
+                                isSaving = true // Start loading
+                                try {
+                                    if (mode == RecipeFormMode.EDIT) {
+                                        viewModel.updateRecipe(
+                                            formState.value.toRecipe(recipeId),
+                                            formState.value.photos.map { uri ->
+                                                RecipeImage(imagePath = uri.toString(), recipeId = recipeId!!)
+                                            },
+                                            formState.value.instructions.map { it.copy(recipeId = recipeId!!) },
+                                            formState.value.recipeIngredients.map {
+                                                it.copy(recipeId = recipeId!!).toRecipeIngredient()
+                                            },
+                                            formState.value.recipeTags,
+                                            context
+                                        )
+                                    } else {
+                                        viewModel.saveRecipe(
+                                            formState.value.toRecipe(
+                                                author = prefillRecipe?.author ?: "Anonymous",
+                                                videoUrl = prefillRecipe?.videoUrl
+                                            ),
+                                            formState.value.photos,
+                                            formState.value.instructions,
+                                            formState.value.recipeIngredients.map { it.toRecipeIngredient() },
+                                            formState.value.recipeTags,
+                                            context,
+                                            formState.value.instructionSections
+                                        )
+                                    }
+                                    navController.popBackStack()
+                                } catch (e: Exception) {
+                                    // Log error or show snackbar if needed
+                                    isSaving = false
+                                } finally {
+                                    // Ensure we reset if popBackStack isn't reached
+                                    // (Though usually popBackStack removes the UI entirely)
                                 }
-                                navController.popBackStack()
                             }
-                        }) { Text("Save") }
-                })
+                        }
+                    ) {
+                        if (isSaving) {
+                            // Spinner display
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("Save")
+                        }
+                    }
+                }
+            )
         }) { paddingValues ->
         LazyColumn(modifier = Modifier.padding(paddingValues)) {
             item {

@@ -17,7 +17,9 @@ import com.seyone22.cook.data.model.RecipeImage
 import com.seyone22.cook.data.model.RecipeIngredient
 import com.seyone22.cook.data.model.RecipeTag
 import com.seyone22.cook.data.model.Tag
+import com.seyone22.cook.data.model.toParsedIngredient
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
+import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantRepository
 import com.seyone22.cook.data.repository.instruction.InstructionRepository
 import com.seyone22.cook.data.repository.instructionsection.InstructionSectionRepository
 import com.seyone22.cook.data.repository.measure.MeasureRepository
@@ -26,9 +28,11 @@ import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
 import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientRepository
 import com.seyone22.cook.data.repository.recipeTag.RecipeTagRepository
 import com.seyone22.cook.data.repository.tag.TagRepository
-import com.seyone22.cook.helper.RecipeFileHandler.compressImageFile
 import com.seyone22.cook.helper.ImageStorageHelper
+import com.seyone22.cook.helper.RecipeFileHandler.compressImageFile
 import com.seyone22.cook.helper.loadBitmapFromUrl
+import com.seyone22.cook.provider.KtorClientProvider.client
+import com.seyone22.cook.service.resolveAndSaveIngredient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,6 +51,7 @@ class RecipeOperationsViewModel(
     private val instructionRepository: InstructionRepository,
     private val instructionSectionRepository: InstructionSectionRepository,
     private val ingredientRepository: IngredientRepository,
+    private val ingredientProductRepository: IngredientVariantRepository,
     private val recipeIngredientRepository: RecipeIngredientRepository,
     private val tagRepository: TagRepository,
     private val recipeTagRepository: RecipeTagRepository
@@ -99,7 +104,13 @@ class RecipeOperationsViewModel(
             }
 
             recipeIngredients.filterNotNull().forEach {
-                recipeIngredientRepository.insertRecipeIngredient(it.copy(recipeId = recipe.id))
+                val newRecipeIngredient = it.copy(recipeId = recipe.id, foodDbId = "-1")
+
+                resolveAndSaveIngredient(
+                    newRecipeIngredient.toParsedIngredient(), client, ingredientRepository, ingredientProductRepository
+                )
+
+                recipeIngredientRepository.insertRecipeIngredient(newRecipeIngredient)
             }
 
             // ✅ Handle tags properly
@@ -155,112 +166,108 @@ class RecipeOperationsViewModel(
         recipeTags: List<Tag>,
         context: Context
     ): Boolean {
-            try {
-                withContext(Dispatchers.IO) {
-                    val imageHelper = ImageStorageHelper(context)
+        try {
+            withContext(Dispatchers.IO) {
+                val imageHelper = ImageStorageHelper(context)
 
-                    // Update Recipe main details
-                    recipeRepository.updateRecipe(recipe)
+                // Update Recipe main details
+                recipeRepository.updateRecipe(recipe)
 
-                    // Fetch current data for modification
-                    val currentInstructions =
-                        instructionRepository.getInstructionsForRecipe(recipe.id).first()
-                    val currentRecipeIngredients =
-                        recipeIngredientRepository.getRecipeIngredientsForRecipe(recipe.id).first()
-                    val currentImages =
-                        recipeImageRepository.getImagesForRecipe(recipe.id).first()
-                    val currentTags =
-                        recipeTagRepository.getRecipeTagByRecipeId(recipe.id).first()
+                // Fetch current data for modification
+                val currentInstructions =
+                    instructionRepository.getInstructionsForRecipe(recipe.id).first()
+                val currentRecipeIngredients =
+                    recipeIngredientRepository.getRecipeIngredientsForRecipe(recipe.id).first()
+                val currentImages = recipeImageRepository.getImagesForRecipe(recipe.id).first()
+                val currentTags = recipeTagRepository.getRecipeTagByRecipeId(recipe.id).first()
 
-                    // Instructions operations (Add/Update/Delete)
-                    val instructionsToAdd =
-                        instructions.filter { it != null && currentInstructions.find { i -> i!!.id == it.id } == null }
-                    val instructionsToUpdate =
-                        instructions.filter { it != null && currentInstructions.find { i -> i!!.id == it.id } != null }
-                    val instructionsToDelete =
-                        currentInstructions.filter { it != null && instructions.find { i -> i!!.id == it.id } == null }
+                // Instructions operations (Add/Update/Delete)
+                val instructionsToAdd =
+                    instructions.filter { it != null && currentInstructions.find { i -> i!!.id == it.id } == null }
+                val instructionsToUpdate =
+                    instructions.filter { it != null && currentInstructions.find { i -> i!!.id == it.id } != null }
+                val instructionsToDelete =
+                    currentInstructions.filter { it != null && instructions.find { i -> i!!.id == it.id } == null }
 
-                    instructionsToAdd.forEach { instruction ->
-                        instructionRepository.insertInstruction(instruction!!)
-                    }
-                    instructionsToUpdate.forEach { instruction ->
-                        instructionRepository.updateInstruction(instruction!!)
-                    }
-                    instructionsToDelete.forEach { instruction ->
-                        instructionRepository.deleteInstruction(instruction!!)
-                    }
+                instructionsToAdd.forEach { instruction ->
+                    instructionRepository.insertInstruction(instruction!!)
+                }
+                instructionsToUpdate.forEach { instruction ->
+                    instructionRepository.updateInstruction(instruction!!)
+                }
+                instructionsToDelete.forEach { instruction ->
+                    instructionRepository.deleteInstruction(instruction!!)
+                }
 
-                    // Recipe Ingredients operations (Add/Update/Delete)
-                    val recipeIngredientsToAdd =
-                        recipeIngredients.filter { it != null && currentRecipeIngredients.find { i -> i!!.id == it.id } == null }
-                    val recipeIngredientsToUpdate =
-                        recipeIngredients.filter { it != null && currentRecipeIngredients.find { i -> i!!.id == it.id } != null }
-                    val recipeIngredientsToDelete =
-                        currentRecipeIngredients.filter { it != null && recipeIngredients.find { i -> i!!.id == it.id } == null }
+                // Recipe Ingredients operations (Add/Update/Delete)
+                val recipeIngredientsToAdd =
+                    recipeIngredients.filter { it != null && currentRecipeIngredients.find { i -> i!!.id == it.id } == null }
+                val recipeIngredientsToUpdate =
+                    recipeIngredients.filter { it != null && currentRecipeIngredients.find { i -> i!!.id == it.id } != null }
+                val recipeIngredientsToDelete =
+                    currentRecipeIngredients.filter { it != null && recipeIngredients.find { i -> i!!.id == it.id } == null }
 
-                    recipeIngredientsToAdd.forEach { recipeIngredient ->
-                        recipeIngredientRepository.insertRecipeIngredient(recipeIngredient!!)
-                    }
-                    recipeIngredientsToUpdate.forEach { recipeIngredient ->
-                        recipeIngredientRepository.updateRecipeIngredient(recipeIngredient!!)
-                    }
-                    recipeIngredientsToDelete.forEach { recipeIngredient ->
-                        recipeIngredientRepository.deleteRecipeIngredient(recipeIngredient!!)
-                    }
+                recipeIngredientsToAdd.forEach { recipeIngredient ->
+                    recipeIngredientRepository.insertRecipeIngredient(recipeIngredient!!)
+                }
+                recipeIngredientsToUpdate.forEach { recipeIngredient ->
+                    recipeIngredientRepository.updateRecipeIngredient(recipeIngredient!!)
+                }
+                recipeIngredientsToDelete.forEach { recipeIngredient ->
+                    recipeIngredientRepository.deleteRecipeIngredient(recipeIngredient!!)
+                }
 
-                    // Images operations (Add/Update/Delete)
-                    val imagesToAdd =
-                        images.filter { it != null && currentImages.find { i -> i!!.id == it.id } == null }
-                    val imagesToDelete =
-                        currentImages.filter { it != null && images.find { i -> i!!.id == it.id } == null }
+                // Images operations (Add/Update/Delete)
+                val imagesToAdd =
+                    images.filter { it != null && currentImages.find { i -> i!!.id == it.id } == null }
+                val imagesToDelete =
+                    currentImages.filter { it != null && images.find { i -> i!!.id == it.id } == null }
 
-                    imagesToDelete.forEach { image ->
-                        recipeImageRepository.deleteRecipeImage(image!!)
-                        imageHelper.deleteImageFromInternalStorage(Uri.parse(image.imagePath))
-                    }
+                imagesToDelete.forEach { image ->
+                    recipeImageRepository.deleteRecipeImage(image!!)
+                    imageHelper.deleteImageFromInternalStorage(Uri.parse(image.imagePath))
+                }
 
-                    imagesToAdd.forEach { image ->
-                        Log.d("TAG", "$image")
+                imagesToAdd.forEach { image ->
+                    Log.d("TAG", "$image")
 
-                        // Ensure image path is not null
-                        image?.let {
-                            val imageBitmap = imageHelper.loadImageFromUri(Uri.parse(it.imagePath))
-                                ?: return@forEach
-                            val imagePath = imageHelper.saveImageToInternalStorage(
-                                imageBitmap,
-                                "recipe_${recipe.id}_${System.currentTimeMillis()}.jpg"
-                            )
+                    // Ensure image path is not null
+                    image?.let {
+                        val imageBitmap =
+                            imageHelper.loadImageFromUri(Uri.parse(it.imagePath)) ?: return@forEach
+                        val imagePath = imageHelper.saveImageToInternalStorage(
+                            imageBitmap, "recipe_${recipe.id}_${System.currentTimeMillis()}.jpg"
+                        )
 
-                            imagePath?.let { path ->
-                                val recipeImage =
-                                    RecipeImage(recipeId = recipe.id, imagePath = path)
-                                Log.d("TAG", "updateRecipe: $recipeImage")
+                        imagePath?.let { path ->
+                            val recipeImage = RecipeImage(recipeId = recipe.id, imagePath = path)
+                            Log.d("TAG", "updateRecipe: $recipeImage")
 
-                                recipeImageRepository.insertRecipeImage(recipeImage)
-                            } ?: run {
-                                Log.e("TAG", "Failed to save image to internal storage.")
-                            }
+                            recipeImageRepository.insertRecipeImage(recipeImage)
+                        } ?: run {
+                            Log.e("TAG", "Failed to save image to internal storage.")
                         }
                     }
-
-                    // Tag operations (Add/Delete)
-                    val tagsToAdd =
-                        recipeTags.map { RecipeTag(recipeId = recipe.id, tagId = it.id) }.filter { currentTags.find { i -> i!!.recipeId == it.recipeId && i.tagId == it.tagId } == null }
-                    val tagsToDelete =
-                        currentTags.filter { it != null && recipeTags.find { i -> i.id == it.tagId && recipe.id == it.recipeId } == null }
-
-                    tagsToAdd.forEach { tag ->
-                        recipeTagRepository.insertRecipeTag(tag)
-                    }
-                    tagsToDelete.forEach { tag ->
-                        recipeTagRepository.deleteRecipeTag(tag!!)
-                    }
                 }
-                return true
-            } catch (e: Exception) {
-                e.printStackTrace()
-                return false
+
+                // Tag operations (Add/Delete)
+                val tagsToAdd = recipeTags.map { RecipeTag(recipeId = recipe.id, tagId = it.id) }
+                    .filter { currentTags.find { i -> i!!.recipeId == it.recipeId && i.tagId == it.tagId } == null }
+                val tagsToDelete =
+                    currentTags.filter { it != null && recipeTags.find { i -> i.id == it.tagId && recipe.id == it.recipeId } == null }
+
+                tagsToAdd.forEach { tag ->
+                    recipeTagRepository.insertRecipeTag(tag)
+                }
+                tagsToDelete.forEach { tag ->
+                    recipeTagRepository.deleteRecipeTag(tag!!)
+                }
             }
+            return true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
     }
 
     suspend fun loadImage(context: Context, imageUri: Uri): Bitmap? {
@@ -273,13 +280,16 @@ class RecipeOperationsViewModel(
                             BitmapFactory.decodeStream(it)
                         }
                     }
+
                     "http", "https" -> {
                         // Web URL
-                        val connection = URL(imageUri.toString()).openConnection() as HttpURLConnection
+                        val connection =
+                            URL(imageUri.toString()).openConnection() as HttpURLConnection
                         connection.doInput = true
                         connection.connect()
                         connection.inputStream.use { BitmapFactory.decodeStream(it) }
                     }
+
                     else -> null
                 }
             } catch (e: Exception) {
@@ -288,7 +298,6 @@ class RecipeOperationsViewModel(
             }
         }
     }
-
 
 
 }

@@ -76,28 +76,28 @@ fun HomeScreen(
     val clipboardManager = LocalClipboardManager.current
     var lastCheckedUrl by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(Unit) {
-        val clipText = clipboardManager.getText()?.text
-        if (!clipText.isNullOrBlank() && clipText.startsWith("http") && clipText != lastCheckedUrl) {
-            lastCheckedUrl = clipText
-            val result = snackbarHostState.showSnackbar(
-                message = "Found a recipe URL in clipboard",
-                actionLabel = "Import",
-                duration = SnackbarDuration.Short
-            )
-            if (result == SnackbarResult.ActionPerformed) {
-                sharedViewModel.setLoading(true)
-                val success = sharedViewModel.importAndSaveRecipe(clipText)
-                sharedViewModel.setLoading(false)
-
-                if (success) {
-                    navigateToScreen(ImportRecipeDestination.route)
-                } else {
-                    Toast.makeText(context, "Failed to fetch recipe", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
+//    LaunchedEffect(Unit) {
+//        val clipText = clipboardManager.getText()?.text
+//        if (!clipText.isNullOrBlank() && clipText.startsWith("http") && clipText != lastCheckedUrl) {
+//            lastCheckedUrl = clipText
+//            val result = snackbarHostState.showSnackbar(
+//                message = "Found a recipe URL in clipboard",
+//                actionLabel = "Import",
+//                duration = SnackbarDuration.Short
+//            )
+//            if (result == SnackbarResult.ActionPerformed) {
+//                sharedViewModel.setLoading(true)
+//                val success = sharedViewModel.importAndSaveRecipe(clipText)
+//                sharedViewModel.setLoading(false)
+//
+//                if (success) {
+//                    navigateToScreen(ImportRecipeDestination.route)
+//                } else {
+//                    Toast.makeText(context, "Failed to fetch recipe", Toast.LENGTH_SHORT).show()
+//                }
+//            }
+//        }
+//    }
 
     Scaffold(
         topBar = {

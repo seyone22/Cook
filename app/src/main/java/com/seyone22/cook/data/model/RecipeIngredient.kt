@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 import com.seyone22.cook.helper.UuidSerializer
+import com.seyone22.cook.service.ParsedIngredient
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import java.util.UUID
@@ -68,4 +69,11 @@ fun RecipeIngredient.toRecipeIngredientDetails(): RecipeIngredientDetails = Reci
     quantity = quantity.toString(),
     unit = unit,
     notes = notes
+)
+
+fun RecipeIngredient.toParsedIngredient(): ParsedIngredient = ParsedIngredient(
+    ingredient = this.name,
+    quantity = this.quantity,
+    unit = this.unit,
+    notes = this.notes
 )

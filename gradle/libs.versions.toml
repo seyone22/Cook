@@ -1,6 +1,6 @@
 [versions]
 accompanistPermissions = "0.37.3"
-agp = "8.13.0"
+agp = "8.13.1"
 coilCompose = "2.7.0"
 compose = "2.9.0"
 generativeai = "0.9.0"

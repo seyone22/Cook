@@ -59,7 +59,8 @@ object AppViewModelProvider {
                 recipeIngredientRepository = cookApplication().container.recipeIngredientRepository,
                 tagRepository = cookApplication().container.tagRepository,
                 recipeTagRepository = cookApplication().container.recipeTagRepository,
-                instructionSectionRepository = cookApplication().container.instructionSectionRepository
+                instructionSectionRepository = cookApplication().container.instructionSectionRepository,
+                ingredientProductRepository = cookApplication().container.ingredientVariantRepository
             )
         }
         initializer {
