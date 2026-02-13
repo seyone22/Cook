@@ -7,7 +7,6 @@ plugins {
     alias(libs.plugins.compose.compiler)
     id("com.google.devtools.ksp")
     id("org.jetbrains.kotlin.plugin.serialization") version "2.3.10"
-    id("com.google.gms.google-services")
 }
 
 android {
@@ -19,7 +18,7 @@ android {
         minSdk = 30
         targetSdk = 36
         versionCode = 5
-        versionName = "v5.0.0-beta3"
+        versionName = "v5.0.0-beta5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -190,5 +189,4 @@ dependencies {
     implementation(libs.generativeai)
 
     implementation(libs.openai.client)
-// Google Gemini API
 }

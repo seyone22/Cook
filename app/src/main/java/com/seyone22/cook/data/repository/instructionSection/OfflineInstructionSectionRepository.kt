@@ -17,13 +17,13 @@ class OfflineInstructionSectionRepository(
     override suspend fun deleteSection(section: InstructionSection) =
         sectionDao.delete(section)
 
-    override suspend fun getSectionById(id: Int): Flow<InstructionSection?> =
+    override fun getSectionById(id: Int): Flow<InstructionSection?> =
         sectionDao.getSectionById(id)
 
-    override suspend fun getSectionsForRecipe(recipeId: UUID): Flow<List<InstructionSection?>> =
+    override fun getSectionsForRecipe(recipeId: UUID): Flow<List<InstructionSection?>> =
         sectionDao.getSectionsForRecipe(recipeId)
 
-    override suspend fun getAllSections(): Flow<List<InstructionSection?>> =
+    override fun getAllSections(): Flow<List<InstructionSection?>> =
         sectionDao.getAllSections()
 
     override suspend fun deleteSectionsForRecipe(id: UUID) =

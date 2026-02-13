@@ -9,8 +9,8 @@ interface InstructionSectionRepository {
     suspend fun updateSection(section: InstructionSection)
     suspend fun deleteSection(section: InstructionSection)
 
-    suspend fun getSectionById(id: Int): Flow<InstructionSection?>
-    suspend fun getSectionsForRecipe(recipeId: UUID): Flow<List<InstructionSection?>>
-    suspend fun getAllSections(): Flow<List<InstructionSection?>>
+    fun getSectionById(id: Int): Flow<InstructionSection?>
+    fun getSectionsForRecipe(recipeId: UUID): Flow<List<InstructionSection?>>
+    fun getAllSections(): Flow<List<InstructionSection?>>
     suspend fun deleteSectionsForRecipe(id: UUID)
 }

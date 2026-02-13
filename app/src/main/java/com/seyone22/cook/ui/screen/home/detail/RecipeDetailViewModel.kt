@@ -3,15 +3,7 @@ package com.seyone22.cook.ui.screen.home.detail
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.seyone22.cook.data.model.Ingredient
-import com.seyone22.cook.data.model.Instruction
-import com.seyone22.cook.data.model.InstructionSection
-import com.seyone22.cook.data.model.Measure
-import com.seyone22.cook.data.model.Recipe
-import com.seyone22.cook.data.model.RecipeImage
-import com.seyone22.cook.data.model.RecipeIngredient
-import com.seyone22.cook.data.model.ShoppingList
-import com.seyone22.cook.data.model.ShoppingListItem
+import com.seyone22.cook.data.model.*
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
 import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantRepository
 import com.seyone22.cook.data.repository.instruction.InstructionRepository
@@ -21,12 +13,7 @@ import com.seyone22.cook.data.repository.recipe.RecipeRepository
 import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
 import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientRepository
 import com.seyone22.cook.data.repository.shoppingList.ShoppingListRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -39,7 +26,7 @@ data class RecipeDetailUiState(
     val instructionSections: List<InstructionSection> = emptyList(),
     val measures: List<Measure> = emptyList(),
     val shoppingLists: List<ShoppingList> = emptyList(),
-    val scaleFactor: Double = 1.0,
+    val scaleFactor: Double = 1.0, // The multiplier (e.g., 0.5, 1.0, 2.0)
     val totalCost: Double = 0.0,
     val isLoading: Boolean = true,
     val ingredientPrices: Map<String, Double> = emptyMap()
@@ -61,87 +48,70 @@ class RecipeDetailViewModel(
     private val recipeIdString: String = checkNotNull(savedStateHandle["recipeId"])
     private val recipeId: UUID = UUID.fromString(recipeIdString)
 
-    private val _scaleFactor = MutableStateFlow(1.0)
+    // This represents the "People Count" the user wants.
+    // Initialized to null so we can fall back to the recipe's default on load.
+    private val _targetServings = MutableStateFlow<Double?>(null)
 
-    // Helper data class to group first batch of flows
-    private data class RecipeData(
-        val recipe: Recipe?,
-        val images: List<RecipeImage>,
-        val ingredients: List<RecipeIngredient>,
-        val instructions: List<Instruction>
-    )
+    private val recipeFlow = recipeRepository.getRecipeById(recipeId).filterNotNull()
+    private val recipeIngredientsFlow = recipeIngredientRepository.getRecipeIngredientsForRecipe(recipeId).map { it.filterNotNull() }
 
-    // Helper data class to group second batch of flows
-    private data class AuxData(
-        val measures: List<Measure>,
-        val shoppingLists: List<ShoppingList>,
-        val scale: Double
-    )
-
-    // 1. Combine core recipe data
-    private val recipeDataFlow = combine(
-        recipeRepository.getRecipeById(recipeId),
-        recipeImageRepository.getImagesForRecipe(recipeId), // Ensure this method exists or use getAll().filter...
-        recipeIngredientRepository.getRecipeIngredientsForRecipe(recipeId),
-        instructionRepository.getInstructionsForRecipe(recipeId)
-    ) { recipe, images, ingredients, instructions ->
-        RecipeData(
-            recipe = recipe,
-            images = images.filterNotNull(),           // Converts List<T?> to List<T>
-            ingredients = ingredients.filterNotNull(), // Converts List<T?> to List<T>
-            instructions = instructions.filterNotNull()
-        )
-    }
-
-    // 2. Combine auxiliary data
-    private val auxDataFlow = combine(
-        measureRepository.getAllMeasures(),
-        shoppingListRepository.getAllShoppingLists(),
-        _scaleFactor
-    ) { measures, shoppingLists, scale ->
-        AuxData(measures.filterNotNull(), shoppingLists.filterNotNull(), scale)
-    }
-
-    // 3. Merge everything into UiState
     val uiState: StateFlow<RecipeDetailUiState> = combine(
-        recipeDataFlow,
-        auxDataFlow
-    ) { rData, aData ->
-        // Fetch remaining one-off data (Sections, Base Ingredients, Costs)
-        // Note: For strict correctness these should be flows too, but fetching on data change is acceptable here
-        val sections = (instructionSectionRepository.getSectionsForRecipe(recipeId).firstOrNull() ?: emptyList()).filterNotNull()
+        recipeFlow,
+        recipeIngredientsFlow,
+        recipeImageRepository.getImagesForRecipe(recipeId).map { it.filterNotNull() },
+        instructionRepository.getInstructionsForRecipe(recipeId).map { it.filterNotNull() },
+        instructionSectionRepository.getSectionsForRecipe(recipeId).map { it.filterNotNull() },
+        measureRepository.getAllMeasures().map { it.filterNotNull() },
+        shoppingListRepository.getAllShoppingLists().map { it.filterNotNull() },
+        _targetServings
+    ) { params ->
+        val recipe = params[0] as Recipe
+        val ingredients = params[1] as List<RecipeIngredient>
+        val images = params[2] as List<RecipeImage>
+        val instructions = params[3] as List<Instruction>
+        val sections = params[4] as List<InstructionSection>
+        val measures = params[5] as List<Measure>
+        val shoppingLists = params[6] as List<ShoppingList>
+        val userTarget = params[7] as? Double
 
-        val baseIngredients = rData.ingredients.mapNotNull { ri ->
+        // 1. Determine "Effective Servings" (Target)
+        // If user hasn't touched the dial, use recipe default (e.g., 8)
+        val baseServings = recipe.servingSize.toDouble()
+        val effectiveServings = userTarget ?: baseServings
+
+        // 2. Calculate the Ratio (Multiplier) for math
+        // Example: Target 16 / Base 8 = 2.0x
+        val multiplier = if (baseServings > 0) effectiveServings / baseServings else 1.0
+
+        // 3. Fetch Base Ingredient details
+        val baseIngredients = ingredients.mapNotNull { ri ->
             ingredientRepository.getIngredientById(ri.ingredientId).firstOrNull()
         }
 
-        // Calculate Cost AND build Price Map
+        // 4. Calculate Costs using the Multiplier
         val priceMap = mutableMapOf<String, Double>()
-        var cost = 0.0
-
-        rData.ingredients.forEach { ri ->
-            if (ri.foodDbId.isNullOrBlank()) {
-                throw Exception("CYKA BLYAT")
+        var baseTotalCost = 0.0
+        ingredients.forEach { ri ->
+            if (!ri.foodDbId.isNullOrBlank()) {
+                val price = ingredientVariantRepository.getCheapestPriceForIngredient(ri.foodDbId)
+                    .firstOrNull()?.price ?: 0.0
+                priceMap[ri.foodDbId!!] = price
+                baseTotalCost += price
             }
-
-            val price = ingredientVariantRepository.getCheapestPriceForIngredient(ri.foodDbId)
-                .firstOrNull()?.price ?: 0.0
-
-            priceMap[ri.foodDbId] = price
-            cost += price
         }
 
         RecipeDetailUiState(
-            recipe = rData.recipe,
-            images = rData.images,
-            ingredients = rData.ingredients,
+            recipe = recipe,
+            images = images,
+            ingredients = ingredients,
             baseIngredients = baseIngredients,
-            instructions = rData.instructions,
+            instructions = instructions,
             instructionSections = sections,
-            measures = aData.measures,
-            shoppingLists = aData.shoppingLists,
-            scaleFactor = aData.scale,
-            totalCost = cost * aData.scale,
+            measures = measures,
+            shoppingLists = shoppingLists,
+            // 'scaleFactor' in state is now explicitly the PEOPLE COUNT (e.g., 16.0)
+            scaleFactor = effectiveServings,
+            totalCost = baseTotalCost * multiplier,
             isLoading = false,
             ingredientPrices = priceMap
         )
@@ -151,36 +121,35 @@ class RecipeDetailViewModel(
         initialValue = RecipeDetailUiState(isLoading = true)
     )
 
-    fun updateScaleFactor(newFactor: Double) {
-        _scaleFactor.value = newFactor
-    }
-
-    fun incrementMakeCounter() {
-        viewModelScope.launch {
-            recipeRepository.incrementTimesMade(recipeId)
-        }
-    }
-
-    fun deleteRecipe() {
-        viewModelScope.launch {
-            val recipe = uiState.value.recipe ?: return@launch
-            recipeRepository.deleteRecipe(recipe)
-        }
+    /**
+     * Updates the target serving count (People Count).
+     */
+    fun updateScaleFactor(newPeopleCount: Double) {
+        _targetServings.value = newPeopleCount
     }
 
     fun addAllToShoppingList(listId: Long) {
         viewModelScope.launch {
-            val currentIngredients = uiState.value.ingredients
-            currentIngredients.forEach { ri ->
+            val currentState = uiState.value
+            val recipe = currentState.recipe ?: return@launch
+
+            // Calculate multiplier: Current People / Base People
+            val multiplier = currentState.scaleFactor / recipe.servingSize.toDouble()
+
+            currentState.ingredients.forEach { ri ->
                 shoppingListRepository.insertItem(
                     ShoppingListItem(
                         ingredientId = ri.ingredientId,
-                        quantity = ri.quantity * _scaleFactor.value,
-                        measureId = 0,
+                        quantity = ri.quantity * multiplier,
+                        measureId =  0,
                         shoppingListId = listId
                     )
                 )
             }
         }
     }
+
+    // Other standard functions...
+    fun incrementMakeCounter() { viewModelScope.launch { recipeRepository.incrementTimesMade(recipeId) } }
+    fun deleteRecipe() { viewModelScope.launch { uiState.value.recipe?.let { recipeRepository.deleteRecipe(it) } } }
 }

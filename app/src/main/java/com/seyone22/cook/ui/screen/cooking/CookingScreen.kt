@@ -389,7 +389,7 @@ fun IngredientTabContent(
                         Spacer(Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "Current Scale: ${if (scaleFactor % 1.0 == 0.0) scaleFactor.toInt() else scaleFactor}x",
+                                text = "Current Scale: ${if (scaleFactor % 1.0 == 0.0) scaleFactor.toInt() else scaleFactor} servings",
                                 style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
@@ -415,29 +415,57 @@ fun IngredientTabContent(
             ingredient?.let { item ->
                 val isChecked = checkedIds.contains(item.id)
 
-                // Now passes both metric preference and scale factor for processing
-                val displayInfo = viewModel.formatIngredient(item, isMetric, scaleFactor)
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                        .clickable { onToggle(item.id) },
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = isChecked,
-                        onCheckedChange = { onToggle(item.id) }
-                    )
-                    Text(
-                        text = displayInfo,
-                        style = MaterialTheme.typography.bodyLarge,
-                        textDecoration = if (isChecked) TextDecoration.LineThrough else TextDecoration.None,
-                        color = if (isChecked) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
-                    )
-                }
+                // Delegate the complex formatting and state management to the row item
+                IngredientRowItem(
+                    ingredient = item,
+                    isMetric = isMetric,
+                    scaleFactor = scaleFactor,
+                    isChecked = isChecked,
+                    viewModel = viewModel,
+                    onToggle = onToggle
+                )
             }
         }
+    }
+}
+
+@Composable
+fun IngredientRowItem(
+    ingredient: RecipeIngredient,
+    isMetric: Boolean,
+    scaleFactor: Double,
+    isChecked: Boolean,
+    viewModel: CookingViewModel,
+    onToggle: (Long) -> Unit
+) {
+    // This state will automatically update when the database call finishes
+    val displayInfo by produceState(
+        initialValue = "...", // Temporary placeholder
+        key1 = ingredient,
+        key2 = isMetric,
+        key3 = scaleFactor
+    ) {
+        value = viewModel.formatIngredient(ingredient, isMetric, scaleFactor)
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .clickable { onToggle(ingredient.id) },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = isChecked,
+            onCheckedChange = { onToggle(ingredient.id) }
+        )
+        Text(
+            text = displayInfo,
+            style = MaterialTheme.typography.bodyLarge,
+            textDecoration = if (isChecked) TextDecoration.LineThrough else TextDecoration.None,
+            color = if (isChecked) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(start = 8.dp)
+        )
     }
 }
 
