@@ -60,7 +60,8 @@ fun CookTopBar(
     recipeTags: List<RecipeTag?> = listOf(),
     setOverlayStatus: (Boolean) -> Unit = {},
     activityType: (String) -> Unit = {},
-    context: Context = LocalContext.current
+    context: Context = LocalContext.current,
+    actions: @Composable () -> Unit = {}
 ) {
     if (currentActivity == "search") {
 
@@ -265,7 +266,9 @@ fun CookTopBar(
     }
 
     if (currentActivity == ShoppingListDetailDestination.route) {
-        TopAppBar(title = { Text(text = title) }, navigationIcon = {
+        TopAppBar(
+            title = { Text(text = title) },
+            navigationIcon = {
             IconButton(onClick = { navController.popBackStack() }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back"
@@ -285,7 +288,7 @@ fun CookTopBar(
                     onClick = { activityType("delete") })
                 DropdownMenuItem(text = { Text(text = "Rename") },
                     onClick = { activityType("rename") })
-                DropdownMenuItem(text = { Text(text = "Mark Complete") },
+                DropdownMenuItem(text = { Text(text = "Toggle Complete") },
                     onClick = { activityType("complete") })
             }
         })

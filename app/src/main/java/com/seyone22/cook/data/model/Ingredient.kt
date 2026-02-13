@@ -23,6 +23,7 @@ data class Ingredient(
     val dietary_flags: List<String> = listOf<String>(),
     val comment: String = "",
     val image: String = "",
+    val category: String = "",
 
     val price: Double = 0.0,
     val currency: String = "",
@@ -41,6 +42,7 @@ data class IngredientDetails(
     val dietary_flags: List<String> = listOf<String>(),
     val comment: String = "",
     val image: String = "",
+    val category: String = ""
 )
 
 fun IngredientDetails.toIngredient(): Ingredient = Ingredient(
@@ -54,6 +56,7 @@ fun IngredientDetails.toIngredient(): Ingredient = Ingredient(
     dietary_flags = dietary_flags,
     comment = comment,
     image = image,
+    category = category
 )
 
 fun Ingredient.toIngredientDetails(): IngredientDetails = IngredientDetails(
@@ -67,4 +70,5 @@ fun Ingredient.toIngredientDetails(): IngredientDetails = IngredientDetails(
     dietary_flags = dietary_flags,
     comment = comment,
     image = image,
+    category = category
 )
