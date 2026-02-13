@@ -24,7 +24,7 @@ data class ShoppingListItem(
     @Contextual
     val ingredientId: UUID,
     val quantity: Double,
-    val measureId: Long,
+    val measureName: String? = "pcs",
     val checked: Boolean = false
 )
 
@@ -33,7 +33,7 @@ data class ShoppingListItemDetails(
     val shoppingListId: Long = -1,
     val ingredientId: UUID = UUID.randomUUID(),
     val quantity: String = "",
-    val measureId: Long = -1,
+    val measureName: String? = "pcs",
     val checked: Boolean = false
 )
 
@@ -42,7 +42,7 @@ fun ShoppingListItemDetails.toShoppingList(): ShoppingListItem = ShoppingListIte
     shoppingListId = shoppingListId,
     ingredientId = ingredientId,
     quantity = quantity.toDouble(),
-    measureId = measureId,
+    measureName = measureName,
     checked = checked
 )
 
@@ -51,6 +51,6 @@ fun ShoppingListItem.toShoppingListItemDetails(): ShoppingListItemDetails = Shop
     shoppingListId = shoppingListId,
     ingredientId = ingredientId,
     quantity = quantity.toString(),
-    measureId = measureId,
+    measureName = measureName,
     checked = checked
 )

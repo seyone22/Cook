@@ -107,12 +107,8 @@ fun ShoppingListDetailScreen(
             item = itemToEdit!!,
             onDismiss = { itemToEdit = null },
             onConfirm = { newQty, newUnit ->
-                // 1. Update the item
-                // Note: We are just updating quantity here.
-                // To update Unit properly, you'd need to find the Measure ID from the Repo.
-                // For V1, let's just update Quantity.
                 viewModel.updateShoppingListItem(
-                    itemToEdit!!.item.copy(quantity = newQty)
+                    itemToEdit!!.item.copy(quantity = newQty, measureName = newUnit)
                 )
                 itemToEdit = null
             }

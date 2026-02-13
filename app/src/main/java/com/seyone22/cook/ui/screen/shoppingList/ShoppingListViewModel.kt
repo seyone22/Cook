@@ -82,8 +82,7 @@ class ShoppingListViewModel(
                 shoppingListRepository.getAllShoppingLists(),
                 shoppingListRepository.getAllItems(),
                 ingredientRepository.getAllIngredients(),
-                measureRepository.getAllMeasures()
-            ) { lists, items, ingredients, measures ->
+            ) { lists, items, ingredients ->
                 val currentList = lists.find { it?.id == listId }
 
                 // FIX: Add .filterNotNull() to ensure we don't pass nulls downstream
@@ -92,12 +91,11 @@ class ShoppingListViewModel(
                 // Map DB objects to Display objects
                 val displayItems = listItems.map { item ->
                     val ingredient = ingredients.find { it?.id == item.ingredientId }
-                    val measure = measures.find { it?.id == item.measureId }
 
                     ShoppingItemDisplay(
                         item = item,
                         ingredientName = ingredient?.name ?: "Unknown Item",
-                        measureName = measure?.name ?: "",
+                        measureName = item.measureName ?: "",
                         category = ingredient?.category ?: "Uncategorized"
                     )
                 }
@@ -158,18 +156,9 @@ class ShoppingListViewModel(
                     ingredientRepository.insertIngredient(ingredient)
                 }
 
-                // C. Resolve Measure (Unit)
-                val allMeasures = measureRepository.getAllMeasures().first()
-                // Simple matching strategy: find by name or abbreviation, default to 'pcs' (ID 1)
-                val measure = allMeasures.find {
-                    it?.name.equals(unitName, ignoreCase = true) ||
-                            it?.abbreviation.equals(unitName, ignoreCase = true)
-                }
-                val measureId = measure?.id ?: 1L // Default to 1 if unit unknown
-
-                // D. Merge Logic: Check if we already have this item in the list
+                // C. Merge Logic: Check if we already have this item in the list
                 val existingItems = shoppingListRepository.getAllItems().first()
-                    .filter { it?.shoppingListId == listId && it?.ingredientId == ingredient.id }
+                    .filter { it?.shoppingListId == listId && it.ingredientId == ingredient.id }
 
                 if (existingItems.isNotEmpty()) {
                     // Update existing item (Merge quantities)
@@ -184,7 +173,7 @@ class ShoppingListViewModel(
                             shoppingListId = listId,
                             ingredientId = ingredient.id,
                             quantity = qty.toDouble(),
-                            measureId = measureId,
+                            measureName = unitName,
                             checked = false
                         )
                     )

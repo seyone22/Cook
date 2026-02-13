@@ -128,8 +128,7 @@ fun NewShoppingListItemDialog(
                         .clickable(enabled = true) {
                             measuresExpanded = true
                         },
-                        value = measures.find { m -> m?.id?.toInt() == shoppingListItemDetails.measureId.toInt() }?.abbreviation
-                            ?: "",
+                        value = shoppingListItemDetails.measureName ?: "",
                         readOnly = true,
                         onValueChange = { },
                         label = { Text("Unit") },
@@ -144,7 +143,7 @@ fun NewShoppingListItemDialog(
                             measure?.let {
                                 DropdownMenuItem(text = { Text(measure.abbreviation) }, onClick = {
                                     shoppingListItemDetails =
-                                        shoppingListItemDetails.copy(measureId = measure.id)
+                                        shoppingListItemDetails.copy(measureName = measure.name)
                                     measuresExpanded = false
                                 })
                             }

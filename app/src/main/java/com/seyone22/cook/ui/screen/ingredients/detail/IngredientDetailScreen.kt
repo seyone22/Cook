@@ -675,7 +675,7 @@ fun AddToShoppingListDialog(
                             shoppingLists[selectedShoppingListIndex]?.id ?: -1,
                             ingredientId,
                             quantity.toDouble(),
-                            selectedMeasureId
+                            "pcs"
                         )
                     )
                 }

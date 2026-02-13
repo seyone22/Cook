@@ -47,7 +47,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [Ingredient::class, IngredientProduct::class, IngredientImage::class, RecipeImage::class, Measure::class, MeasureConversion::class, Recipe::class, Instruction::class, InstructionSection::class, RecipeIngredient::class, ShoppingList::class, ShoppingListItem::class, Tag::class, RecipeTag::class, MealEntry::class, MealEntryTagCrossRef::class, MealEntryIngredientCrossRef::class],
-    version = 15,
+    version = 16,
     exportSchema = true
 )
 @TypeConverters(RoomConverters::class)
@@ -74,10 +74,14 @@ abstract class CookDatabase : RoomDatabase() {
         fun getDatabase(context: Context, scope: CoroutineScope): CookDatabase {
             return Instance ?: synchronized(this) {
                 Room.databaseBuilder(context, CookDatabase::class.java, "cook_database")
-                    .fallbackToDestructiveMigration()
-                    .addMigrations(MIGRATION_1_2).addMigrations(MIGRATION_2_3)
+                    .fallbackToDestructiveMigration(false)
+                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_2_3)
                     .addMigrations(MIGRATION_1_3)
                     .addMigrations(MIGRATION_3_4)
+                    .addMigrations(MIGRATION_6_7)
+                    .addMigrations(MIGRATION_15_16)
+                    .addMigrations(MIGRATION_14_15)
                     .addCallback(CookDatabaseCallback(scope))
                     .build().also { Instance = it }
             }
@@ -302,6 +306,42 @@ abstract class CookDatabase : RoomDatabase() {
         private val MIGRATION_14_15 = object: Migration(14, 15) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE ingredients ADD COLUMN category TEXT DEFAULT ''")
+            }
+        }
+
+        private val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // 1. Create the new table matching the "Expected" schema EXACTLY
+                // Note: No DEFAULT values, and ingredientId is BLOB
+                db.execSQL("""
+            CREATE TABLE IF NOT EXISTS `shopping_list_items_new` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+                `shoppingListId` INTEGER NOT NULL, 
+                `ingredientId` BLOB NOT NULL, 
+                `quantity` REAL NOT NULL, 
+                `measureName` TEXT, 
+                `checked` INTEGER NOT NULL,
+                FOREIGN KEY(`shoppingListId`) REFERENCES `shopping_lists`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE 
+            )
+        """.trimIndent())
+
+                // 2. Copy the data
+                // We handle the 'pcs' default manually here during the transfer
+                // because we can't put it in the table schema itself.
+                db.execSQL("""
+            INSERT INTO `shopping_list_items_new` (`id`, `shoppingListId`, `ingredientId`, `quantity`, `checked`, `measureName`)
+            SELECT `id`, `shoppingListId`, `ingredientId`, `quantity`, `checked`, 'pcs' 
+            FROM `shopping_list_items`
+        """.trimIndent())
+
+                // 3. Drop the old
+                db.execSQL("DROP TABLE `shopping_list_items`")
+
+                // 4. Rename
+                db.execSQL("ALTER TABLE `shopping_list_items_new` RENAME TO `shopping_list_items`")
+
+                // 5. DO NOT CREATE ANY INDEXES.
+                // The logs show Room expects 'indices = {}'.
             }
         }
 

@@ -141,7 +141,7 @@ class RecipeDetailViewModel(
                     ShoppingListItem(
                         ingredientId = ri.ingredientId,
                         quantity = ri.quantity * multiplier,
-                        measureId =  0,
+                        measureName =  ri.unit,
                         shoppingListId = listId
                     )
                 )
