@@ -1,6 +1,5 @@
 package com.seyone22.cook.helper
 
-import androidx.compose.runtime.collectAsState
 import com.aallam.openai.api.chat.ChatCompletionRequest
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
@@ -14,8 +13,7 @@ import com.seyone22.cook.data.model.GenerativeAiResult
 import kotlin.time.Duration.Companion.seconds
 
 class OpenAiGeminiClient(
-    apiKey: String,
-    private val modelName: String = "gemini-2.5-flash-lite"
+    apiKey: String, private val modelName: String = "gemini-2.5-flash-lite"
 ) : GenerativeAiClient {
 
     private val client: OpenAI = OpenAI(
@@ -30,11 +28,9 @@ class OpenAiGeminiClient(
             val response = client.chatCompletion(
                 requestOptions = RequestOptions(timeout = Timeout(socket = 60.seconds)),
                 request = ChatCompletionRequest(
-                    model = ModelId("gemini-2.5-flash"),
-                    messages = listOf(
+                    model = ModelId("gemini-2.5-flash"), messages = listOf(
                         ChatMessage(
-                            role = ChatRole.User,
-                            content = prompt
+                            role = ChatRole.User, content = prompt
                         )
                     )
                 )

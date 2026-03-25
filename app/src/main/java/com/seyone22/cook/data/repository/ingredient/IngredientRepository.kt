@@ -8,9 +8,10 @@ interface IngredientRepository {
     suspend fun insertIngredient(ingredient: Ingredient)
     suspend fun deleteIngredient(ingredient: Ingredient)
     suspend fun updateIngredient(ingredient: Ingredient)
+    suspend fun upsertIngredients(ingredients: List<Ingredient>)
 
-    suspend fun getIngredientById(ingredientId: UUID): Flow<Ingredient?>
-    suspend fun getAllIngredients(): Flow<List<Ingredient?>>
-    suspend fun getIngredientByName(nameEn: String): Flow<Ingredient?>
-    suspend fun getIngredientByFoodDbId(foodDbId: String): Flow<Ingredient?>
+    fun getIngredientById(ingredientId: UUID): Flow<Ingredient?>
+    fun getAllIngredients(): Flow<List<Ingredient?>>
+    fun getIngredientByName(nameEn: String): Flow<Ingredient?>
+    fun getIngredientByFoodDbId(foodDbId: String): Flow<Ingredient?>
 }

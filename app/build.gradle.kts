@@ -99,6 +99,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.material)
     implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.navigation.runtime.ktx)
 
     // JUnit
     testImplementation(libs.junit)
@@ -189,4 +190,6 @@ dependencies {
     implementation(libs.generativeai)
 
     implementation(libs.openai.client)
+
+    implementation(libs.genai.prompt)
 }

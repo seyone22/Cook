@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.tasks.Tasks.await
 import com.seyone22.cook.BaseViewModel
+import com.seyone22.cook.data.model.Ingredient
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
 import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantRepository
 import com.seyone22.cook.data.repository.instruction.InstructionRepository
@@ -25,8 +26,11 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import com.seyone22.cook.provider.KtorClientProvider.client
 import com.seyone22.cook.service.getProducts
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 import java.util.UUID
 
@@ -77,44 +81,69 @@ class MoreViewModel(
                 //_moreViewState.value = _moreViewState.value.copy(isLoading = true)
 
                 // 1️⃣ Get all product variants from local DB
-                val allProducts = ingredientProductRepository.getAllIngredientVariants().firstOrNull() ?: emptyList()
-                if (allProducts.isEmpty()) {
-                    Toast.makeText(context, "No product variants found in DB.", Toast.LENGTH_SHORT).show()
+                val allIngredients = ingredientRepository.getAllIngredients().firstOrNull() ?: emptyList()
+                if (allIngredients.isEmpty()) {
+                    Toast.makeText(context, "No ingredients found in DB.", Toast.LENGTH_SHORT).show()
                     return@launch
                 }
 
-                // 2️⃣ Fetch updated product data in batches
-                val batchSize = 50 // adjust depending on API limits
-                allProducts.chunked(batchSize).forEach { batch ->
-                    val productIds = batch.mapNotNull { it?.uniqueId?.takeIf { id -> id.isNotBlank() } }
-                    val updatedProductsJson = getProducts(client, productIds) // calls POST /api/products
+                try {
+                    val batchSize = 50
+                    // We'll collect all updates to run a single DB transaction per batch
+                    val ingredientsToUpdate = mutableListOf<Ingredient>()
+
+                    allIngredients.chunked(batchSize).forEach { batch ->
+                        val productIds = batch.mapNotNull { it?.foodDbId?.takeIf { id -> id.isNotBlank() } }
+                        val updatedProductsJson = getProducts(client, productIds)
+
+                        Log.d("Log", "Nigger")
 
 
-                    updatedProductsJson.forEach { prodJson ->
-                        try {
-                            val prodId = prodJson["_id"]?.jsonPrimitive?.contentOrNull ?: return@forEach
-                            val ingredientId = prodJson["ingredient"]?.jsonPrimitive?.contentOrNull ?: return@forEach
-                            val localProduct = batch.firstOrNull { it?.uniqueId.toString() == prodId } ?: return@forEach
+                        updatedProductsJson.forEach { prodJson ->
+                            try {
+                                val prodId = prodJson["_id"]?.jsonPrimitive?.contentOrNull ?: return@forEach
+                                val localProduct = batch.firstOrNull { it?.foodDbId == prodId } ?: return@forEach
 
-                            val updatedProduct = localProduct.copy(
-                                ingredientId = ingredientId,
-                                uniqueId = prodJson["_id"]?.jsonPrimitive?.contentOrNull ?: localProduct.uniqueId,
-                                price = prodJson["price"]?.jsonPrimitive?.doubleOrNull ?: localProduct.price,
-                                currency = prodJson["currency"]?.jsonPrimitive?.contentOrNull ?: localProduct.currency,
-                                quantity = prodJson["quantity"]?.jsonPrimitive?.doubleOrNull ?: localProduct.quantity,
-                                item_unit = prodJson["unit"]?.jsonPrimitive?.contentOrNull ?: localProduct.item_unit,
-                                last_fetched = System.currentTimeMillis().toString(),
-                                image = prodJson["url"]?.jsonPrimitive?.contentOrNull ?: localProduct.image
-                            )
 
-                            Log.d("TAG", "updateIngredients: ${updatedProduct}")
 
-                            ingredientProductRepository.updateIngredientVariant(updatedProduct)
-                        } catch (e: Exception) {
-                            Log.e("UpdateIngredients", "Failed to update product: ${e.localizedMessage}")
-                        } finally {
-                            Toast.makeText(context, "Ingredient data refreshed!", Toast.LENGTH_SHORT).show()
+                                val updatedProduct = localProduct.copy(
+                                    country = prodJson["country"]?.jsonArray?.mapNotNull { it.jsonPrimitive.contentOrNull } ?: localProduct.country,
+                                    region = prodJson["region"]?.jsonArray?.mapNotNull { it.jsonPrimitive.contentOrNull } ?: localProduct.region,
+                                    cuisine = prodJson["cuisine"]?.jsonArray?.mapNotNull { it.jsonPrimitive.contentOrNull } ?: localProduct.cuisine,
+                                    flavor_profile = prodJson["flavor_profile"]?.jsonArray?.mapNotNull { it.jsonPrimitive.contentOrNull } ?: localProduct.flavor_profile,
+                                    dietary_flags = prodJson["dietary_flags"]?.jsonArray?.mapNotNull { it.jsonPrimitive.contentOrNull } ?: localProduct.dietary_flags,
+                                    comment = prodJson["comment"]?.jsonPrimitive?.contentOrNull ?: localProduct.comment,
+                                    category = prodJson["category"]?.jsonPrimitive?.contentOrNull ?: localProduct.category,
+                                    product_unit = prodJson["unit"]?.jsonPrimitive?.contentOrNull ?: localProduct.product_unit,
+                                    price = prodJson["price"]?.jsonPrimitive?.doubleOrNull ?: localProduct.price,
+                                    currency = prodJson["currency"]?.jsonPrimitive?.contentOrNull ?: localProduct.currency,
+                                    image = prodJson["url"]?.jsonPrimitive?.contentOrNull ?: localProduct.image
+                                )
+
+                                ingredientsToUpdate.add(updatedProduct)
+                            } catch (e: Exception) {
+                                Log.e("UpdateIngredients", "Error parsing product: ${e.localizedMessage}")
+                            }
                         }
+
+                        Log.d("Tag", ingredientsToUpdate.toString())
+
+                        // Batch update the DB for this chunk
+                        if (ingredientsToUpdate.isNotEmpty()) {
+                            ingredientRepository.upsertIngredients(ingredientsToUpdate)
+                            ingredientsToUpdate.clear() // Clear for next batch
+                        }
+                    }
+
+                    // Show success once at the end on the Main thread
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "All ingredients refreshed!", Toast.LENGTH_SHORT).show()
+                    }
+
+                } catch (e: Exception) {
+                    Log.e("UpdateIngredients", "Global Error: ${e.localizedMessage}")
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Failed to refresh ingredients.", Toast.LENGTH_SHORT).show()
                     }
                 }
 

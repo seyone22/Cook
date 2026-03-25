@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Upsert
 import com.seyone22.cook.data.model.Ingredient
 import kotlinx.coroutines.flow.Flow
 import java.util.UUID
@@ -20,6 +21,9 @@ interface IngredientDao {
 
     @Delete
     suspend fun delete(ingredient: Ingredient)
+
+    @Upsert
+    suspend fun upsertIngredients(ingredients: List<Ingredient>)
 
     @Query(
         "SELECT * FROM ingredients" +
