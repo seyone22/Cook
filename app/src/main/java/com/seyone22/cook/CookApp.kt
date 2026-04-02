@@ -42,6 +42,8 @@ fun CookApp(
     onCameraRequested: () -> Unit,
     sharedViewModel: SharedViewModel = viewModel(factory = AppViewModelProvider.Factory),
     sharedText: String?,
+    sharedRecipeId: String?,
+    onSharedRecipeHandled: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val navBackStackEntry by navController.currentBackStackEntryAsState()

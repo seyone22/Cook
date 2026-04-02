@@ -1,11 +1,6 @@
 package com.seyone22.cook.service
 
 import android.util.Log
-import com.seyone22.atproto_auth2.network.KtorClient.client
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.engine.android.Android
-import io.ktor.client.request.get
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import recipeimporter.RecipeImporter.importFromUrl
@@ -24,6 +19,6 @@ class RecipeImportService {
     }
 
     fun close() {
-        client.close()
+
     }
 }

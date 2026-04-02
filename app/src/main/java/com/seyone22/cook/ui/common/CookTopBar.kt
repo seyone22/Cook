@@ -2,7 +2,6 @@ package com.seyone22.cook.ui.common
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,12 +41,12 @@ import com.seyone22.cook.data.model.Recipe
 import com.seyone22.cook.data.model.RecipeTag
 import com.seyone22.cook.data.model.Tag
 import com.seyone22.cook.ui.screen.cooking.CookingDestination
-import com.seyone22.cook.ui.screen.home.detail.RecipeDetailDestination
 import com.seyone22.cook.ui.screen.ingredients.IngredientsDestination
 import com.seyone22.cook.ui.screen.more.MoreDestination
 import com.seyone22.cook.ui.screen.shoppingList.ShoppingListDestination
 import com.seyone22.cook.ui.screen.shoppingList.detail.ShoppingListDetailDestination
 import androidx.core.net.toUri
+import com.seyone22.cook.ui.screen.home.detail.RecipeDetailDestination
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

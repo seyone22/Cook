@@ -11,5 +11,5 @@ interface RecipeRepository {
 
     fun getRecipeById(recipeId: UUID): Flow<Recipe?>
     fun getAllRecipes(): Flow<List<Recipe?>>
-    fun incrementTimesMade(recipeId: UUID)
+    suspend fun incrementTimesMade(recipeId: UUID)
 }

@@ -42,10 +42,6 @@ import com.seyone22.cook.ui.screen.more.MoreDestination
 import com.seyone22.cook.ui.screen.more.MoreScreen
 import com.seyone22.cook.ui.screen.more.SettingsDestination
 import com.seyone22.cook.ui.screen.more.SettingsDetailScreen
-import com.seyone22.cook.ui.screen.more.account.ChangePasswordDestination
-import com.seyone22.cook.ui.screen.more.account.ChangePasswordScreen
-import com.seyone22.cook.ui.screen.more.account.RegisterDestination
-import com.seyone22.cook.ui.screen.more.account.RegisterScreen
 import com.seyone22.cook.ui.screen.shoppingList.ShoppingListDestination
 import com.seyone22.cook.ui.screen.shoppingList.ShoppingListScreen
 import com.seyone22.cook.ui.screen.shoppingList.detail.ShoppingListDetailDestination
@@ -218,20 +214,6 @@ fun CookNavHost(
                 navigateBack = { navController.popBackStack() },
                 backStackEntry = it.arguments?.getString("setting") ?: "-1",
                 sharedViewModel = sharedViewModel
-            )
-        }
-
-        composable(
-            route = RegisterDestination.route,
-        ) {
-            RegisterScreen(onRegisterSuccess = { navController.popBackStack() })
-        }
-
-        composable(
-            route = ChangePasswordDestination.route,
-        ) {
-            ChangePasswordScreen(
-                navController = navController
             )
         }
     }

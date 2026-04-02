@@ -6,6 +6,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.seyone22.cook.CookApplication
+import com.seyone22.cook.MainViewModel
 import com.seyone22.cook.SharedViewModel
 import com.seyone22.cook.ui.screen.cooking.CookingViewModel
 import com.seyone22.cook.ui.screen.crud.ingredient.IngredientOperationsViewModel
@@ -29,6 +30,11 @@ object AppViewModelProvider {
                 shoppingListRepository = cookApplication().container.shoppingListRepository,
                 tagRepository = cookApplication().container.tagRepository,
                 recipeTagRepository = cookApplication().container.recipeTagRepository,
+            )
+        }
+        initializer {
+            MainViewModel(
+                syncRepository = cookApplication().container.syncRepository,
             )
         }
         initializer {

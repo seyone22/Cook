@@ -47,7 +47,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [Ingredient::class, IngredientProduct::class, IngredientImage::class, RecipeImage::class, Measure::class, MeasureConversion::class, Recipe::class, Instruction::class, InstructionSection::class, RecipeIngredient::class, ShoppingList::class, ShoppingListItem::class, Tag::class, RecipeTag::class, MealEntry::class, MealEntryTagCrossRef::class, MealEntryIngredientCrossRef::class],
-    version = 16,
+    version = 18,
     exportSchema = true
 )
 @TypeConverters(RoomConverters::class)
@@ -82,8 +82,31 @@ abstract class CookDatabase : RoomDatabase() {
                     .addMigrations(MIGRATION_6_7)
                     .addMigrations(MIGRATION_15_16)
                     .addMigrations(MIGRATION_14_15)
+                    .addMigrations(MIGRATION_16_17) // 3. ADD TO BUILDER
+                    .addMigrations(MIGRATION_17_18) // 3. ADD TO BUILDER
                     .addCallback(CookDatabaseCallback(scope))
                     .build().also { Instance = it }
+            }
+        }
+
+        val MIGRATION_17_18 = object : Migration(17, 18) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Add the new Quick Share columns
+                db.execSQL("ALTER TABLE recipes ADD COLUMN shareMode TEXT NOT NULL DEFAULT 'PRIVATE'")
+                // Defaulting to an empty JSON array string for the List<String> converter
+                db.execSQL("ALTER TABLE recipes ADD COLUMN allowedEmails TEXT NOT NULL DEFAULT '[]'")
+            }
+        }
+
+        val MIGRATION_16_17 = object : Migration(16, 17) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Add the new columns to the 'recipes' table.
+                // Default values are required when adding NON-NULL columns to an existing table.
+                db.execSQL("ALTER TABLE recipes ADD COLUMN firestoreId TEXT")
+                db.execSQL("ALTER TABLE recipes ADD COLUMN ownerUid TEXT")
+                db.execSQL("ALTER TABLE recipes ADD COLUMN remoteImageUrl TEXT")
+                db.execSQL("ALTER TABLE recipes ADD COLUMN syncStatus TEXT NOT NULL DEFAULT 'LOCAL_ONLY'")
+                db.execSQL("ALTER TABLE recipes ADD COLUMN isReadOnly INTEGER NOT NULL DEFAULT 0") // SQLite uses 0 for false
             }
         }
 

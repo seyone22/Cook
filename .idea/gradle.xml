@@ -9,9 +9,7 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/ap" />
             <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/atproto-auth2" />
           </set>
         </option>
       </GradleProjectSettings>

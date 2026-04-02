@@ -13,8 +13,11 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -24,6 +27,8 @@ import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.FloatingToolbarExitDirection
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryTabRow
@@ -58,12 +63,13 @@ import com.seyone22.cook.ui.common.dialog.action.DeleteDialogAction
 import com.seyone22.cook.ui.common.dialog.action.ScaleRecipeDialogAction
 import com.seyone22.cook.ui.navigation.NavigationDestination
 import com.seyone22.cook.ui.screen.crud.recipe.EditRecipeDestination
-import com.seyone22.cook.ui.screen.home.HomeViewModel
 import com.seyone22.cook.ui.screen.home.composables.ExpandableDescription
 import com.seyone22.cook.ui.screen.home.composables.HeaderImage
 import com.seyone22.cook.ui.screen.home.composables.IngredientsList
 import com.seyone22.cook.ui.screen.home.composables.InstructionList
 import com.seyone22.cook.ui.screen.home.composables.RecipeStats
+import com.seyone22.cook.ui.screen.home.composables.ShareBottomSheet
+import com.seyone22.cook.ui.screen.more.SettingsDestination
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -76,7 +82,6 @@ object RecipeDetailDestination : NavigationDestination {
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeDetailScreen(
-    // Manual DI Injection
     viewModel: RecipeDetailViewModel = viewModel(factory = AppViewModelProvider.Factory),
     navController: NavController,
     context: Context = LocalContext.current
@@ -84,11 +89,49 @@ fun RecipeDetailScreen(
     val uiState by viewModel.uiState.collectAsState()
     val coroutineScope = rememberCoroutineScope()
 
-    // Dialog State
     var activeDialogAction by remember { mutableStateOf<DialogAction?>(null) }
+    var showShareSheet by remember { mutableStateOf(false) }
 
     activeDialogAction?.let { action ->
         GenericDialog(dialogAction = action, onDismiss = { activeDialogAction = null })
+    }
+
+    // Render the Share Bottom Sheet if requested and recipe is loaded
+    if (showShareSheet && uiState.recipe != null) {
+        ShareBottomSheet(
+            recipe = uiState.recipe!!,
+            onDismiss = { showShareSheet = false },
+            onExportZip = {
+                // Keep your existing robust zip logic here
+                coroutineScope.launch(Dispatchers.IO) {
+                    val recipe = uiState.recipe ?: return@launch
+                    val zipFile = RecipeFileHandler.exportRecipe(
+                        context = context,
+                        recipe = recipe,
+                        instructions = uiState.instructions,
+                        recipeIngredients = uiState.ingredients,
+                        ingredients = uiState.baseIngredients,
+                        images = uiState.images
+                    )
+                    val uri = FileProvider.getUriForFile(
+                        context, "${context.packageName}.provider", zipFile
+                    )
+                    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        type = "application/zip"
+                    }
+                    launch(Dispatchers.Main) {
+                        context.startActivity(Intent.createChooser(sendIntent, "Share Recipe"))
+                    }
+                }
+            },
+            onSaveCloudSettings = { newMode, newEmails ->
+                viewModel.updateShareSettings(context, newMode, newEmails)
+                showShareSheet = false
+                Toast.makeText(context, "Updating cloud permissions...", Toast.LENGTH_SHORT).show()
+            }
+        )
     }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -117,7 +160,6 @@ fun RecipeDetailScreen(
                         )
                     },
                     onCookingModeClicked = {
-                        // Pass the ID and the current scale factor
                         navController.navigate("Cooking/${uiState.recipe!!.id}?scale=${uiState.scaleFactor}")
                     },
                     onAddToShoppingListClicked = {
@@ -144,35 +186,47 @@ fun RecipeDetailScreen(
                     )
                 },
                 actions = {
-                    // Share Button
-                    IconButton(onClick = {
-                        coroutineScope.launch(Dispatchers.IO) {
-                            val recipe = uiState.recipe ?: return@launch
-
-                            val zipFile = RecipeFileHandler.exportRecipe(
-                                context = context,
-                                recipe = recipe,
-                                instructions = uiState.instructions,
-                                recipeIngredients = uiState.ingredients,
-                                ingredients = uiState.baseIngredients,
-                                images = uiState.images
-                            )
-
-                            val uri = FileProvider.getUriForFile(
-                                context, "${context.packageName}.provider", zipFile
-                            )
-
-                            val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                                putExtra(Intent.EXTRA_STREAM, uri)
-                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                type = "application/zip"
-                            }
-
-                            launch(Dispatchers.Main) {
-                                context.startActivity(Intent.createChooser(sendIntent, "Share Recipe"))
-                            }
+                    val recipe = uiState.recipe
+                    if (recipe != null) {
+                        val syncIcon = when (recipe.syncStatus) {
+                            "SYNCED" -> Icons.Default.CloudDone
+                            "WATCHING" -> Icons.Outlined.Cloud
+                            else -> Icons.Default.CloudUpload
                         }
-                    }) {
+
+                        IconButton(onClick = {
+                            if (!viewModel.isUserLoggedIn()) {
+                                // 1. Tell them why you're redirecting
+                                Toast.makeText(context, "Please log in to use cloud features", Toast.LENGTH_LONG).show()
+
+                                // 2. Navigate to your login/settings screen
+                                // Replace "Settings" with your actual route name
+                                navController.navigate(SettingsDestination.route)
+                            } else {
+                                // 3. Proceed with existing logic
+                                when (recipe.syncStatus) {
+                                    "SYNCED" -> Toast.makeText(context, "Recipe is safely in the cloud!", Toast.LENGTH_SHORT).show()
+                                    "WATCHING" -> Toast.makeText(context, "This is a shared recipe.", Toast.LENGTH_SHORT).show()
+                                    else -> {
+                                        viewModel.backupToCloud(context)
+                                        Toast.makeText(context, "Backup started in background...", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                        }) {
+                            Icon(
+                                imageVector = syncIcon,
+                                contentDescription = "Cloud Status",
+                                tint = if (recipe.syncStatus == "SYNCED")
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    LocalContentColor.current
+                            )
+                        }
+                    }
+
+                    // --- SHARE BUTTON NOW OPENS THE BOTTOM SHEET ---
+                    IconButton(onClick = { showShareSheet = true }) {
                         Icon(imageVector = Icons.Default.Share, contentDescription = "Share")
                     }
 
@@ -211,6 +265,7 @@ fun RecipeDetailScreen(
             )
         }
     ) { innerPadding ->
+        // ... ALL of your existing LazyColumn/ViewPager code stays exactly the same here ...
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -247,7 +302,6 @@ fun RecipeDetailScreen(
                     val pagerState = rememberPagerState(pageCount = { 2 })
                     var selectedTabIndex by remember { mutableIntStateOf(0) }
 
-                    // Sync tab state with pager
                     androidx.compose.runtime.LaunchedEffect(pagerState.currentPage) {
                         selectedTabIndex = pagerState.currentPage
                     }

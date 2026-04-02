@@ -1,8 +1,16 @@
 package com.seyone22.cook.ui.screen.home.detail
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import com.seyone22.cook.data.model.*
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
 import com.seyone22.cook.data.repository.ingredientVariant.IngredientVariantRepository
@@ -13,6 +21,7 @@ import com.seyone22.cook.data.repository.recipe.RecipeRepository
 import com.seyone22.cook.data.repository.recipeImage.RecipeImageRepository
 import com.seyone22.cook.data.repository.recipeIngredient.RecipeIngredientRepository
 import com.seyone22.cook.data.repository.shoppingList.ShoppingListRepository
+import com.seyone22.cook.worker.RecipeSyncWorker
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -147,6 +156,50 @@ class RecipeDetailViewModel(
                 )
             }
         }
+    }
+
+    fun backupToCloud(context: Context) {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val inputData = workDataOf(
+            RecipeSyncWorker.KEY_RECIPE_ID to recipeIdString
+        )
+
+        val syncRequest = OneTimeWorkRequestBuilder<RecipeSyncWorker>()
+            .setConstraints(constraints)
+            .setInputData(inputData)
+            .build()
+
+        WorkManager.getInstance(context).enqueue(syncRequest)
+    }
+
+    /**
+     * Updates the local Room database with new share permissions
+     * and triggers a cloud sync to update Firestore.
+     */
+    fun updateShareSettings(context: Context, newMode: String, newEmails: List<String>) {
+        viewModelScope.launch {
+            val currentRecipe = uiState.value.recipe ?: return@launch
+
+            // 1. Update the local entity
+            val updatedRecipe = currentRecipe.copy(
+                shareMode = newMode,
+                allowedEmails = newEmails,
+                syncStatus = "MODIFIED" // Mark it as dirty so the user knows it's syncing
+            )
+
+            // 2. Save to Room
+            recipeRepository.updateRecipe(updatedRecipe)
+
+            // 3. Trigger the Worker to push changes to Firebase
+            backupToCloud(context)
+        }
+    }
+
+    fun isUserLoggedIn(): Boolean {
+        return Firebase.auth.currentUser != null
     }
 
     // Other standard functions...

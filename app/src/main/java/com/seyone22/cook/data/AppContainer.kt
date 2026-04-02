@@ -2,6 +2,8 @@ package com.seyone22.cook.data
 
 import OfflineMealEntryRepository
 import android.content.Context
+import com.seyone22.cook.data.remote.FirestoreService
+import com.seyone22.cook.data.remote.SyncRepository
 import com.seyone22.cook.data.repository.ingredient.IngredientRepository
 import com.seyone22.cook.data.repository.ingredient.OfflineIngredientRepository
 import com.seyone22.cook.data.repository.ingredientImage.IngredientImageRepository
@@ -51,6 +53,8 @@ interface AppContainer {
     val tagRepository: TagRepository
     val recipeTagRepository: RecipeTagRepository
     val mealEntryRepository: MealEntryRepository
+    val firestoreService: FirestoreService
+    val syncRepository: SyncRepository
 }
 
 /**
@@ -58,6 +62,11 @@ interface AppContainer {
  */
 class AppDataContainer(private val context: Context, private val scope: CoroutineScope) :
     AppContainer {
+
+    override val firestoreService: FirestoreService by lazy {
+        FirestoreService()
+    }
+
     override val geminiService: GeminiService by lazy {
         // BuildConfig is generated from the setup in build.gradle.kts
         GeminiService(apiKey = com.seyone22.cook.BuildConfig.GEMINI_API_KEY)
@@ -118,5 +127,10 @@ class AppDataContainer(private val context: Context, private val scope: Coroutin
     }
     override val mealEntryRepository: MealEntryRepository by lazy {
         OfflineMealEntryRepository(CookDatabase.getDatabase(context, scope).mealEntryDao())
+    }
+    override val syncRepository: SyncRepository by lazy {
+        SyncRepository(
+            db = CookDatabase.getDatabase(context, scope), firestoreService = firestoreService
+        )
     }
 }

@@ -7,4 +7,6 @@
     <string name="add_recipe">Add Recipe</string>
     <string name="edit_recipe">Edit Recipe</string>
     <string name="import_recipe">Import Recipe</string>
+
+    <string name="default_web_client_id" translatable="false">YOUR_ID_HERE.apps.googleusercontent.com</string>
 </resources>

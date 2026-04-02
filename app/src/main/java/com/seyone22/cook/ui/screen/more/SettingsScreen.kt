@@ -16,19 +16,27 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -42,20 +50,24 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.seyone22.cook.R
 import com.seyone22.cook.SharedViewModel
 import com.seyone22.cook.ui.AppViewModelProvider
 import com.seyone22.cook.ui.common.dialog.action.ImportRecipeUrlDialogAction
 import com.seyone22.cook.ui.navigation.NavigationDestination
-import com.seyone22.cook.ui.screen.more.account.AuthState
+import com.seyone22.cook.ui.screen.more.account.AuthUiState
 import com.seyone22.cook.ui.screen.more.account.AuthViewModel
 import kotlinx.coroutines.CoroutineScope
 
@@ -84,16 +96,16 @@ fun SettingsDetailScreen(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                ), title = { Text(text = backStackEntry) }, navigationIcon = {
-                    IconButton(onClick = { navigateBack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null
-                        )
-                    }
-                })
+                containerColor = MaterialTheme.colorScheme.background,
+                titleContentColor = MaterialTheme.colorScheme.onSurface,
+            ), title = { Text(text = backStackEntry) }, navigationIcon = {
+                IconButton(onClick = { navigateBack() }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = null
+                    )
+                }
+            })
         },
     ) { innerPadding ->
         Column(
@@ -169,7 +181,7 @@ fun AboutList(context: Context = LocalContext.current) {
             )
         }, modifier = Modifier.clickable {
             val urlIntent = Intent(
-                Intent.ACTION_VIEW, Uri.parse("https://github.com/seyone22/Cook/tags")
+                Intent.ACTION_VIEW, "https://github.com/seyone22/Cook/tags".toUri()
             )
             context.startActivity(urlIntent)
         })
@@ -186,7 +198,7 @@ fun AboutList(context: Context = LocalContext.current) {
                         onClick = {
                             // Open the URL in a web browser
                             val intent = Intent(
-                                Intent.ACTION_VIEW, Uri.parse("http://seyone22.github.io")
+                                Intent.ACTION_VIEW, "http://seyone22.github.io".toUri()
                             )
                             context.startActivity(intent)
                         }, modifier = Modifier.padding(8.dp)
@@ -199,7 +211,7 @@ fun AboutList(context: Context = LocalContext.current) {
                         onClick = {
                             // Open the URL in a web browser
                             val intent = Intent(
-                                Intent.ACTION_VIEW, Uri.parse("mailto:s.g.seyone@live.com")
+                                Intent.ACTION_VIEW, "mailto:s.g.seyone@live.com".toUri()
                             )
                             context.startActivity(intent)
                         }, modifier = Modifier.padding(8.dp)
@@ -282,8 +294,7 @@ fun DataSettingsList(
             settingSubtext = "Fetch latest ingredient data from the database",
             action = {
                 viewModel.updateIngredients(context)
-            }
-        )
+            })
 
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.padding(16.dp))
@@ -291,58 +302,172 @@ fun DataSettingsList(
     }
 }
 
-
 @Composable
 fun AccountSettingsList(
     viewModel: MoreViewModel,
     authViewModel: AuthViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    scope: CoroutineScope = rememberCoroutineScope(),
-    context: Context = LocalContext.current,
     navigateToScreen: (screen: String) -> Unit,
 ) {
-    val authState by authViewModel.authState.collectAsState()
+    val uiState by authViewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    // Mutable state to control WebView visibility
-    var showWebView by remember { mutableStateOf(false) }
-    var redirectUri by remember { mutableStateOf("") }
-
-    // Observe changes in authState and handle redirection
-    LaunchedEffect(authState) {
-        if (authState is AuthState.Success) {
-            val uri = (authState as AuthState.Success).result
-            Log.d("TAG", "AccountSettingsList: uri $uri")
-
-            if (uri.isNotEmpty()) {
-                Log.d("TAG", "AccountSettingsList: here here")
-                redirectUri = uri
-                showWebView = true // Show WebView when auth completes
-            }
+    // React to error states automatically
+    LaunchedEffect(uiState) {
+        if (uiState is AuthUiState.Error) {
+            snackbarHostState.showSnackbar((uiState as AuthUiState.Error).message)
+            authViewModel.resetUiState()
         }
     }
 
-    Column {
-        if (true) {
-            // Show "Create Account" and "Login" options only when no user is logged in
-            SettingsListItem(
-                settingName = "Create Cook Account",
-                settingSubtext = "If you haven't already, create an account to join shared groups",
-                action = {
-                    navigateToScreen("Register")
-                })
-            SettingsListItem(
-                settingName = "Login",
-                settingSubtext = "Login to access your shared groups and recipes",
-                action = {
-                    authViewModel.startAuth()
-                })
-        }
+    val currentUser by authViewModel.currentUser.collectAsState()
+    val context = LocalContext.current
 
-        if (showWebView) {
-            Log.d("TAG", "AccountSettingsList: here")
-            OAuthWebView(redirectUri) { code, state, iss ->
-                authViewModel.handleOAuthResult(code, state, iss, context)
-                showWebView = false // Hide WebView after authentication
+    val isGuest = currentUser?.isAnonymous != false
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        if (isGuest) {
+            // --- GUEST VIEW ---
+            // Wrapped in a Card to make the "Call to Action" pop
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Secure Your Kitchen",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Link a Google account to enable family sharing, cloud sync, and device backups.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(onClick = { authViewModel.launchCredentialManagerAuth(context) }) {
+                        Text("Link Account")
+                    }
+                }
             }
+        } else {
+            // --- AUTHENTICATED VIEW ---
+            val displayName = currentUser?.displayName?.takeIf { it.isNotBlank() } ?: "Cook Chef"
+            val email = currentUser?.email ?: "Linked Account"
+            val photoUrl = currentUser?.photoUrl
+
+            // 1. Profile Header
+            ProfileHeaderCard(
+                displayName = displayName,
+                email = email,
+                photoUrl = photoUrl?.toString()
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            // 2. Management Section
+            Text(
+                text = "Account Management",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            SettingsListItem(
+                settingName = "Manage Google Account",
+                settingSubtext = "Security, personal info, and privacy",
+                action = {
+                    // Launches the system browser to the Google Account dashboard
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://myaccount.google.com/"))
+                    context.startActivity(intent)
+                }
+            )
+
+            // Optional: A placeholder for your Firebase sync logic later
+            SettingsListItem(
+                settingName = "Force Cloud Sync",
+                settingSubtext = "Last synced: Just now",
+                action = { /* Trigger Room -> Firestore sync */ }
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            // 3. Danger Zone
+            Text(
+                text = "Danger Zone",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            SettingsListItem(
+                settingName = "Sign Out",
+                settingSubtext = "Return to a local-only kitchen",
+                action = { authViewModel.signOut() }
+            )
+
+            SettingsListItem(
+                settingName = "Delete Account",
+                settingSubtext = "Permanently wipe your cloud data",
+                action = {
+                    // TODO: Implement Re-Auth and Account Deletion
+                    // navigateToScreen("DeleteAccountWarning")
+                }
+            )
+
+            if (uiState is AuthUiState.Loading) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+
+            SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.CenterHorizontally))
+        }
+    }
+}
+
+/**
+ * A dedicated, visually distinct header for the user's profile.
+ */
+@Composable
+fun ProfileHeaderCard(
+    displayName: String,
+    email: String,
+    photoUrl: String?
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Avatar using Coil
+        AsyncImage(
+            model = photoUrl ?: "https://ui-avatars.com/api/?name=${displayName.replace(" ", "+")}&background=random",
+            contentDescription = "Profile Picture",
+            modifier = Modifier
+                .size(64.dp)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        // Name and Email
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = displayName,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = email,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -364,49 +489,3 @@ fun TagSettingsList(
         }
     }
 }
-
-
-@Composable
-fun OAuthWebView(redirectURI: String, onAuthComplete: (String?, String?, String?) -> Unit) {
-    AndroidView(modifier = Modifier.fillMaxSize(), factory = { context ->
-        android.webkit.WebView(context).apply {
-            settings.javaScriptEnabled = true
-            webViewClient = OAuthWebViewClient { code, state, iss ->
-                // Close WebView and return extracted values
-                onAuthComplete(code, state, iss)
-            }
-            loadUrl(redirectURI)
-        }
-    })
-}
-
-class OAuthWebViewClient(
-    private val onAuthSuccess: (code: String?, state: String?, iss: String?) -> Unit
-) : android.webkit.WebViewClient() {
-
-    override fun shouldOverrideUrlLoading(
-        view: android.webkit.WebView?, request: android.webkit.WebResourceRequest?
-    ): Boolean {
-        val url = request?.url.toString()
-
-        // Handle the redirect URI
-        if (url.startsWith("io.github.seyone22:/oauth/callback")) {
-            // Extract query parameters
-            val uri = url.toUri()
-            val code = uri.getQueryParameter("code")
-            val state = uri.getQueryParameter("state")
-            val iss = uri.getQueryParameter("iss")
-
-            // Log extracted parameters
-            Log.d("OAuth", "Code: $code, State: $state, Iss: $iss")
-
-            // Notify the success callback
-            onAuthSuccess(code, state, iss)
-
-            return true // Prevent WebView from opening the URL
-        }
-        return super.shouldOverrideUrlLoading(view, request)
-    }
-}
-
-

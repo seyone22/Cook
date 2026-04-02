@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 
 interface InstructionSectionRepository {
-    suspend fun insertSection(section: InstructionSection)
+    suspend fun insertSection(section: InstructionSection): Long
     suspend fun updateSection(section: InstructionSection)
     suspend fun deleteSection(section: InstructionSection)
 

@@ -6,7 +6,9 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.compose.compiler)
     id("com.google.devtools.ksp")
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.10"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.20"
+
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -100,6 +102,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.compose.runtime)
     implementation(libs.androidx.navigation.runtime.ktx)
+    implementation(libs.androidx.material3)
 
     // JUnit
     testImplementation(libs.junit)
@@ -164,10 +167,8 @@ dependencies {
 
     implementation(libs.coil.compose)
 
-    implementation(project(":atproto-auth2"))
-
-    implementation(libs.ktor.client.core.v235) // core client
-    implementation(libs.ktor.client.cio.v235)  // CIO engine
+    implementation(libs.ktor.client.core) // core client
+    implementation(libs.ktor.client.cio)  // CIO engine
 
     implementation(libs.ktor.client.android) // For Android-specific support
     implementation(libs.ktor.client.content.negotiation)
@@ -192,4 +193,17 @@ dependencies {
     implementation(libs.openai.client)
 
     implementation(libs.genai.prompt)
+
+    // Import the BoM
+    implementation(platform(libs.firebase.bom))
+
+    // Firebase Authentication & Firestore
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.storage)
+
+    // Android Credential Manager for modern OAuth/Passkeys
+    implementation(libs.androidx.credentials) // Use latest stable
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
 }

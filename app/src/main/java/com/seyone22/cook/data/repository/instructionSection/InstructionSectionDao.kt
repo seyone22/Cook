@@ -8,8 +8,8 @@ import java.util.UUID
 @Dao
 interface InstructionSectionDao {
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insert(section: InstructionSection)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(section: InstructionSection): Long
 
     @Update
     suspend fun update(section: InstructionSection)

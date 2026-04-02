@@ -25,5 +25,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "Cook"
 include(":app")
-include(":ap")
-include(":atproto-auth2")
